@@ -1,0 +1,134 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+import { requireAdmin } from "@/lib/admin/require-admin";
+import {
+  createProduct,
+  deleteProduct,
+  updateProduct,
+} from "@/lib/services/admin/product.service";
+import { productFormSchema } from "@/lib/validations/admin";
+
+export type AdminActionState = {
+  error?: string;
+  fieldErrors?: Record<string, string[]>;
+};
+
+function parseProductForm(formData: FormData) {
+  const compareAt = formData.get("compareAtPrice");
+  const categoryId = formData.get("categoryId");
+
+  return productFormSchema.safeParse({
+    name: formData.get("name"),
+    slug: formData.get("slug"),
+    sku: formData.get("sku"),
+    price: formData.get("price"),
+    compareAtPrice: compareAt === "" || compareAt === null ? undefined : compareAt,
+    categoryId: categoryId === "" || categoryId === null ? undefined : categoryId,
+    shortDescription: formData.get("shortDescription") || undefined,
+    description: formData.get("description") || undefined,
+    imageUrl: formData.get("imageUrl") || undefined,
+    quantity: formData.get("quantity"),
+    isActive: formData.get("isActive") === "on",
+    isFeatured: formData.get("isFeatured") === "on",
+  });
+}
+
+export async function createProductAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized." };
+
+  const parsed = parseProductForm(formData);
+  if (!parsed.success) {
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
+  }
+
+  const data = parsed.data;
+
+  try {
+    const product = await createProduct({
+      name: data.name,
+      slug: data.slug,
+      sku: data.sku,
+      price: data.price,
+      compareAtPrice:
+        typeof data.compareAtPrice === "number" ? data.compareAtPrice : null,
+      categoryId: data.categoryId ?? null,
+      shortDescription: data.shortDescription ?? null,
+      description: data.description ?? null,
+      imageUrl: data.imageUrl || null,
+      quantity: data.quantity,
+      isActive: data.isActive,
+      isFeatured: data.isFeatured,
+    });
+
+    revalidatePath("/admin/products");
+    revalidatePath("/products");
+    redirect(`/admin/products/${product.id}/edit`);
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error ? error.message : "Could not create product.",
+    };
+  }
+}
+
+export async function updateProductAction(
+  productId: string,
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized." };
+
+  const parsed = parseProductForm(formData);
+  if (!parsed.success) {
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
+  }
+
+  const data = parsed.data;
+
+  try {
+    await updateProduct(productId, {
+      name: data.name,
+      slug: data.slug,
+      sku: data.sku,
+      price: data.price,
+      compareAtPrice:
+        typeof data.compareAtPrice === "number" ? data.compareAtPrice : null,
+      categoryId: data.categoryId ?? null,
+      shortDescription: data.shortDescription ?? null,
+      description: data.description ?? null,
+      imageUrl: data.imageUrl || null,
+      quantity: data.quantity,
+      isActive: data.isActive,
+      isFeatured: data.isFeatured,
+    });
+
+    revalidatePath("/admin/products");
+    revalidatePath(`/admin/products/${productId}/edit`);
+    revalidatePath("/products");
+    revalidatePath(`/products/${data.slug}`);
+    return {};
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error ? error.message : "Could not update product.",
+    };
+  }
+}
+
+export async function deleteProductAction(productId: string): Promise<void> {
+  const admin = await requireAdmin();
+  if (!admin) return;
+
+  await deleteProduct(productId);
+  revalidatePath("/admin/products");
+  revalidatePath("/products");
+  redirect("/admin/products");
+}

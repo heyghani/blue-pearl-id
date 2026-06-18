@@ -1,0 +1,108 @@
+import Image from "next/image";
+
+import { DutiesNotice } from "@/components/shared/duties-notice";
+import { Price } from "@/components/shared/price";
+import { Separator } from "@/components/ui/separator";
+import { getCheckoutDraft } from "@/lib/checkout/draft";
+import { getCheckoutCart } from "@/lib/services/cart.service";
+import { calculateCheckoutTotals } from "@/lib/services/order.service";
+import { cn } from "@/lib/utils";
+
+export async function CheckoutSummary({
+  className,
+  showTotals = false,
+}: {
+  className?: string;
+  showTotals?: boolean;
+}) {
+  const cart = await getCheckoutCart();
+  const draft = await getCheckoutDraft();
+
+  if (!cart) return null;
+
+  let totals = null;
+  if (showTotals && draft.shippingMethod) {
+    const result = await calculateCheckoutTotals(
+      cart.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+      draft.shippingMethod,
+      draft.couponCode,
+    );
+    if (!("error" in result)) {
+      totals = result;
+    }
+  }
+
+  const subtotal = cart.items.reduce(
+    (sum, item) => sum + Number(item.product.price) * item.quantity,
+    0,
+  );
+
+  return (
+    <div className={cn("rounded-lg border bg-card p-6", className)}>
+      <h2 className="text-lg font-semibold">Order summary</h2>
+
+      <ul className="mt-4 space-y-4">
+        {cart.items.map((item) => (
+          <li key={item.id} className="flex gap-3">
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-muted">
+              {item.product.images[0]?.url ? (
+                <Image
+                  src={item.product.images[0].url}
+                  alt={item.product.name}
+                  fill
+                  className="object-cover"
+                  sizes="56px"
+                />
+              ) : null}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="line-clamp-2 text-sm font-medium">{item.product.name}</p>
+              <p className="text-xs text-muted-foreground">Qty {item.quantity}</p>
+            </div>
+            <Price
+              amount={(Number(item.product.price) * item.quantity).toFixed(2)}
+              className="shrink-0 text-sm"
+            />
+          </li>
+        ))}
+      </ul>
+
+      <Separator className="my-4" />
+
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Subtotal</span>
+          <Price amount={totals?.subtotal ?? subtotal.toFixed(2)} />
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Shipping</span>
+          <span>
+            {totals ? (
+              <Price amount={totals.shipping} />
+            ) : (
+              <span className="text-muted-foreground">At next step</span>
+            )}
+          </span>
+        </div>
+        {totals && Number(totals.discount) > 0 && (
+          <div className="flex justify-between text-emerald-700">
+            <span>Discount</span>
+            <span>-<Price amount={totals.discount} /></span>
+          </div>
+        )}
+      </div>
+
+      {totals && (
+        <>
+          <Separator className="my-4" />
+          <div className="flex justify-between font-medium">
+            <span>Total</span>
+            <Price amount={totals.total} />
+          </div>
+        </>
+      )}
+
+      <DutiesNotice className="mt-4" />
+    </div>
+  );
+}
