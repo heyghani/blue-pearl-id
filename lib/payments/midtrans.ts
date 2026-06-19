@@ -1,5 +1,7 @@
 import crypto from "crypto";
 
+import { convertUsdToIdrLive } from "@/lib/payments/usd-idr";
+
 const serverKey = process.env.MIDTRANS_SERVER_KEY ?? "";
 const isProduction = process.env.MIDTRANS_IS_PRODUCTION === "true";
 
@@ -26,17 +28,19 @@ type SnapCustomer = {
 
 export async function createMidtransSnapToken({
   orderId,
-  grossAmount,
+  grossAmountUsd,
   customer,
 }: {
   orderId: string;
-  grossAmount: number;
+  grossAmountUsd: number;
   customer: SnapCustomer;
 }) {
   if (!isMidtransConfigured()) {
     throw new Error("Midtrans is not configured.");
   }
 
+  const { idr: grossAmountIdr, quote: exchangeQuote } =
+    await convertUsdToIdrLive(grossAmountUsd);
   const auth = Buffer.from(`${serverKey}:`).toString("base64");
   const response = await fetch(`${getMidtransSnapBaseUrl()}/snap/v1/transactions`, {
     method: "POST",
@@ -48,8 +52,16 @@ export async function createMidtransSnapToken({
     body: JSON.stringify({
       transaction_details: {
         order_id: orderId,
-        gross_amount: grossAmount,
+        gross_amount: grossAmountIdr,
       },
+      item_details: [
+        {
+          id: orderId,
+          price: grossAmountIdr,
+          quantity: 1,
+          name: `Order ${orderId.slice(0, 8)}…`,
+        },
+      ],
       customer_details: {
         email: customer.email,
         first_name: customer.firstName,
@@ -73,6 +85,9 @@ export async function createMidtransSnapToken({
   return {
     token: data.token as string,
     redirectUrl: data.redirect_url as string | undefined,
+    grossAmountIdr,
+    grossAmountUsd,
+    exchangeQuote,
   };
 }
 

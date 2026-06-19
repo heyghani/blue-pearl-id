@@ -37,8 +37,7 @@ export function Footer() {
           <div className="space-y-4 lg:col-span-2">
             <p className="text-lg font-semibold tracking-tight">{APP_NAME}</p>
             <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-              Premium pearls and fine jewelry for collectors worldwide. Secure checkout,
-              transparent USD pricing, and delivery to your door.
+              Pearl jewelry with flat-rate international shipping. Prices shown in USD.
             </p>
             <p className="text-sm text-muted-foreground">
               <a

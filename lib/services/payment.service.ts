@@ -60,6 +60,12 @@ export async function initiatePayment(paymentId: string) {
     }
 
     if (payment.snapToken) {
+      const meta = payment.rawResponse as {
+        chargedAmountIdr?: number;
+        exchangeRate?: number;
+        rateSource?: string;
+        rateFetchedAt?: string;
+      } | null;
       return {
         status: "ready" as const,
         provider: "midtrans" as const,
@@ -67,6 +73,11 @@ export async function initiatePayment(paymentId: string) {
         clientKey: getMidtransClientKey(),
         orderNumber: payment.order.orderNumber,
         isSandbox: process.env.MIDTRANS_IS_PRODUCTION !== "true",
+        redirectUrl: payment.redirectUrl ?? undefined,
+        chargedAmountIdr: meta?.chargedAmountIdr,
+        exchangeRate: meta?.exchangeRate,
+        rateSource: meta?.rateSource,
+        rateFetchedAt: meta?.rateFetchedAt,
       };
     }
 
@@ -79,7 +90,7 @@ export async function initiatePayment(paymentId: string) {
 
     const snap = await createMidtransSnapToken({
       orderId: externalId,
-      grossAmount: Number(payment.amount),
+      grossAmountUsd: Number(payment.amount),
       customer: {
         email:
           payment.order.guestEmail ??
@@ -98,6 +109,13 @@ export async function initiatePayment(paymentId: string) {
           snapToken: snap.token,
           redirectUrl: snap.redirectUrl,
           externalId,
+          rawResponse: {
+            chargedAmountIdr: snap.grossAmountIdr,
+            orderAmountUsd: snap.grossAmountUsd,
+            exchangeRate: snap.exchangeQuote.rate,
+            rateSource: snap.exchangeQuote.source,
+            rateFetchedAt: snap.exchangeQuote.fetchedAt,
+          },
         },
       }),
       prisma.order.update({
@@ -113,6 +131,11 @@ export async function initiatePayment(paymentId: string) {
       clientKey: getMidtransClientKey(),
       orderNumber: payment.order.orderNumber,
       isSandbox: process.env.MIDTRANS_IS_PRODUCTION !== "true",
+      redirectUrl: snap.redirectUrl,
+      chargedAmountIdr: snap.grossAmountIdr,
+      exchangeRate: snap.exchangeQuote.rate,
+      rateSource: snap.exchangeQuote.source,
+      rateFetchedAt: snap.exchangeQuote.fetchedAt,
     };
   }
 

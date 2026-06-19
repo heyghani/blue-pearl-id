@@ -12,50 +12,12 @@ import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/catalog/product-card";
 import { TrustBar } from "@/components/layout/trust-bar";
 import { DutiesNotice } from "@/components/shared/duties-notice";
-import { APP_NAME } from "@/lib/constants";
+import { homeCopy } from "@/lib/copy";
 import {
   getBestSellerProducts,
   getFeaturedProducts,
   toProductCard,
 } from "@/lib/products";
-
-const faqs = [
-  {
-    question: "Do you ship internationally?",
-    answer:
-      "Yes. We offer Standard and Express shipping worldwide. Rates are shown at checkout in USD.",
-  },
-  {
-    question: "What payment methods do you accept?",
-    answer:
-      "We accept major credit cards via Midtrans and PayPal for a secure, familiar checkout experience.",
-  },
-  {
-    question: "Are import duties included?",
-    answer:
-      "Import duties, VAT, and local taxes are not included and may be charged upon delivery depending on your country.",
-  },
-  {
-    question: "How can I track my order?",
-    answer:
-      "Once your order ships, you will receive a confirmation email with tracking details.",
-  },
-];
-
-const testimonials = [
-  {
-    quote:
-      "Exceptional quality and a seamless checkout. My necklace arrived beautifully packaged.",
-    author: "Mei L.",
-    location: "Shanghai",
-  },
-  {
-    quote:
-      "Fast international shipping and clear pricing. Exactly what I expected from a premium brand.",
-    author: "Sarah K.",
-    location: "Singapore",
-  },
-];
 
 async function getProductSections() {
   try {
@@ -93,14 +55,13 @@ export default async function HomePage() {
         <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
           <div className="max-w-xl">
             <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-[var(--pearl)]">
-              Fine Jewelry · Worldwide
+              {homeCopy.eyebrow}
             </p>
             <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
-              Pearls of distinction, delivered to your door
+              {homeCopy.headline}
             </h1>
             <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-              Discover curated pearl collections crafted for discerning collectors.
-              Secure checkout, worldwide shipping, and transparent USD pricing.
+              {homeCopy.subhead}
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <Button size="lg" className="shadow-sm" asChild>
@@ -115,7 +76,7 @@ export default async function HomePage() {
             </div>
             <div className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
               <ShieldCheck className="h-4 w-4 text-[var(--pearl)]" aria-hidden />
-              <span>Secure payment · Guest checkout available</span>
+              <span>Card & PayPal accepted · Prices in USD</span>
             </div>
           </div>
         </div>
@@ -124,29 +85,27 @@ export default async function HomePage() {
       <TrustBar />
 
       <ProductSection
-        title="Featured"
-        description="Hand-selected pieces from our latest collection."
+        title={homeCopy.featured.title}
+        description={homeCopy.featured.description}
         products={featured}
-        emptyMessage="Featured products will appear here once the catalog is seeded."
+        emptyMessage="No featured products yet."
       />
 
       <ProductSection
-        title="Best Sellers"
-        description="Beloved by collectors around the world."
+        title={homeCopy.bestSellers.title}
+        description={homeCopy.bestSellers.description}
         products={bestSellers}
-        emptyMessage="Best sellers will appear here once products are added."
+        emptyMessage="No products yet."
         className="bg-muted/30"
       />
 
       <section className="border-y bg-background py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-semibold tracking-tight">
-              Trusted by collectors worldwide
-            </h2>
+            <h2 className="text-2xl font-semibold tracking-tight">Customer notes</h2>
           </div>
           <div className="mx-auto mt-10 grid max-w-4xl gap-6 md:grid-cols-2">
-            {testimonials.map((item) => (
+            {homeCopy.testimonials.map((item) => (
               <blockquote
                 key={item.author}
                 className="rounded-xl border bg-card p-6 text-left shadow-sm ring-1 ring-black/[0.03]"
@@ -168,15 +127,13 @@ export default async function HomePage() {
       <section id="faq" className="py-16">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-2xl font-semibold tracking-tight">
-              Frequently asked questions
-            </h2>
+            <h2 className="text-2xl font-semibold tracking-tight">FAQ</h2>
             <p className="mt-2 text-muted-foreground">
-              Everything you need to know about shopping with {APP_NAME}.
+              Shipping, payment, and duties — the basics.
             </p>
           </div>
           <Accordion type="single" collapsible className="mt-10">
-            {faqs.map((faq, index) => (
+            {homeCopy.faqs.map((faq, index) => (
               <AccordionItem key={faq.question} value={`item-${index}`}>
                 <AccordionTrigger>{faq.question}</AccordionTrigger>
                 <AccordionContent>{faq.answer}</AccordionContent>

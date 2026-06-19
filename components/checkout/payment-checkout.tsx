@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 
+import { checkoutCopy } from "@/lib/copy";
+import { formatIdr, formatUsdToIdrRate } from "@/lib/payments/usd-idr";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -16,6 +18,11 @@ type PaymentSession =
       clientKey: string;
       orderNumber: string;
       isSandbox: boolean;
+      redirectUrl?: string;
+      chargedAmountIdr?: number;
+      exchangeRate?: number;
+      rateSource?: string;
+      rateFetchedAt?: string;
     }
   | {
       status: "ready";
@@ -50,7 +57,38 @@ export function PaymentCheckout({ orderNumber }: { orderNumber: string }) {
   const [session, setSession] = useState<PaymentSession | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [snapScriptReady, setSnapScriptReady] = useState(false);
+  const [needsManualOpen, setNeedsManualOpen] = useState(false);
   const snapOpened = useRef(false);
+
+  const openSnap = useCallback(
+    (token: string, redirectUrl?: string) => {
+      if (snapOpened.current) return;
+      snapOpened.current = true;
+
+      if (window.snap) {
+        window.snap.pay(token, {
+          onSuccess: () => pollAndRedirect(orderNumber, router),
+          onPending: () => pollAndRedirect(orderNumber, router),
+          onError: () => router.push(`/payment/failed?order=${orderNumber}`),
+          onClose: () => {
+            snapOpened.current = false;
+            setNeedsManualOpen(true);
+          },
+        });
+        return;
+      }
+
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+        return;
+      }
+
+      snapOpened.current = false;
+      setNeedsManualOpen(true);
+    },
+    [orderNumber, router],
+  );
 
   useEffect(() => {
     async function load() {
@@ -82,23 +120,26 @@ export function PaymentCheckout({ orderNumber }: { orderNumber: string }) {
       return;
     }
 
-    if (
-      session.provider === "midtrans" &&
-      window.snap &&
-      !snapOpened.current
-    ) {
-      snapOpened.current = true;
-      window.snap.pay(session.snapToken, {
-        onSuccess: () => pollAndRedirect(orderNumber, router),
-        onPending: () => pollAndRedirect(orderNumber, router),
-        onError: () =>
-          router.push(`/payment/failed?order=${orderNumber}`),
-        onClose: () => {
-          router.push(`/payment/failed?order=${orderNumber}`);
-        },
-      });
+    if (session.provider === "midtrans" && snapScriptReady) {
+      openSnap(session.snapToken, session.redirectUrl);
     }
-  }, [session, orderNumber, router]);
+  }, [session, snapScriptReady, openSnap]);
+
+  // Fallback if Snap.js is slow or blocked
+  useEffect(() => {
+    if (!session || session.status !== "ready" || session.provider !== "midtrans") {
+      return;
+    }
+    if (snapOpened.current || needsManualOpen) return;
+
+    const timer = window.setTimeout(() => {
+      if (!snapOpened.current) {
+        setNeedsManualOpen(true);
+      }
+    }, 4000);
+
+    return () => window.clearTimeout(timer);
+  }, [session, needsManualOpen]);
 
   const snapScript =
     session?.status === "ready" && session.provider === "midtrans"
@@ -113,7 +154,11 @@ export function PaymentCheckout({ orderNumber }: { orderNumber: string }) {
       : undefined;
 
   if (loading) {
-    return <p className="text-center text-sm text-muted-foreground">Preparing secure payment…</p>;
+    return (
+      <p className="text-center text-sm text-muted-foreground">
+        {checkoutCopy.openingPayment}
+      </p>
+    );
   }
 
   if (error) {
@@ -127,13 +172,8 @@ export function PaymentCheckout({ orderNumber }: { orderNumber: string }) {
   if (session?.status === "unconfigured") {
     return (
       <div className="space-y-4 rounded-lg border border-dashed p-4 text-sm">
-        <p className="font-medium text-foreground">Payment gateway not configured</p>
+        <p className="font-medium text-foreground">Payment not configured</p>
         <p className="text-muted-foreground">{session.message}</p>
-        <p className="text-muted-foreground">
-          Add your {session.provider === "midtrans" ? "Midtrans" : "PayPal"} API keys to{" "}
-          <code className="text-xs">.env</code> and restart the server. See{" "}
-          <code className="text-xs">docs/PAYMENT-SETUP.md</code>.
-        </p>
         <Button variant="outline" onClick={() => router.push(`/checkout/confirmation/${orderNumber}`)}>
           View order status
         </Button>
@@ -141,34 +181,66 @@ export function PaymentCheckout({ orderNumber }: { orderNumber: string }) {
     );
   }
 
+  const idrNote =
+    session?.status === "ready" &&
+    session.provider === "midtrans" &&
+    session.chargedAmountIdr
+      ? formatIdr(session.chargedAmountIdr)
+      : null;
+
   return (
     <>
       {snapScript && clientKey && (
-        <Script src={snapScript} data-client-key={clientKey} strategy="afterInteractive" />
+        <Script
+          src={snapScript}
+          data-client-key={clientKey}
+          strategy="afterInteractive"
+          onReady={() => setSnapScriptReady(true)}
+          onLoad={() => setSnapScriptReady(true)}
+        />
       )}
-      <p className="text-center text-sm text-muted-foreground">
-        {session?.status === "ready" && session.provider === "paypal"
-          ? "Redirecting to PayPal…"
-          : "Opening secure payment window…"}
-      </p>
-      <div className="mt-4 flex justify-center">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            if (session?.status === "ready" && session.provider === "midtrans" && window.snap) {
-              snapOpened.current = true;
-              window.snap.pay(session.snapToken, {
-                onSuccess: () => pollAndRedirect(orderNumber, router),
-                onPending: () => pollAndRedirect(orderNumber, router),
-                onError: () => router.push(`/payment/failed?order=${orderNumber}`),
-                onClose: () => router.push(`/payment/failed?order=${orderNumber}`),
-              });
-            }
-          }}
-        >
-          Open payment window
-        </Button>
+
+      <div className="space-y-4 text-center text-sm">
+        {idrNote ? (
+          <p className="rounded-lg border bg-muted/40 px-4 py-3 text-muted-foreground">
+            Card charge: <strong className="text-foreground">{idrNote}</strong>
+            {session.status === "ready" &&
+            session.provider === "midtrans" &&
+            session.exchangeRate ? (
+              <span className="mt-2 block text-xs">
+                1 USD = Rp {formatUsdToIdrRate(session.exchangeRate)}
+                {session.rateSource === "frankfurter" ? " · live rate" : " · fallback rate"}
+                {session.rateFetchedAt
+                  ? ` · ${new Date(session.rateFetchedAt).toLocaleString()}`
+                  : ""}
+              </span>
+            ) : (
+              <span className="mt-1 block text-xs">{checkoutCopy.processingCardNote}</span>
+            )}
+          </p>
+        ) : null}
+
+        {!needsManualOpen ? (
+          <p className="text-muted-foreground">{checkoutCopy.openingPayment}</p>
+        ) : (
+          <>
+            <p className="text-muted-foreground">
+              Payment window did not open automatically. Click below to continue.
+            </p>
+            <Button
+              size="lg"
+              className="w-full sm:w-auto"
+              onClick={() => {
+                if (session?.status === "ready" && session.provider === "midtrans") {
+                  snapOpened.current = false;
+                  openSnap(session.snapToken, session.redirectUrl);
+                }
+              }}
+            >
+              Continue to payment
+            </Button>
+          </>
+        )}
       </div>
     </>
   );

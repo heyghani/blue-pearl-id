@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 
+import { checkoutCopy } from "@/lib/copy";
 import { APP_NAME } from "@/lib/constants";
 
 export default function CheckoutLayout({
@@ -24,7 +25,7 @@ export default function CheckoutLayout({
             </Link>
             <div className="flex items-center gap-1.5 rounded-full bg-[var(--pearl-light)] px-3 py-1 text-xs font-medium text-[var(--pearl)]">
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
-              <span>Secure checkout</span>
+              <span>{checkoutCopy.secureBadge}</span>
             </div>
           </div>
         </div>

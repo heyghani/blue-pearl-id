@@ -62,7 +62,47 @@ MIDTRANS_SERVER_KEY="<sandbox server key>"
 MIDTRANS_CLIENT_KEY="<sandbox client key>"
 NEXT_PUBLIC_MIDTRANS_CLIENT_KEY="<same client key>"
 MIDTRANS_IS_PRODUCTION="false"
+USD_TO_IDR_RATE="16500"
 ```
+
+### USD storefront, IDR card charges
+
+**Midtrans only settles in Indonesian Rupiah (IDR).** That is a gateway limitation, not a choice we can override.
+
+How this store works:
+
+| | Amount |
+|--|--------|
+| Product prices, cart, checkout | **USD** (your business rule) |
+| PayPal | Charged in **USD** |
+| Card via Midtrans Snap | Converted to **IDR** using a **live exchange rate** |
+
+#### Live rate (default)
+
+The app fetches **USD → IDR** from [Frankfurter](https://www.frankfurter.app/) (ECB data, free, no API key). The rate is **cached for 1 hour** so we do not hit the API on every page view.
+
+Optional env:
+
+```bash
+EXCHANGE_RATE_CACHE_SECONDS="3600"   # default: 1 hour
+```
+
+#### Fallback
+
+If the live API is unavailable, we use `USD_TO_IDR_RATE` from `.env`, then a built-in default.
+
+```bash
+USD_TO_IDR_RATE="16500"   # fallback only — keep as safety net
+```
+
+To disable live rates (e.g. local testing):
+
+```bash
+EXCHANGE_RATE_PROVIDER="static"
+USD_TO_IDR_RATE="16500"
+```
+
+Customers see the IDR amount and the rate used on the payment screen before Snap opens. Orders and admin reports stay in **USD**; the locked rate is stored on each payment record.
 
 ### 3. Webhook URL
 
