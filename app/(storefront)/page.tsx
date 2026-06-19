@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 
 import {
@@ -76,32 +77,44 @@ export default async function HomePage() {
 
   return (
     <>
-      <section className="relative overflow-hidden border-b bg-background">
-        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="mb-4 text-sm font-medium uppercase tracking-widest text-muted-foreground">
+      <section className="relative overflow-hidden border-b">
+        <div className="absolute inset-0">
+          <Image
+            src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=1920&q=80"
+            alt=""
+            fill
+            priority
+            className="object-cover object-center"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/70" />
+        </div>
+
+        <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+          <div className="max-w-xl">
+            <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-[var(--pearl)]">
               Fine Jewelry · Worldwide
             </p>
-            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
               Pearls of distinction, delivered to your door
             </h1>
-            <p className="mt-6 text-lg text-muted-foreground">
+            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
               Discover curated pearl collections crafted for discerning collectors.
               Secure checkout, worldwide shipping, and transparent USD pricing.
             </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Button size="lg" asChild>
+            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+              <Button size="lg" className="shadow-sm" asChild>
                 <Link href="/products">
                   Shop Collection
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" variant="outline" className="bg-background/80 backdrop-blur" asChild>
                 <Link href="/products?featured=true">Featured Pieces</Link>
               </Button>
             </div>
-            <div className="mt-8 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <ShieldCheck className="h-4 w-4" aria-hidden />
+            <div className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
+              <ShieldCheck className="h-4 w-4 text-[var(--pearl)]" aria-hidden />
               <span>Secure payment · Guest checkout available</span>
             </div>
           </div>
@@ -136,7 +149,7 @@ export default async function HomePage() {
             {testimonials.map((item) => (
               <blockquote
                 key={item.author}
-                className="rounded-lg border bg-card p-6 text-left shadow-sm"
+                className="rounded-xl border bg-card p-6 text-left shadow-sm ring-1 ring-black/[0.03]"
               >
                 <p className="text-muted-foreground">&ldquo;{item.quote}&rdquo;</p>
                 <footer className="mt-4 text-sm font-medium">

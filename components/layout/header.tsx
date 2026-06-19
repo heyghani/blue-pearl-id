@@ -3,6 +3,7 @@ import { Search, User } from "lucide-react";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { CartButton } from "@/components/cart/cart-button";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { APP_NAME } from "@/lib/constants";
@@ -10,6 +11,7 @@ import { getCartItemCount } from "@/lib/services/cart.service";
 
 const navLinks = [
   { href: "/products", label: "Shop" },
+  { href: "/products?featured=true", label: "Featured" },
   { href: "/#faq", label: "FAQ" },
 ];
 
@@ -19,10 +21,13 @@ export async function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="text-lg font-semibold tracking-tight">
-          {APP_NAME}
-        </Link>
+      <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-3">
+          <MobileNav />
+          <Link href="/" className="text-lg font-semibold tracking-tight">
+            {APP_NAME}
+          </Link>
+        </div>
 
         <nav className="hidden items-center gap-8 md:flex">
           {navLinks.map((link) => (
@@ -37,8 +42,10 @@ export async function Header() {
         </nav>
 
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" aria-label="Search">
-            <Search className="h-5 w-5" />
+          <Button variant="ghost" size="icon" aria-label="Search products" asChild>
+            <Link href="/products">
+              <Search className="h-5 w-5" />
+            </Link>
           </Button>
 
           {session?.user ? (

@@ -2,25 +2,27 @@
 
 :root {
   --background: #fafafa;
-  --foreground: #0a0a0a;
+  --foreground: #0c1222;
   --card: #ffffff;
-  --card-foreground: #0a0a0a;
+  --card-foreground: #0c1222;
   --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  --primary: #18181b;
+  --popover-foreground: #0c1222;
+  --primary: #0c1222;
   --primary-foreground: #fafafa;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #18181b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --accent: #f4f4f5;
-  --accent-foreground: #18181b;
+  --secondary: #f0f2f6;
+  --secondary-foreground: #0c1222;
+  --muted: #f0f2f6;
+  --muted-foreground: #64748b;
+  --accent: #e8eef5;
+  --accent-foreground: #0c1222;
   --destructive: #dc2626;
   --destructive-foreground: #fafafa;
-  --border: #e4e4e7;
-  --input: #e4e4e7;
-  --ring: #18181b;
-  --radius: 0.5rem;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #1e3a5f;
+  --pearl: #1e3a5f;
+  --pearl-light: #e8eef5;
+  --radius: 0.625rem;
 }
 
 @theme inline {
@@ -43,6 +45,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-pearl: var(--pearl);
+  --color-pearl-light: var(--pearl-light);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 4px);
@@ -56,6 +60,11 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  ::selection {
+    background: var(--pearl-light);
+    color: var(--foreground);
   }
 }
 

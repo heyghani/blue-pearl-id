@@ -68,6 +68,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run db:migrate` | Run Prisma migrations |
 | `npm run db:seed` | Seed sample data |
 | `npm run db:studio` | Open Prisma Studio |
+| `npm test` | Run unit tests (Vitest) |
+| `npm run test:e2e` | Run E2E tests (Playwright) |
 
 ## Documentation
 
@@ -83,8 +85,10 @@ Architecture and product docs live in [`docs/`](docs/README.md).
 - [x] Phase 6 — Checkout (3-step wizard, order creation, shipping)
 - [x] Phase 7 — Payments (Midtrans Snap, PayPal, webhooks, retry)
 - [x] Phase 8 — Admin dashboard (products, orders, customers, shipping, analytics)
+- [x] Phase 9 — Testing (Vitest unit tests, Playwright E2E, CI, security checklist)
+- [ ] Phase 10 — Production deployment
 
-See [docs/PAYMENT-SETUP.md](docs/PAYMENT-SETUP.md) for Midtrans, PayPal, and Resend configuration.
+See [docs/TESTING.md](docs/TESTING.md), [docs/SECURITY-CHECKLIST.md](docs/SECURITY-CHECKLIST.md), and [docs/DEMO-GUIDE.md](docs/DEMO-GUIDE.md) for client demonstrations.
 
 ## Deploy to Vercel (checkpoint)
 

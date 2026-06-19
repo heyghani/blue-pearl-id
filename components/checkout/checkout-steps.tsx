@@ -18,29 +18,29 @@ export function CheckoutSteps({
   const currentIndex = steps.findIndex((s) => s.id === current);
 
   return (
-    <nav aria-label="Checkout progress" className={cn("mb-8", className)}>
-      <ol className="flex items-center gap-2">
+    <nav aria-label="Checkout progress" className={cn("mb-10", className)}>
+      <ol className="flex items-center">
         {steps.map((step, index) => {
           const isComplete = index < currentIndex;
           const isCurrent = index === currentIndex;
 
           return (
-            <li key={step.id} className="flex flex-1 items-center gap-2">
-              <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
+            <li key={step.id} className="flex flex-1 items-center">
+              <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
                 <span
                   className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium",
-                    isComplete && "bg-primary text-primary-foreground",
-                    isCurrent && "border-2 border-primary text-primary",
+                    "flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold transition-colors",
+                    isComplete && "bg-[var(--pearl)] text-white",
+                    isCurrent && "border-2 border-[var(--pearl)] bg-background text-[var(--pearl)]",
                     !isComplete && !isCurrent && "bg-muted text-muted-foreground",
                   )}
                 >
-                  {index + 1}
+                  {isComplete ? "✓" : index + 1}
                 </span>
                 <span
                   className={cn(
-                    "hidden text-xs sm:block",
-                    isCurrent ? "font-medium text-foreground" : "text-muted-foreground",
+                    "text-xs",
+                    isCurrent ? "font-semibold text-foreground" : "text-muted-foreground",
                   )}
                 >
                   {step.label}
@@ -49,8 +49,8 @@ export function CheckoutSteps({
               {index < steps.length - 1 && (
                 <div
                   className={cn(
-                    "mb-5 h-px flex-1",
-                    isComplete ? "bg-primary" : "bg-border",
+                    "mx-2 mb-6 h-0.5 flex-1 rounded-full",
+                    isComplete ? "bg-[var(--pearl)]" : "bg-border",
                   )}
                 />
               )}

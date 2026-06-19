@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  unit:
+    name: Lint & unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - name: Typecheck & build
+        env:
+          DATABASE_URL: postgresql://bluepearl:bluepearl@localhost:5432/bluepearl
+          AUTH_SECRET: ci-build-secret-min-32-characters-long
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+        run: npm run build
+
+      - run: npm test
+
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: bluepearl
+          POSTGRES_PASSWORD: bluepearl
+          POSTGRES_DB: bluepearl
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bluepearl -d bluepearl"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://bluepearl:bluepearl@localhost:5432/bluepearl
+      AUTH_SECRET: ci-e2e-secret-min-32-characters-long
+      AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx playwright install chromium --with-deps
+
+      - run: npm run db:migrate:deploy
+
+      - run: npm run db:seed
+
+      - run: npm run test:e2e

@@ -14,6 +14,9 @@ Complete MVP architecture for a conversion-focused international e-commerce plat
 | 6 | UI/UX Sitemap & Design System | [06-UI-UX-SITEMAP.md](./06-UI-UX-SITEMAP.md) |
 | 7 | Payment Flow Architecture | [07-PAYMENT-FLOW-ARCHITECTURE.md](./07-PAYMENT-FLOW-ARCHITECTURE.md) |
 | — | **Payment setup (Midtrans / PayPal)** | [PAYMENT-SETUP.md](./PAYMENT-SETUP.md) |
+| — | **Testing guide** | [TESTING.md](./TESTING.md) |
+| — | **Security checklist** | [SECURITY-CHECKLIST.md](./SECURITY-CHECKLIST.md) |
+| — | **Client demo script** | [DEMO-GUIDE.md](./DEMO-GUIDE.md) |
 | 8 | Development Roadmap | [08-DEVELOPMENT-ROADMAP.md](./08-DEVELOPMENT-ROADMAP.md) |
 | 9 | Deployment Strategy | [09-DEPLOYMENT-STRATEGY.md](./09-DEPLOYMENT-STRATEGY.md) |
 | 10 | Future Scaling Plan | [10-FUTURE-SCALING-PLAN.md](./10-FUTURE-SCALING-PLAN.md) |

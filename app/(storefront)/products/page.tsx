@@ -48,10 +48,13 @@ export default async function ProductsPage({
   const title = params.featured ? "Featured" : "Shop All";
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
-        <p className="mt-2 text-muted-foreground">
+    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mb-10 border-b pb-8">
+        <p className="text-sm font-medium uppercase tracking-[0.15em] text-[var(--pearl)]">
+          Collection
+        </p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
+        <p className="mt-3 text-muted-foreground">
           {catalog.total} {catalog.total === 1 ? "product" : "products"}
           {params.search ? ` for “${params.search}”` : ""}
         </p>
