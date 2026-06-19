@@ -204,7 +204,7 @@ export function PaymentCheckout({ orderNumber }: { orderNumber: string }) {
         {idrNote ? (
           <p className="rounded-lg border bg-muted/40 px-4 py-3 text-muted-foreground">
             Card charge: <strong className="text-foreground">{idrNote}</strong>
-            {session.status === "ready" &&
+            {session?.status === "ready" &&
             session.provider === "midtrans" &&
             session.exchangeRate ? (
               <span className="mt-2 block text-xs">
