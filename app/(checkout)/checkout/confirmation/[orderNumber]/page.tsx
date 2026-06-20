@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { DutiesNotice } from "@/components/shared/duties-notice";
 import { Price } from "@/components/shared/price";
 import { getOrderByNumber } from "@/lib/services/order.service";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 
 type Props = {
   params: Promise<{ orderNumber: string }>;
@@ -27,7 +27,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
     notFound();
   }
 
-  const session = await auth();
+  const session = await getSession();
   const email = order.guestEmail ?? session?.user?.email;
 
   return (

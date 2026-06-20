@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import { JWTSessionError } from "@auth/core/errors";
 
 export const authConfig = {
   pages: {
@@ -6,6 +7,13 @@ export const authConfig = {
   },
   session: {
     strategy: "jwt",
+  },
+  logger: {
+    error(error) {
+      // Stale cookies after AUTH_SECRET rotation — cleared in middleware.
+      if (error instanceof JWTSessionError) return;
+      console.error(error);
+    },
   },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {

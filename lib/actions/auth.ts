@@ -249,8 +249,8 @@ export async function updateProfileAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const { auth } = await import("@/lib/auth");
-  const session = await auth();
+  const { getSession } = await import("@/lib/auth");
+  const session = await getSession();
 
   if (!session?.user?.id) {
     return { error: "You must be signed in." };

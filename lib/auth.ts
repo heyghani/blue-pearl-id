@@ -64,3 +64,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
 });
+
+/** Safe session read for Server Components (stale cookies cleared in middleware). */
+export async function getSession() {
+  return auth();
+}

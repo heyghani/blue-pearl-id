@@ -141,8 +141,8 @@ async function getOrCreateGuestCart(sessionId: string) {
 }
 
 async function getAuthUserId() {
-  const { auth } = await import("@/lib/auth");
-  const session = await auth();
+  const { getSession } = await import("@/lib/auth");
+  const session = await getSession();
   return session?.user?.id;
 }
 

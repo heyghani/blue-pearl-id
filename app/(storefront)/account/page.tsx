@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getUserOrders } from "@/lib/services/account.service";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Price } from "@/components/shared/price";
 
 export default async function AccountPage() {
-  const session = await auth();
+  const session = await getSession();
   const user = session?.user?.id
     ? await prisma.user.findUnique({
         where: { id: session.user.id },

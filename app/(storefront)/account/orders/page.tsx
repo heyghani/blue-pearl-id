@@ -3,11 +3,11 @@ import Link from "next/link";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { Button } from "@/components/ui/button";
 import { Price } from "@/components/shared/price";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getUserOrders } from "@/lib/services/account.service";
 
 export default async function AccountOrdersPage() {
-  const session = await auth();
+  const session = await getSession();
   const orders = session?.user?.id
     ? await getUserOrders(session.user.id)
     : [];

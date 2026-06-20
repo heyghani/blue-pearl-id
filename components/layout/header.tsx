@@ -3,28 +3,36 @@ import { Search, User } from "lucide-react";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { CartButton } from "@/components/cart/cart-button";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { APP_NAME } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 import { getCartItemCount } from "@/lib/services/cart.service";
 
-const navLinks = [
-  { href: "/products", label: "Shop" },
-  { href: "/products?featured=true", label: "Featured" },
-  { href: "/#faq", label: "FAQ" },
-];
-
 export async function Header() {
-  const session = await auth();
+  const session = await getSession();
   const itemCount = await getCartItemCount();
+  const locale = await getLocale();
+  const t = getDictionary(locale);
+
+  const navLinks = [
+    { href: "/products", label: t.nav.shop },
+    { href: "/products?featured=true", label: t.nav.featured },
+    { href: "/#faq", label: t.nav.faq },
+  ];
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="relative mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-2 sm:gap-3">
           <MobileNav />
-          <Link href="/" className="text-lg font-semibold tracking-tight">
+          <Link
+            href="/"
+            className="text-base font-bold tracking-tight sm:text-lg"
+          >
             {APP_NAME}
           </Link>
         </div>
@@ -34,15 +42,19 @@ export async function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               {link.label}
             </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" aria-label="Search products" asChild>
+        <div className="flex items-center gap-0.5 sm:gap-1">
+          <div className="hidden sm:block">
+            <LanguageSwitcher />
+          </div>
+
+          <Button variant="ghost" size="icon" aria-label={t.nav.search} asChild>
             <Link href="/products">
               <Search className="h-5 w-5" />
             </Link>
@@ -53,11 +65,11 @@ export async function Header() {
               <Button variant="ghost" size="sm" className="hidden sm:inline-flex" asChild>
                 <Link href="/account">
                   <User className="mr-1.5 h-4 w-4" />
-                  Account
+                  {t.nav.account}
                 </Link>
               </Button>
               <Button variant="ghost" size="icon" className="sm:hidden" asChild>
-                <Link href="/account" aria-label="Account">
+                <Link href="/account" aria-label={t.nav.account}>
                   <User className="h-5 w-5" />
                 </Link>
               </Button>
@@ -67,7 +79,7 @@ export async function Header() {
             </>
           ) : (
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/login">Sign in</Link>
+              <Link href="/login">{t.nav.signIn}</Link>
             </Button>
           )}
 

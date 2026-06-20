@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
+import { LocaleProvider } from "@/components/i18n/locale-provider";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 import "./globals.css";
 
@@ -21,14 +24,21 @@ export const metadata: Metadata = {
   ),
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const dictionary = getDictionary(locale);
+
   return (
-    <html lang="en" className={`${inter.variable} h-full`}>
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+    <html lang={locale} className={`${inter.variable} h-full`}>
+      <body className="min-h-full flex flex-col font-sans">
+        <LocaleProvider locale={locale} dictionary={dictionary}>
+          {children}
+        </LocaleProvider>
+      </body>
     </html>
   );
 }

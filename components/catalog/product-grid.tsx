@@ -1,8 +1,10 @@
+"use client";
+
 import Link from "next/link";
 
-import { ProductCard } from "@/components/catalog/product-card";
+import { ProductCard, type ProductCardData } from "@/components/catalog/product-card";
 import { Button } from "@/components/ui/button";
-import type { ProductCardData } from "@/components/catalog/product-card";
+import { useTranslations } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
 
 export function ProductGrid({
@@ -12,12 +14,14 @@ export function ProductGrid({
   products: ProductCardData[];
   className?: string;
 }) {
+  const t = useTranslations();
+
   if (products.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed p-12 text-center">
-        <p className="text-muted-foreground">No products match your filters.</p>
-        <Button variant="outline" className="mt-4" asChild>
-          <Link href="/products">Clear filters</Link>
+      <div className="rounded-2xl border border-dashed px-6 py-14 text-center">
+        <p className="text-sm text-muted-foreground">{t.catalog.emptyResults}</p>
+        <Button variant="outline" className="mt-4 rounded-full" asChild>
+          <Link href="/products">{t.catalog.clearFilters}</Link>
         </Button>
       </div>
     );
@@ -26,12 +30,12 @@ export function ProductGrid({
   return (
     <div
       className={cn(
-        "grid grid-cols-2 gap-4 md:grid-cols-3 lg:gap-6",
+        "grid grid-cols-2 gap-x-2 gap-y-4 sm:gap-x-3 sm:gap-y-5 md:grid-cols-3 lg:grid-cols-4",
         className,
       )}
     >
       {products.map((product) => (
-        <ProductCard key={product.slug} product={product} />
+        <ProductCard key={product.slug} product={product} showPriceOnImage />
       ))}
     </div>
   );

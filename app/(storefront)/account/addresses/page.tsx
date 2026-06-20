@@ -2,12 +2,12 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { COUNTRIES } from "@/lib/countries";
 import { getUserAddresses } from "@/lib/services/account.service";
 
 export default async function AddressesPage() {
-  const session = await auth();
+  const session = await getSession();
   const addresses = session?.user?.id
     ? await getUserAddresses(session.user.id)
     : [];

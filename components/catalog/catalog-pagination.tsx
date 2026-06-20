@@ -1,12 +1,15 @@
-import Link from "next/link";
+"use client";
 
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+
+import { useTranslations } from "@/components/i18n/locale-provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function CatalogPagination({
   page,
   totalPages,
-  searchParams,
   className,
 }: {
   page: number;
@@ -14,46 +17,54 @@ export function CatalogPagination({
   searchParams: Record<string, string | string[] | undefined>;
   className?: string;
 }) {
+  const t = useTranslations();
+  const params = useSearchParams();
+
   if (totalPages <= 1) return null;
 
   function href(targetPage: number) {
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(searchParams)) {
-      if (value === undefined || key === "page") continue;
-      if (Array.isArray(value)) {
-        value.forEach((v) => params.append(key, v));
-      } else {
-        params.set(key, value);
-      }
-    }
+    const next = new URLSearchParams(params.toString());
     if (targetPage > 1) {
-      params.set("page", String(targetPage));
+      next.set("page", String(targetPage));
+    } else {
+      next.delete("page");
     }
-    const qs = params.toString();
+    const qs = next.toString();
     return qs ? `/products?${qs}` : "/products";
   }
 
   return (
     <nav
-      className={cn("flex items-center justify-center gap-2", className)}
+      className={cn("flex items-center justify-center gap-2 py-2", className)}
       aria-label="Pagination"
     >
-      <Button variant="outline" size="sm" disabled={page <= 1} asChild={page > 1}>
-        {page > 1 ? <Link href={href(page - 1)}>Previous</Link> : <span>Previous</span>}
+      <Button
+        variant="outline"
+        size="sm"
+        className="rounded-full"
+        disabled={page <= 1}
+        asChild={page > 1}
+      >
+        {page > 1 ? (
+          <Link href={href(page - 1)}>{t.catalog.previous}</Link>
+        ) : (
+          <span>{t.catalog.previous}</span>
+        )}
       </Button>
-      <span className="px-3 text-sm text-muted-foreground">
-        Page {page} of {totalPages}
+      <span className="px-2 text-xs text-muted-foreground sm:text-sm">
+        {t.catalog.pageOf.replace("{page}", String(page)).replace("{total}", String(totalPages))}
       </span>
       <Button
         variant="outline"
         size="sm"
+        className="rounded-full"
         disabled={page >= totalPages}
         asChild={page < totalPages}
       >
         {page < totalPages ? (
-          <Link href={href(page + 1)}>Next</Link>
+          <Link href={href(page + 1)}>{t.catalog.next}</Link>
         ) : (
-          <span>Next</span>
+          <span>{t.catalog.next}</span>
         )}
       </Button>
     </nav>

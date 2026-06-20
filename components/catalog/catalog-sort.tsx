@@ -3,11 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
+import { useTranslations } from "@/components/i18n/locale-provider";
 import { SORT_OPTIONS } from "@/lib/catalog";
 import type { ProductSort } from "@/lib/products";
 import { cn } from "@/lib/utils";
 
 export function CatalogSort({ className }: { className?: string }) {
+  const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -25,15 +27,15 @@ export function CatalogSort({ className }: { className?: string }) {
         });
       }}
       className={cn(
-        "h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "h-10 rounded-full border border-input bg-background px-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isPending && "opacity-60",
         className,
       )}
-      aria-label="Sort products"
+      aria-label={t.catalog.sortLabel}
     >
       {SORT_OPTIONS.map((option) => (
         <option key={option.value} value={option.value}>
-          {option.label}
+          {t.catalog[option.labelKey]}
         </option>
       ))}
     </select>

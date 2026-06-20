@@ -27,8 +27,8 @@ export type CheckoutActionState = {
 };
 
 async function getAuthUser() {
-  const { auth } = await import("@/lib/auth");
-  const session = await auth();
+  const { getSession } = await import("@/lib/auth");
+  const session = await getSession();
   if (!session?.user?.id) return null;
 
   return prisma.user.findUnique({

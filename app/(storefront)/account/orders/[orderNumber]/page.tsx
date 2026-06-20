@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { DutiesNotice } from "@/components/shared/duties-notice";
 import { Price } from "@/components/shared/price";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getUserOrder } from "@/lib/services/account.service";
 
 type Props = {
@@ -14,7 +14,7 @@ type Props = {
 };
 
 export default async function AccountOrderDetailPage({ params }: Props) {
-  const session = await auth();
+  const session = await getSession();
   const { orderNumber } = await params;
 
   if (!session?.user?.id) {

@@ -11,42 +11,66 @@ export function OrderSummary({
   cart,
   className,
   showCheckout = true,
+  variant = "full",
+  onCheckoutClick,
 }: {
   cart: Pick<CartView, "subtotal" | "itemCount">;
   className?: string;
   showCheckout?: boolean;
+  variant?: "full" | "drawer";
+  onCheckoutClick?: () => void;
 }) {
+  const itemLabel = cart.itemCount === 1 ? "item" : "items";
+  const isDrawer = variant === "drawer";
+
   return (
-    <div className={cn("space-y-4 rounded-lg border bg-card p-6", className)}>
-      <h2 className="text-lg font-semibold">Order summary</h2>
-
-      <div className="space-y-2 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">
-            Subtotal ({cart.itemCount} {cart.itemCount === 1 ? "item" : "items"})
-          </span>
-          <Price amount={cart.subtotal} />
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Shipping</span>
-          <span className="text-muted-foreground">Calculated at checkout</span>
-        </div>
-      </div>
-
-      <Separator />
-
-      <div className="flex justify-between font-medium">
-        <span>Estimated total</span>
-        <Price amount={cart.subtotal} />
-      </div>
-
-      <DutiesNotice />
-
-      {showCheckout && cart.itemCount > 0 && (
-        <Button className="w-full" size="lg" asChild>
-          <Link href="/checkout">Proceed to checkout</Link>
-        </Button>
+    <div
+      className={cn(
+        isDrawer ? "space-y-3" : "space-y-4 rounded-lg border bg-card p-6",
+        className,
       )}
+    >
+      {!isDrawer ? (
+        <h2 className="text-lg font-semibold">Order summary</h2>
+      ) : null}
+
+      <div className={cn("space-y-2", isDrawer ? "text-sm" : "text-sm")}>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-muted-foreground">
+            Subtotal ({cart.itemCount} {itemLabel})
+          </span>
+          <Price amount={cart.subtotal} className={isDrawer ? "text-sm font-semibold" : undefined} />
+        </div>
+        {!isDrawer ? (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Shipping</span>
+            <span className="text-muted-foreground">Calculated at checkout</span>
+          </div>
+        ) : null}
+      </div>
+
+      {!isDrawer ? (
+        <>
+          <Separator />
+          <div className="flex justify-between font-medium">
+            <span>Estimated total</span>
+            <Price amount={cart.subtotal} />
+          </div>
+          <DutiesNotice />
+        </>
+      ) : null}
+
+      {showCheckout && cart.itemCount > 0 ? (
+        <Button
+          className={cn("w-full", isDrawer && "h-12 rounded-full text-sm font-semibold")}
+          size={isDrawer ? "default" : "lg"}
+          asChild
+        >
+          <Link href="/checkout" onClick={onCheckoutClick}>
+            Proceed to checkout
+          </Link>
+        </Button>
+      ) : null}
     </div>
   );
 }

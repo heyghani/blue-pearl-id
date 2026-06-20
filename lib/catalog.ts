@@ -44,9 +44,15 @@ function isValidSort(value?: string): value is ProductSort {
   );
 }
 
-export const SORT_OPTIONS: { value: ProductSort; label: string }[] = [
-  { value: "newest", label: "Newest" },
-  { value: "popular", label: "Popular" },
-  { value: "price_asc", label: "Price: Low to High" },
-  { value: "price_desc", label: "Price: High to Low" },
+export const SORT_OPTIONS: { value: ProductSort; labelKey: ProductSortLabelKey }[] = [
+  { value: "newest", labelKey: "sortNewest" },
+  { value: "popular", labelKey: "sortFeatured" },
+  { value: "price_asc", labelKey: "sortPriceAsc" },
+  { value: "price_desc", labelKey: "sortPriceDesc" },
 ];
+
+export type ProductSortLabelKey =
+  | "sortNewest"
+  | "sortFeatured"
+  | "sortPriceAsc"
+  | "sortPriceDesc";

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 
-import { checkoutCopy } from "@/lib/copy";
+import { useTranslations } from "@/components/i18n/locale-provider";
 import { formatIdr, formatUsdToIdrRate } from "@/lib/payments/usd-idr";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,7 @@ declare global {
 }
 
 export function PaymentCheckout({ orderNumber }: { orderNumber: string }) {
+  const t = useTranslations();
   const router = useRouter();
   const [session, setSession] = useState<PaymentSession | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -121,7 +122,10 @@ export function PaymentCheckout({ orderNumber }: { orderNumber: string }) {
     }
 
     if (session.provider === "midtrans" && snapScriptReady) {
-      openSnap(session.snapToken, session.redirectUrl);
+      const timer = window.setTimeout(() => {
+        openSnap(session.snapToken, session.redirectUrl);
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
   }, [session, snapScriptReady, openSnap]);
 
@@ -156,7 +160,7 @@ export function PaymentCheckout({ orderNumber }: { orderNumber: string }) {
   if (loading) {
     return (
       <p className="text-center text-sm text-muted-foreground">
-        {checkoutCopy.openingPayment}
+        {t.checkout.openingPayment}
       </p>
     );
   }
@@ -172,10 +176,10 @@ export function PaymentCheckout({ orderNumber }: { orderNumber: string }) {
   if (session?.status === "unconfigured") {
     return (
       <div className="space-y-4 rounded-lg border border-dashed p-4 text-sm">
-        <p className="font-medium text-foreground">Payment not configured</p>
+        <p className="font-medium text-foreground">{t.checkout.paymentNotConfigured}</p>
         <p className="text-muted-foreground">{session.message}</p>
         <Button variant="outline" onClick={() => router.push(`/checkout/confirmation/${orderNumber}`)}>
-          View order status
+          {t.checkout.viewOrderStatus}
         </Button>
       </div>
     );
@@ -203,30 +207,30 @@ export function PaymentCheckout({ orderNumber }: { orderNumber: string }) {
       <div className="space-y-4 text-center text-sm">
         {idrNote ? (
           <p className="rounded-lg border bg-muted/40 px-4 py-3 text-muted-foreground">
-            Card charge: <strong className="text-foreground">{idrNote}</strong>
+            {t.checkout.cardCharge}: <strong className="text-foreground">{idrNote}</strong>
             {session?.status === "ready" &&
             session.provider === "midtrans" &&
             session.exchangeRate ? (
               <span className="mt-2 block text-xs">
                 1 USD = Rp {formatUsdToIdrRate(session.exchangeRate)}
-                {session.rateSource === "frankfurter" ? " · live rate" : " · fallback rate"}
+                {session.rateSource === "frankfurter"
+                  ? ` · ${t.checkout.liveRate}`
+                  : ` · ${t.checkout.fallbackRate}`}
                 {session.rateFetchedAt
                   ? ` · ${new Date(session.rateFetchedAt).toLocaleString()}`
                   : ""}
               </span>
             ) : (
-              <span className="mt-1 block text-xs">{checkoutCopy.processingCardNote}</span>
+              <span className="mt-1 block text-xs">{t.checkout.processingCardNote}</span>
             )}
           </p>
         ) : null}
 
         {!needsManualOpen ? (
-          <p className="text-muted-foreground">{checkoutCopy.openingPayment}</p>
+          <p className="text-muted-foreground">{t.checkout.openingPayment}</p>
         ) : (
           <>
-            <p className="text-muted-foreground">
-              Payment window did not open automatically. Click below to continue.
-            </p>
+          <p className="text-muted-foreground">{t.checkout.manualOpen}</p>
             <Button
               size="lg"
               className="w-full sm:w-auto"
@@ -237,7 +241,7 @@ export function PaymentCheckout({ orderNumber }: { orderNumber: string }) {
                 }
               }}
             >
-              Continue to payment
+              {t.checkout.continuePayment}
             </Button>
           </>
         )}

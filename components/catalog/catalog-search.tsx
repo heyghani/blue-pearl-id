@@ -4,11 +4,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
 import { Search, X } from "lucide-react";
 
+import { useTranslations } from "@/components/i18n/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export function CatalogSearch({ className }: { className?: string }) {
+  const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -43,9 +45,9 @@ export function CatalogSearch({ className }: { className?: string }) {
       <Input
         name="q"
         defaultValue={currentQuery}
-        placeholder="Search products…"
-        className="pl-9 pr-9"
-        aria-label="Search products"
+        placeholder={t.catalog.searchPlaceholder}
+        className="rounded-full pl-9 pr-9"
+        aria-label={t.nav.search}
       />
       {currentQuery && (
         <Button
@@ -54,14 +56,12 @@ export function CatalogSearch({ className }: { className?: string }) {
           size="icon"
           className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
           onClick={() => updateQuery("")}
-          aria-label="Clear search"
+          aria-label={t.catalog.clearSearch}
         >
           <X className="h-4 w-4" />
         </Button>
       )}
-      {isPending && (
-        <span className="sr-only">Searching…</span>
-      )}
+      {isPending && <span className="sr-only">{t.catalog.searchPlaceholder}</span>}
     </form>
   );
 }

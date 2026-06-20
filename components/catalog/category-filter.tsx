@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
+import { useTranslations } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
 
 interface Category {
@@ -18,6 +19,7 @@ export function CategoryFilter({
   categories: Category[];
   className?: string;
 }) {
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const activeSlugs = new Set(
     (searchParams.get("category") ?? "").split(",").filter(Boolean),
@@ -51,19 +53,19 @@ export function CategoryFilter({
 
   return (
     <div className={cn("space-y-4", className)}>
-      <h2 className="text-sm font-medium">Categories</h2>
+      <h2 className="text-sm font-medium">{t.catalog.categories}</h2>
       <ul className="space-y-1">
         <li>
           <Link
             href={buildHref(null)}
             className={cn(
-              "block rounded-md px-3 py-2 text-sm transition-colors",
+              "block rounded-full px-3 py-2 text-sm transition-colors",
               activeSlugs.size === 0
                 ? "bg-muted font-medium text-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            All products
+            {t.catalog.allProducts}
           </Link>
         </li>
         {categories.map((category) => {
@@ -73,7 +75,7 @@ export function CategoryFilter({
               <Link
                 href={buildHref(category.slug)}
                 className={cn(
-                  "flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors",
+                  "flex items-center justify-between rounded-full px-3 py-2 text-sm transition-colors",
                   isActive
                     ? "bg-muted font-medium text-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",

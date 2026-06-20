@@ -38,16 +38,13 @@ export function CartItemRow({
   const lineTotal = (Number(item.product.price) * item.quantity).toFixed(2);
 
   return (
-    <div
-      className={cn(
-        "flex gap-4",
-        isPending && "opacity-60",
-        compact && "gap-3",
-      )}
-    >
+    <div className={cn("flex gap-3", isPending && "opacity-60", compact && "gap-3")}>
       <Link
         href={`/products/${item.product.slug}`}
-        className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-muted"
+        className={cn(
+          "relative shrink-0 overflow-hidden rounded-xl bg-muted",
+          compact ? "h-[72px] w-[72px]" : "h-20 w-20",
+        )}
       >
         {item.product.imageUrl ? (
           <Image
@@ -64,34 +61,38 @@ export function CartItemRow({
         )}
       </Link>
 
-      <div className="flex min-w-0 flex-1 flex-col justify-between">
+      <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <Link
               href={`/products/${item.product.slug}`}
-              className="line-clamp-2 text-sm font-medium hover:underline"
+              className="line-clamp-2 text-sm font-medium leading-snug hover:underline"
             >
               {item.product.name}
             </Link>
-            <Price amount={item.product.price} className="mt-1 text-sm" />
-            {!item.product.inStock && (
+            <div className="mt-1 flex items-center gap-2">
+              <Price amount={item.product.price} className="text-sm" />
+              {compact ? (
+                <span className="text-xs text-muted-foreground">× {item.quantity}</span>
+              ) : null}
+            </div>
+            {!item.product.inStock ? (
               <p className="mt-1 text-xs text-destructive">Out of stock</p>
-            )}
+            ) : null}
           </div>
-          {!compact && (
-            <p className="shrink-0 text-sm font-medium">
-              <Price amount={lineTotal} />
-            </p>
-          )}
+
+          <p className="shrink-0 text-sm font-semibold">
+            <Price amount={lineTotal} />
+          </p>
         </div>
 
-        <div className="mt-2 flex items-center justify-between">
-          <div className="flex items-center rounded-md border">
+        <div className="mt-3 flex items-center justify-between">
+          <div className="flex items-center rounded-full border bg-background">
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 rounded-full"
               disabled={isPending || item.quantity <= 1}
               onClick={() =>
                 mutate(() => updateCartItemAction(item.id, item.quantity - 1))
@@ -100,12 +101,14 @@ export function CartItemRow({
             >
               <Minus className="h-3 w-3" />
             </Button>
-            <span className="w-8 text-center text-sm">{item.quantity}</span>
+            <span className="min-w-[1.5rem] text-center text-sm font-medium">
+              {item.quantity}
+            </span>
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 rounded-full"
               disabled={
                 isPending ||
                 !item.product.inStock ||
@@ -124,7 +127,7 @@ export function CartItemRow({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+            className="h-8 w-8 rounded-full text-muted-foreground hover:text-destructive"
             disabled={isPending}
             onClick={() => mutate(() => removeCartItemAction(item.id))}
             aria-label="Remove item"
