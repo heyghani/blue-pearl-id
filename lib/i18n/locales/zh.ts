@@ -111,6 +111,7 @@ export const zh: Dictionary = {
     viewCart: "查看购物车",
     noDescription: "暂无商品描述。",
     noSpecs: "暂无更多规格信息。",
+    selectOptions: "请选择规格后继续。",
   },
   common: {
     taxNotice: "进口关税和当地税费未包含在内，承运商可能在送达时收取。",

@@ -88,7 +88,7 @@ function calculateDiscount(
 }
 
 export async function calculateCheckoutTotals(
-  cartItems: { productId: string; quantity: number }[],
+  cartItems: { productId: string; variantId?: string | null; quantity: number }[],
   shippingMethod: ShippingMethodType,
   couponCode?: string,
 ): Promise<CheckoutTotals | { error: string }> {
@@ -105,7 +105,18 @@ export async function calculateCheckoutTotals(
     include: { inventory: true },
   });
 
-  if (products.length !== cartItems.length) {
+  const variantIds = cartItems
+    .map((item) => item.variantId)
+    .filter((id): id is string => Boolean(id));
+
+  const variants =
+    variantIds.length > 0
+      ? await prisma.productVariant.findMany({
+          where: { id: { in: variantIds }, isActive: true },
+        })
+      : [];
+
+  if (products.length !== new Set(cartItems.map((item) => item.productId)).size) {
     return { error: "Some items in your cart are no longer available." };
   }
 
@@ -113,6 +124,23 @@ export async function calculateCheckoutTotals(
   for (const item of cartItems) {
     const product = products.find((p) => p.id === item.productId);
     if (!product) return { error: "Product not found." };
+
+    const variant = item.variantId
+      ? variants.find((entry) => entry.id === item.variantId)
+      : null;
+
+    if (product.hasVariants) {
+      if (!variant || variant.productId !== product.id) {
+        return { error: `Selected options for ${product.name} are unavailable.` };
+      }
+
+      if (variant.quantity < item.quantity) {
+        return { error: `Not enough stock for ${product.name}.` };
+      }
+
+      subtotal += Number(variant.price ?? product.price) * item.quantity;
+      continue;
+    }
 
     const available = product.inventory
       ? product.inventory.quantity - product.inventory.reservedQuantity
@@ -172,6 +200,7 @@ export async function createOrderFromCart(
       items: {
         include: {
           product: { include: { inventory: true } },
+          variant: true,
         },
       },
     },
@@ -182,7 +211,11 @@ export async function createOrderFromCart(
   }
 
   const totals = await calculateCheckoutTotals(
-    cart.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+    cart.items.map((i) => ({
+      productId: i.productId,
+      variantId: i.variantId,
+      quantity: i.quantity,
+    })),
     input.shippingMethod,
     input.couponCode,
   );
@@ -204,6 +237,25 @@ export async function createOrderFromCart(
   try {
     const order = await prisma.$transaction(async (tx) => {
       for (const item of cart.items) {
+        if (item.variant) {
+          if (item.variant.quantity < item.quantity) {
+            throw new Error(`Not enough stock for ${item.product.name}.`);
+          }
+
+          await tx.productVariant.update({
+            where: { id: item.variant.id },
+            data: { quantity: { decrement: item.quantity } },
+          });
+
+          if (item.product.inventory) {
+            await tx.inventory.update({
+              where: { productId: item.productId },
+              data: { quantity: { decrement: item.quantity } },
+            });
+          }
+          continue;
+        }
+
         const inv = item.product.inventory;
         if (!inv) continue;
 
@@ -239,16 +291,20 @@ export async function createOrderFromCart(
           idempotencyKey: input.idempotencyKey,
           notes: input.notes || null,
           items: {
-            create: cart.items.map((item) => ({
-              productId: item.productId,
-              productName: item.product.name,
-              productSku: item.product.sku,
-              unitPrice: item.product.price,
-              quantity: item.quantity,
-              totalPrice: (
-                Number(item.product.price) * item.quantity
-              ).toFixed(2),
-            })),
+            create: cart.items.map((item) => {
+              const unitPrice = item.variant?.price ?? item.product.price;
+              const productName = item.product.name;
+              const productSku = item.variant?.sku ?? item.product.sku;
+
+              return {
+                productId: item.productId,
+                productName,
+                productSku,
+                unitPrice,
+                quantity: item.quantity,
+                totalPrice: (Number(unitPrice) * item.quantity).toFixed(2),
+              };
+            }),
           },
         },
       });

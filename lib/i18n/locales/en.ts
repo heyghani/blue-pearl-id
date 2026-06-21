@@ -114,6 +114,7 @@ export const en: Dictionary = {
     viewCart: "View cart",
     noDescription: "No description available.",
     noSpecs: "No additional specifications listed.",
+    selectOptions: "Select options to continue.",
   },
   common: {
     taxNotice:

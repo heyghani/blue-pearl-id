@@ -70,6 +70,11 @@ export function CartItemRow({
             >
               {item.product.name}
             </Link>
+            {item.product.variantLabel ? (
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {item.product.variantLabel}
+              </p>
+            ) : null}
             <div className="mt-1 flex items-center gap-2">
               <Price amount={item.product.price} className="text-sm" />
               {compact ? (

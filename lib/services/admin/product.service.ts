@@ -1,6 +1,26 @@
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
+import {
+  parseVariantsPayload,
+  type ProductOptionInput,
+  type ProductVariantInput,
+} from "@/lib/products/variants";
+
+const variantInclude = {
+  options: {
+    orderBy: { position: "asc" as const },
+    include: {
+      values: { orderBy: { position: "asc" as const } },
+    },
+  },
+  variants: {
+    orderBy: { sortOrder: "asc" as const },
+    include: {
+      optionValues: true,
+    },
+  },
+} satisfies Prisma.ProductInclude;
 
 export async function listAdminProducts({
   search,
@@ -30,6 +50,7 @@ export async function listAdminProducts({
         category: { select: { name: true } },
         images: { where: { isPrimary: true }, take: 1 },
         inventory: true,
+        variants: { where: { isActive: true }, select: { quantity: true } },
       },
       orderBy: { updatedAt: "desc" },
       skip,
@@ -48,6 +69,7 @@ export async function getAdminProduct(id: string) {
       category: true,
       images: { orderBy: { sortOrder: "asc" } },
       inventory: true,
+      ...variantInclude,
     },
   });
 }
@@ -65,7 +87,122 @@ export type ProductInput = {
   quantity: number;
   isActive: boolean;
   isFeatured: boolean;
+  hasVariants: boolean;
+  options: ProductOptionInput[];
+  variants: ProductVariantInput[];
 };
+
+function resolveVariantPricing(variants: ProductVariantInput[], fallbackPrice: number) {
+  const activePrices = variants
+    .filter((variant) => variant.isActive)
+    .map((variant) => variant.price ?? fallbackPrice)
+    .filter((price) => Number.isFinite(price) && price > 0);
+
+  if (activePrices.length === 0) {
+    return { price: fallbackPrice, compareAtPrice: null as number | null };
+  }
+
+  const minPrice = Math.min(...activePrices);
+  return { price: minPrice, compareAtPrice: null as number | null };
+}
+
+async function syncProductVariants(
+  tx: Prisma.TransactionClient,
+  productId: string,
+  hasVariants: boolean,
+  options: ProductOptionInput[],
+  variants: ProductVariantInput[],
+  fallbackPrice: number,
+) {
+  await tx.productVariantValue.deleteMany({
+    where: { variant: { productId } },
+  });
+  await tx.productVariant.deleteMany({ where: { productId } });
+  await tx.productOptionValue.deleteMany({
+    where: { option: { productId } },
+  });
+  await tx.productOption.deleteMany({ where: { productId } });
+
+  if (!hasVariants || options.length === 0 || variants.length === 0) {
+    await tx.product.update({
+      where: { id: productId },
+      data: { hasVariants: false },
+    });
+    return { price: fallbackPrice, quantity: 0 };
+  }
+
+  const optionValueMap = new Map<string, string>();
+
+  for (const [optionIndex, option] of options.entries()) {
+    const createdOption = await tx.productOption.create({
+      data: {
+        productId,
+        name: option.name,
+        position: optionIndex,
+      },
+    });
+
+    for (const [valueIndex, value] of option.values.entries()) {
+      const createdValue = await tx.productOptionValue.create({
+        data: {
+          optionId: createdOption.id,
+          value,
+          position: valueIndex,
+        },
+      });
+      optionValueMap.set(`${option.name}::${value}`, createdValue.id);
+    }
+  }
+
+  let totalQuantity = 0;
+
+  for (const [index, variant] of variants.entries()) {
+    const optionValueIds = Object.entries(variant.optionValues)
+      .map(([optionName, value]) => optionValueMap.get(`${optionName}::${value}`))
+      .filter((id): id is string => Boolean(id));
+
+    if (optionValueIds.length !== options.length) {
+      throw new Error(`Variant "${variant.sku}" has invalid option values.`);
+    }
+
+    const createdVariant = await tx.productVariant.create({
+      data: {
+        productId,
+        sku: variant.sku,
+        price: variant.price ?? null,
+        compareAtPrice: variant.compareAtPrice ?? null,
+        imageUrl: variant.imageUrl ?? null,
+        quantity: variant.quantity,
+        isActive: variant.isActive,
+        sortOrder: index,
+      },
+    });
+
+    await tx.productVariantValue.createMany({
+      data: optionValueIds.map((optionValueId) => ({
+        variantId: createdVariant.id,
+        optionValueId,
+      })),
+    });
+
+    if (variant.isActive) {
+      totalQuantity += variant.quantity;
+    }
+  }
+
+  const pricing = resolveVariantPricing(variants, fallbackPrice);
+
+  await tx.product.update({
+    where: { id: productId },
+    data: {
+      hasVariants: true,
+      price: pricing.price,
+      compareAtPrice: pricing.compareAtPrice,
+    },
+  });
+
+  return { price: pricing.price, quantity: totalQuantity };
+}
 
 export async function createProduct(input: ProductInput) {
   return prisma.$transaction(async (tx) => {
@@ -81,6 +218,7 @@ export async function createProduct(input: ProductInput) {
         description: input.description ?? null,
         isActive: input.isActive,
         isFeatured: input.isFeatured,
+        hasVariants: input.hasVariants,
         images: input.imageUrl
           ? {
               create: {
@@ -92,10 +230,26 @@ export async function createProduct(input: ProductInput) {
             }
           : undefined,
         inventory: {
-          create: { quantity: input.quantity },
+          create: { quantity: input.hasVariants ? 0 : input.quantity },
         },
       },
     });
+
+    if (input.hasVariants) {
+      const synced = await syncProductVariants(
+        tx,
+        product.id,
+        true,
+        input.options,
+        input.variants,
+        input.price,
+      );
+
+      await tx.inventory.update({
+        where: { productId: product.id },
+        data: { quantity: synced.quantity },
+      });
+    }
 
     return product;
   });
@@ -116,13 +270,30 @@ export async function updateProduct(id: string, input: ProductInput) {
         description: input.description ?? null,
         isActive: input.isActive,
         isFeatured: input.isFeatured,
+        hasVariants: input.hasVariants,
       },
     });
 
+    let inventoryQuantity = input.quantity;
+
+    if (input.hasVariants) {
+      const synced = await syncProductVariants(
+        tx,
+        id,
+        true,
+        input.options,
+        input.variants,
+        input.price,
+      );
+      inventoryQuantity = synced.quantity;
+    } else {
+      await syncProductVariants(tx, id, false, [], [], input.price);
+    }
+
     await tx.inventory.upsert({
       where: { productId: id },
-      create: { productId: id, quantity: input.quantity },
-      update: { quantity: input.quantity },
+      create: { productId: id, quantity: inventoryQuantity },
+      update: { quantity: inventoryQuantity },
     });
 
     if (input.imageUrl) {
@@ -166,3 +337,5 @@ export async function listAdminCategories() {
     select: { id: true, name: true, slug: true },
   });
 }
+
+export { parseVariantsPayload };

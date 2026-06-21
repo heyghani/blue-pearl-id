@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ProductForm } from "@/components/admin/product-form";
 import { Button } from "@/components/ui/button";
+import { adminVariantsToFormState } from "@/lib/products/variants";
 import {
   getAdminProduct,
   listAdminCategories,
@@ -25,6 +26,7 @@ export default async function EditProductPage({ params }: Props) {
   }
 
   const primaryImage = product.images.find((image) => image.isPrimary) ?? product.images[0];
+  const variantState = adminVariantsToFormState(product.options, product.variants);
 
   return (
     <div className="space-y-6">
@@ -61,6 +63,9 @@ export default async function EditProductPage({ params }: Props) {
           quantity: product.inventory?.quantity ?? 0,
           isActive: product.isActive,
           isFeatured: product.isFeatured,
+          hasVariants: variantState.hasVariants,
+          options: variantState.options,
+          variants: variantState.variants,
         }}
       />
 

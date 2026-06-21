@@ -55,6 +55,7 @@ describe("calculateCheckoutTotals", () => {
         id: "prod-1",
         name: "Pearl Necklace",
         price: new Decimal(100),
+        hasVariants: false,
         inventory: { quantity: 10, reservedQuantity: 0 },
       },
     ]);
@@ -81,6 +82,7 @@ describe("calculateCheckoutTotals", () => {
         id: "prod-1",
         name: "Pearl Necklace",
         price: new Decimal(100),
+        hasVariants: false,
         inventory: { quantity: 1, reservedQuantity: 0 },
       },
     ]);

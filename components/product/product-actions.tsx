@@ -13,13 +13,17 @@ import { cn } from "@/lib/utils";
 
 interface ProductActionsProps {
   productId: string;
+  variantId?: string;
   inStock: boolean;
+  requiresSelection?: boolean;
   layout?: "inline" | "sticky";
 }
 
 export function ProductActions({
   productId,
+  variantId,
   inStock,
+  requiresSelection = false,
   layout = "inline",
 }: ProductActionsProps) {
   const t = useTranslations();
@@ -32,8 +36,13 @@ export function ProductActions({
     setError(null);
     setAdded(false);
 
+    if (requiresSelection) {
+      setError(t.product.selectOptions);
+      return;
+    }
+
     startTransition(async () => {
-      const result = await addToCartAction(productId, 1);
+      const result = await addToCartAction(productId, 1, variantId);
       if (result.error) {
         setError(result.error);
         return;
@@ -64,7 +73,7 @@ export function ProductActions({
             size="lg"
             variant="outline"
             className="h-12 flex-1 rounded-full text-sm font-semibold"
-            disabled={!inStock || isPending}
+            disabled={!inStock || isPending || requiresSelection}
             onClick={() => handleAdd(false)}
           >
             {isPending ? t.product.adding : t.product.addToCart}
@@ -72,7 +81,7 @@ export function ProductActions({
           <Button
             size="lg"
             className="h-12 flex-[1.2] rounded-full text-sm font-semibold"
-            disabled={!inStock || isPending}
+            disabled={!inStock || isPending || requiresSelection}
             onClick={() => handleAdd(true)}
           >
             {t.product.buyNow}
@@ -99,7 +108,7 @@ export function ProductActions({
         <Button
           size="lg"
           className="h-12 flex-1 rounded-full text-sm font-semibold"
-          disabled={!inStock || isPending}
+          disabled={!inStock || isPending || requiresSelection}
           onClick={() => handleAdd(false)}
         >
           {isPending ? t.product.adding : t.product.addToCart}
@@ -108,7 +117,7 @@ export function ProductActions({
           size="lg"
           variant="outline"
           className="h-12 flex-1 rounded-full text-sm font-semibold"
-          disabled={!inStock || isPending}
+          disabled={!inStock || isPending || requiresSelection}
           onClick={() => handleAdd(true)}
         >
           {t.product.buyNow}

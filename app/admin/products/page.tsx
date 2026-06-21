@@ -76,12 +76,27 @@ export default async function AdminProductsPage({
                 <td className="px-4 py-3">
                   <Price amount={product.price.toString()} />
                 </td>
-                <td className="px-4 py-3">{product.inventory?.quantity ?? 0}</td>
                 <td className="px-4 py-3">
-                  <div className="flex gap-2">
+                  {product.hasVariants ? (
+                    <div className="space-y-1">
+                      <span>{product.inventory?.quantity ?? 0}</span>
+                      <p className="text-xs text-muted-foreground">
+                        {product.variants.length} variant
+                        {product.variants.length === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                  ) : (
+                    product.inventory?.quantity ?? 0
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap gap-2">
                     <Badge variant={product.isActive ? "default" : "secondary"}>
                       {product.isActive ? "Active" : "Hidden"}
                     </Badge>
+                    {product.hasVariants ? (
+                      <Badge variant="outline">Variants</Badge>
+                    ) : null}
                     {product.isFeatured && <Badge variant="outline">Featured</Badge>}
                   </div>
                 </td>

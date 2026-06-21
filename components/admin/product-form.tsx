@@ -1,16 +1,26 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import {
   createProductAction,
   updateProductAction,
   type AdminActionState,
 } from "@/lib/actions/admin/products";
+import { ProductVariantsEditor } from "@/components/admin/product-variants-editor";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { ProductOptionInput, ProductVariantInput } from "@/lib/products/variants";
 
 type Category = { id: string; name: string };
 
@@ -27,6 +37,9 @@ type ProductDefaults = {
   quantity?: number;
   isActive?: boolean;
   isFeatured?: boolean;
+  hasVariants?: boolean;
+  options?: ProductOptionInput[];
+  variants?: ProductVariantInput[];
 };
 
 const initialState: AdminActionState = {};
@@ -45,145 +58,201 @@ export function ProductForm({
     : createProductAction;
 
   const [state, formAction, pending] = useActionState(action, initialState);
+  const [baseSku, setBaseSku] = useState(defaults.sku ?? "");
+  const [basePrice, setBasePrice] = useState(Number(defaults.price ?? 0) || 0);
 
   return (
-    <form action={formAction} className="max-w-2xl space-y-6">
+    <form action={formAction} className="max-w-4xl space-y-6">
       {state.error && (
         <Alert variant="destructive">
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="name">Name</Label>
-          <Input id="name" name="name" defaultValue={defaults.name} required />
-          {state.fieldErrors?.name && (
-            <p className="text-sm text-destructive">{state.fieldErrors.name[0]}</p>
-          )}
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Basic information</CardTitle>
+          <CardDescription>Name, slug, and category shown on the storefront.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" name="name" defaultValue={defaults.name} required />
+            {state.fieldErrors?.name && (
+              <p className="text-sm text-destructive">{state.fieldErrors.name[0]}</p>
+            )}
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="slug">Slug</Label>
-          <Input id="slug" name="slug" defaultValue={defaults.slug} required />
-          {state.fieldErrors?.slug && (
-            <p className="text-sm text-destructive">{state.fieldErrors.slug[0]}</p>
-          )}
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="slug">Slug</Label>
+            <Input id="slug" name="slug" defaultValue={defaults.slug} required />
+            {state.fieldErrors?.slug && (
+              <p className="text-sm text-destructive">{state.fieldErrors.slug[0]}</p>
+            )}
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="sku">SKU</Label>
-          <Input id="sku" name="sku" defaultValue={defaults.sku} required />
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="categoryId">Category</Label>
+            <select
+              id="categoryId"
+              name="categoryId"
+              defaultValue={defaults.categoryId ?? ""}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">No category</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="price">Price (USD)</Label>
-          <Input
-            id="price"
-            name="price"
-            type="number"
-            step="0.01"
-            min="0"
-            defaultValue={defaults.price}
-            required
-          />
-        </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="shortDescription">Short description</Label>
+            <Input
+              id="shortDescription"
+              name="shortDescription"
+              defaultValue={defaults.shortDescription ?? ""}
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="compareAtPrice">Compare at price</Label>
-          <Input
-            id="compareAtPrice"
-            name="compareAtPrice"
-            type="number"
-            step="0.01"
-            min="0"
-            defaultValue={defaults.compareAtPrice ?? ""}
-          />
-        </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="description">Description</Label>
+            <textarea
+              id="description"
+              name="description"
+              rows={5}
+              defaultValue={defaults.description ?? ""}
+              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-        <div className="space-y-2">
-          <Label htmlFor="quantity">Inventory quantity</Label>
-          <Input
-            id="quantity"
-            name="quantity"
-            type="number"
-            min="0"
-            defaultValue={defaults.quantity ?? 0}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="categoryId">Category</Label>
-          <select
-            id="categoryId"
-            name="categoryId"
-            defaultValue={defaults.categoryId ?? ""}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="">No category</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="imageUrl">Image URL</Label>
-          <Input
-            id="imageUrl"
+      <Card>
+        <CardHeader>
+          <CardTitle>Media</CardTitle>
+          <CardDescription>Primary product image used in catalog and product detail.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ImageUploadField
             name="imageUrl"
-            type="url"
-            placeholder="https://..."
-            defaultValue={defaults.imageUrl ?? ""}
+            label="Primary image"
+            value={defaults.imageUrl}
+            folder="products"
           />
-          <p className="text-xs text-muted-foreground">
-            Paste an image URL for now. R2 upload support can be added later.
-          </p>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="shortDescription">Short description</Label>
-          <Input
-            id="shortDescription"
-            name="shortDescription"
-            defaultValue={defaults.shortDescription ?? ""}
-          />
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Pricing & inventory</CardTitle>
+          <CardDescription>
+            For simple products, set price and stock here. Variant products use per-variant stock.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="sku">Base SKU</Label>
+            <Input
+              id="sku"
+              name="sku"
+              defaultValue={defaults.sku}
+              required
+              onChange={(event) => setBaseSku(event.target.value)}
+            />
+          </div>
 
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="description">Description</Label>
-          <textarea
-            id="description"
-            name="description"
-            rows={5}
-            defaultValue={defaults.description ?? ""}
-            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          />
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="price">Base price (USD)</Label>
+            <Input
+              id="price"
+              name="price"
+              type="number"
+              step="0.01"
+              min="0"
+              defaultValue={defaults.price}
+              required
+              onChange={(event) => setBasePrice(Number(event.target.value) || 0)}
+            />
+          </div>
 
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            name="isActive"
-            defaultChecked={defaults.isActive ?? true}
-            className="rounded border-input"
-          />
-          Active on storefront
-        </label>
+          <div className="space-y-2">
+            <Label htmlFor="compareAtPrice">Compare at price</Label>
+            <Input
+              id="compareAtPrice"
+              name="compareAtPrice"
+              type="number"
+              step="0.01"
+              min="0"
+              defaultValue={defaults.compareAtPrice ?? ""}
+            />
+          </div>
 
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            name="isFeatured"
-            defaultChecked={defaults.isFeatured ?? false}
-            className="rounded border-input"
+          <div className="space-y-2">
+            <Label htmlFor="quantity">Inventory quantity</Label>
+            <Input
+              id="quantity"
+              name="quantity"
+              type="number"
+              min="0"
+              defaultValue={defaults.quantity ?? 0}
+            />
+            <p className="text-xs text-muted-foreground">
+              Used for simple products only. Variant stock is managed below.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Variants</CardTitle>
+          <CardDescription>
+            Add options such as color, size, or shoe size for products with multiple sellable combinations.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ProductVariantsEditor
+            baseSku={baseSku}
+            basePrice={basePrice}
+            initialState={{
+              hasVariants: defaults.hasVariants,
+              options: defaults.options,
+              variants: defaults.variants,
+            }}
+            fieldError={state.fieldErrors?.variantsPayload?.[0]}
           />
-          Featured product
-        </label>
-      </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Visibility</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-6">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="isActive"
+              defaultChecked={defaults.isActive ?? true}
+              className="rounded border-input"
+            />
+            Active on storefront
+          </label>
+
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="isFeatured"
+              defaultChecked={defaults.isFeatured ?? false}
+              className="rounded border-input"
+            />
+            Featured product
+          </label>
+        </CardContent>
+      </Card>
 
       <Button type="submit" disabled={pending}>
         {pending ? "Saving…" : productId ? "Save changes" : "Create product"}

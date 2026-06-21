@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 import { requireAdmin } from "@/lib/admin/require-admin";
+import { parseVariantsPayload } from "@/lib/products/variants";
 import {
   createProduct,
   deleteProduct,
@@ -15,6 +17,8 @@ export type AdminActionState = {
   error?: string;
   fieldErrors?: Record<string, string[]>;
 };
+
+type ProductFormData = z.infer<typeof productFormSchema>;
 
 function parseProductForm(formData: FormData) {
   const compareAt = formData.get("compareAtPrice");
@@ -33,7 +37,24 @@ function parseProductForm(formData: FormData) {
     quantity: formData.get("quantity"),
     isActive: formData.get("isActive") === "on",
     isFeatured: formData.get("isFeatured") === "on",
+    hasVariants: formData.get("hasVariants") === "on",
+    variantsPayload: formData.get("variantsPayload") || undefined,
   });
+}
+
+function buildVariantInput(data: ProductFormData) {
+  if (!data.hasVariants) {
+    return { hasVariants: false, options: [], variants: [] };
+  }
+
+  let parsedPayload: unknown = null;
+  try {
+    parsedPayload = data.variantsPayload ? JSON.parse(data.variantsPayload) : null;
+  } catch {
+    return { hasVariants: false, options: [], variants: [] };
+  }
+
+  return parseVariantsPayload({ hasVariants: true, ...(parsedPayload as object) });
 }
 
 export async function createProductAction(
@@ -49,6 +70,7 @@ export async function createProductAction(
   }
 
   const data = parsed.data;
+  const variantData = buildVariantInput(data);
 
   try {
     const product = await createProduct({
@@ -65,6 +87,9 @@ export async function createProductAction(
       quantity: data.quantity,
       isActive: data.isActive,
       isFeatured: data.isFeatured,
+      hasVariants: variantData.hasVariants,
+      options: variantData.options,
+      variants: variantData.variants,
     });
 
     revalidatePath("/admin/products");
@@ -92,6 +117,7 @@ export async function updateProductAction(
   }
 
   const data = parsed.data;
+  const variantData = buildVariantInput(data);
 
   try {
     await updateProduct(productId, {
@@ -108,6 +134,9 @@ export async function updateProductAction(
       quantity: data.quantity,
       isActive: data.isActive,
       isFeatured: data.isFeatured,
+      hasVariants: variantData.hasVariants,
+      options: variantData.options,
+      variants: variantData.variants,
     });
 
     revalidatePath("/admin/products");

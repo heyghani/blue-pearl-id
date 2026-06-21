@@ -21,13 +21,18 @@ export type CartActionState = {
 export async function addToCartAction(
   productId: string,
   quantity = 1,
+  variantId?: string,
 ): Promise<CartActionState> {
-  const parsed = addToCartSchema.safeParse({ productId, quantity });
+  const parsed = addToCartSchema.safeParse({ productId, quantity, variantId });
   if (!parsed.success) {
     return { error: "Invalid product or quantity." };
   }
 
-  const result = await addToCart(parsed.data.productId, parsed.data.quantity);
+  const result = await addToCart(
+    parsed.data.productId,
+    parsed.data.quantity,
+    parsed.data.variantId,
+  );
   if (result.error) return { error: result.error };
 
   revalidatePath("/", "layout");

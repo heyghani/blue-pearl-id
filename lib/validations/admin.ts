@@ -1,23 +1,93 @@
 import { OrderStatus } from "@prisma/client";
 import { z } from "zod";
 
-export const productFormSchema = z.object({
-  name: z.string().min(2, "Name is required."),
-  slug: z
-    .string()
-    .min(2, "Slug is required.")
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and hyphens."),
-  sku: z.string().min(2, "SKU is required."),
-  price: z.coerce.number().positive("Price must be greater than zero."),
-  compareAtPrice: z.coerce.number().positive().optional().or(z.literal("")),
-  categoryId: z.string().optional(),
-  shortDescription: z.string().max(500).optional(),
-  description: z.string().optional(),
-  imageUrl: z.string().url("Enter a valid image URL.").optional().or(z.literal("")),
-  quantity: z.coerce.number().int().min(0, "Quantity cannot be negative."),
-  isActive: z.coerce.boolean(),
-  isFeatured: z.coerce.boolean(),
+import { uploadedImageUrlSchema } from "@/lib/validations/upload";
+
+const optionalImageUrlSchema = z
+  .string()
+  .optional()
+  .or(z.literal(""))
+  .refine(
+    (value) =>
+      !value ||
+      uploadedImageUrlSchema.safeParse(value).success,
+    "Upload a valid image.",
+  );
+
+const productOptionSchema = z.object({
+  name: z.string().min(1),
+  values: z.array(z.string().min(1)).min(1),
 });
+
+const productVariantSchema = z.object({
+  sku: z.string().min(2),
+  price: z.number().positive().nullable().optional(),
+  compareAtPrice: z.number().positive().nullable().optional(),
+  quantity: z.number().int().min(0),
+  imageUrl: optionalImageUrlSchema,
+  isActive: z.boolean().optional(),
+  optionValues: z.record(z.string(), z.string()),
+});
+
+export const productFormSchema = z
+  .object({
+    name: z.string().min(2, "Name is required."),
+    slug: z
+      .string()
+      .min(2, "Slug is required.")
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and hyphens."),
+    sku: z.string().min(2, "SKU is required."),
+    price: z.coerce.number().positive("Price must be greater than zero."),
+    compareAtPrice: z.coerce.number().positive().optional().or(z.literal("")),
+    categoryId: z.string().optional(),
+    shortDescription: z.string().max(500).optional(),
+    description: z.string().optional(),
+    imageUrl: optionalImageUrlSchema,
+    quantity: z.coerce.number().int().min(0, "Quantity cannot be negative."),
+    isActive: z.coerce.boolean(),
+    isFeatured: z.coerce.boolean(),
+    hasVariants: z.coerce.boolean(),
+    variantsPayload: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.hasVariants) return;
+
+    let parsed: unknown = null;
+    try {
+      parsed = data.variantsPayload ? JSON.parse(data.variantsPayload) : null;
+    } catch {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["variantsPayload"],
+        message: "Variant data is invalid.",
+      });
+      return;
+    }
+
+    const payload = parsed as {
+      options?: unknown;
+      variants?: unknown;
+    };
+
+    const options = z.array(productOptionSchema).safeParse(payload.options ?? []);
+    const variants = z.array(productVariantSchema).safeParse(payload.variants ?? []);
+
+    if (!options.success || options.data.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["variantsPayload"],
+        message: "Add at least one option with values (e.g. Color, Size).",
+      });
+    }
+
+    if (!variants.success || variants.data.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["variantsPayload"],
+        message: "Generate at least one variant combination.",
+      });
+    }
+  });
 
 export const orderStatusSchema = z.object({
   status: z.nativeEnum(OrderStatus),

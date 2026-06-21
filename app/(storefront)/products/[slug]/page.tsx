@@ -4,15 +4,11 @@ import { notFound } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { ImageGallery } from "@/components/product/image-gallery";
-import {
-  ProductActions,
-  ProductBackNav,
-  ProductWhatsAppLink,
-} from "@/components/product/product-actions";
+import { ProductBackNav, ProductWhatsAppLink } from "@/components/product/product-actions";
+import { ProductPurchaseSection } from "@/components/product/product-purchase-section";
 import { ProductDetailTabs } from "@/components/product/product-detail-tabs";
 import { RelatedProductsSection } from "@/components/product/related-products";
 import { DutiesNotice } from "@/components/shared/duties-notice";
-import { Price } from "@/components/shared/price";
 import { ProductJsonLd } from "@/components/shared/product-json-ld";
 import {
   getProductBySlug,
@@ -21,6 +17,7 @@ import {
   parseProductSpecs,
   toProductCard,
 } from "@/lib/products";
+import { serializeProductVariants } from "@/lib/products/variants";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
 
@@ -68,10 +65,11 @@ export default async function ProductDetailPage({ params }: Props) {
 
   const galleryKey = product.images.map((img) => img.url).join("|") || product.slug;
   const related = await getRelatedProducts(product.categoryId, product.slug);
-  const inStock = isInStock(product.inventory);
+  const inStock = isInStock(product);
   const specs = parseProductSpecs(product.metadata);
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const productUrl = `${baseUrl}/products/${product.slug}`;
+  const { options, variants } = serializeProductVariants(product.options, product.variants);
 
   return (
     <>
@@ -86,7 +84,6 @@ export default async function ProductDetailPage({ params }: Props) {
       />
 
       <div className="pb-28 lg:pb-12">
-        {/* Mobile: full-bleed gallery */}
         <div className="-mx-4 lg:hidden">
           <ImageGallery
             key={galleryKey}
@@ -146,12 +143,6 @@ export default async function ProductDetailPage({ params }: Props) {
                     )}
                   </div>
 
-                  <Price
-                    amount={product.price.toString()}
-                    compareAt={product.compareAtPrice?.toString()}
-                    className="[&_span:first-child]:text-2xl [&_span:first-child]:font-bold sm:[&_span:first-child]:text-3xl"
-                  />
-
                   <h1 className="text-lg font-bold leading-snug tracking-tight sm:text-2xl lg:text-3xl">
                     {product.name}
                   </h1>
@@ -164,7 +155,15 @@ export default async function ProductDetailPage({ params }: Props) {
                 </div>
 
                 <div className="hidden lg:block">
-                  <ProductActions productId={product.id} inStock={inStock} />
+                  <ProductPurchaseSection
+                    productId={product.id}
+                    basePrice={product.price.toString()}
+                    compareAtPrice={product.compareAtPrice?.toString() ?? null}
+                    hasVariants={product.hasVariants}
+                    inStock={inStock}
+                    options={options}
+                    variants={variants}
+                  />
                 </div>
 
                 <ProductWhatsAppLink productName={product.name} />
@@ -182,9 +181,18 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
         </div>
 
-        <div className="lg:hidden">
-          <ProductActions productId={product.id} inStock={inStock} layout="sticky" />
-        </div>
+                <div className="lg:hidden">
+                  <ProductPurchaseSection
+                    productId={product.id}
+                    basePrice={product.price.toString()}
+                    compareAtPrice={product.compareAtPrice?.toString() ?? null}
+                    hasVariants={product.hasVariants}
+                    inStock={inStock}
+                    options={options}
+                    variants={variants}
+                    layout="mobile-split"
+                  />
+                </div>
       </div>
     </>
   );

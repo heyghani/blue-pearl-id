@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
+import { getProductStockSummary } from "@/lib/products/variants";
 
 export type ProductSort = "newest" | "price_asc" | "price_desc" | "popular";
 
@@ -17,6 +18,29 @@ const productInclude = {
   images: { orderBy: { sortOrder: "asc" as const }, take: 1 },
   inventory: true,
   category: { select: { name: true, slug: true } },
+  variants: {
+    where: { isActive: true },
+    select: { quantity: true, isActive: true },
+  },
+} satisfies Prisma.ProductInclude;
+
+const productDetailInclude = {
+  images: { orderBy: { sortOrder: "asc" as const } },
+  category: true,
+  inventory: true,
+  options: {
+    orderBy: { position: "asc" as const },
+    include: {
+      values: { orderBy: { position: "asc" as const } },
+    },
+  },
+  variants: {
+    where: { isActive: true },
+    orderBy: { sortOrder: "asc" as const },
+    include: {
+      optionValues: true,
+    },
+  },
 } satisfies Prisma.ProductInclude;
 
 function getOrderBy(sort?: ProductSort): Prisma.ProductOrderByWithRelationInput[] {
@@ -95,11 +119,7 @@ export async function getCatalogProducts(params: CatalogParams = {}) {
 export async function getProductBySlug(slug: string) {
   return prisma.product.findFirst({
     where: { slug, isActive: true, deletedAt: null },
-    include: {
-      images: { orderBy: { sortOrder: "asc" } },
-      category: true,
-      inventory: true,
-    },
+    include: productDetailInclude,
   });
 }
 
@@ -120,6 +140,10 @@ export async function getRelatedProducts(
     include: {
       images: { where: { isPrimary: true }, take: 1 },
       inventory: true,
+      variants: {
+        where: { isActive: true },
+        select: { quantity: true, isActive: true },
+      },
     },
     take: limit,
     orderBy: { isFeatured: "desc" },
@@ -139,6 +163,10 @@ export async function getFeaturedProducts(limit = 8) {
     include: {
       images: { where: { isPrimary: true }, take: 1 },
       inventory: true,
+      variants: {
+        where: { isActive: true },
+        select: { quantity: true, isActive: true },
+      },
     },
     orderBy: { createdAt: "desc" },
     take: limit,
@@ -151,6 +179,10 @@ export async function getBestSellerProducts(limit = 8) {
     include: {
       images: { where: { isPrimary: true }, take: 1 },
       inventory: true,
+      variants: {
+        where: { isActive: true },
+        select: { quantity: true, isActive: true },
+      },
     },
     orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
     take: limit,
@@ -164,18 +196,33 @@ export function toProductCard(product: {
   compareAtPrice?: { toString(): string } | null;
   images: { url: string }[];
   inventory?: { quantity: number } | null;
+  hasVariants?: boolean;
+  variants?: { quantity: number; isActive: boolean }[];
 }) {
+  const stock = getProductStockSummary(product);
+
   return {
     slug: product.slug,
     name: product.name,
     price: product.price.toString(),
     compareAtPrice: product.compareAtPrice?.toString() ?? null,
     imageUrl: product.images[0]?.url ?? null,
-    inStock: product.inventory ? product.inventory.quantity > 0 : true,
+    inStock: stock.inStock,
   };
 }
 
-export function isInStock(inventory?: { quantity: number } | null) {
+export function isInStock(
+  product: {
+    hasVariants?: boolean;
+    inventory?: { quantity: number } | null;
+    variants?: { quantity: number; isActive: boolean }[];
+  },
+  inventory?: { quantity: number } | null,
+) {
+  if (typeof product === "object" && product !== null && "hasVariants" in product) {
+    return getProductStockSummary(product).inStock;
+  }
+
   if (!inventory) return true;
   return inventory.quantity > 0;
 }

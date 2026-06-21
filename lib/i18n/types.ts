@@ -100,6 +100,7 @@ export interface Dictionary {
     viewCart: string;
     noDescription: string;
     noSpecs: string;
+    selectOptions: string;
   };
   common: {
     taxNotice: string;
