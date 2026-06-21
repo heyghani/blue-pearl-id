@@ -1,6 +1,11 @@
 import { PrismaClient, ShippingMethodType, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
+import {
+  buildVariantSku,
+  cartesianProduct,
+} from "../lib/products/variants";
+
 const prisma = new PrismaClient();
 
 const categories = [
@@ -9,6 +14,8 @@ const categories = [
   { name: "Bracelets", slug: "bracelets" },
   { name: "Rings", slug: "rings" },
   { name: "Sets", slug: "sets" },
+  { name: "Footwear", slug: "footwear" },
+  { name: "Accessories", slug: "accessories" },
 ];
 
 const products = [
@@ -67,6 +74,277 @@ const products = [
     shortDescription: "Timeless 8mm Akoya pearl studs.",
   },
 ];
+
+type VariantProductSeed = {
+  name: string;
+  slug: string;
+  sku: string;
+  basePrice: number;
+  compareAtPrice?: number;
+  isFeatured?: boolean;
+  categorySlug: string;
+  shortDescription: string;
+  description?: string;
+  imageUrl: string;
+  options: { name: string; values: string[] }[];
+  variantStock?: Record<string, number>;
+  variantPrices?: Record<string, number>;
+  variantImages?: Record<string, string>;
+};
+
+const variantProducts: VariantProductSeed[] = [
+  {
+    name: "Heritage Leather Sneaker",
+    slug: "heritage-leather-sneaker",
+    sku: "BP-SH-001",
+    basePrice: 129,
+    compareAtPrice: 159,
+    isFeatured: true,
+    categorySlug: "footwear",
+    shortDescription: "Minimal leather sneaker with cushioned insole — available in multiple colors and sizes.",
+    description:
+      "Demo product for client review: shows Color and Shoe size variants (e.g. for footwear catalog expansion).",
+    imageUrl:
+      "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&q=80",
+    options: [
+      { name: "Color", values: ["White", "Black", "Navy"] },
+      { name: "Shoe size", values: ["38", "39", "40", "41", "42"] },
+    ],
+    variantStock: {
+      "White|38": 4,
+      "White|40": 8,
+      "White|42": 2,
+      "Black|39": 6,
+      "Black|41": 5,
+      "Navy|40": 3,
+      "Navy|42": 0,
+    },
+    variantPrices: {
+      "Black|42": 139,
+    },
+    variantImages: {
+      "White|40":
+        "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&q=80",
+      "Black|41":
+        "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80",
+      "Navy|40":
+        "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800&q=80",
+    },
+  },
+  {
+    name: "Adjustable Pearl Cuff Bracelet",
+    slug: "adjustable-pearl-cuff-bracelet",
+    sku: "BP-BR-002",
+    basePrice: 79,
+    isFeatured: true,
+    categorySlug: "bracelets",
+    shortDescription: "Open cuff with freshwater pearls — choose metal tone and wrist size.",
+    description:
+      "Jewelry example with variants: Color (metal finish) and Size for storefront option picker demo.",
+    imageUrl:
+      "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80",
+    options: [
+      { name: "Color", values: ["Gold", "Silver", "Rose Gold"] },
+      { name: "Size", values: ["Small", "Medium", "Large"] },
+    ],
+    variantStock: {
+      "Gold|Medium": 12,
+      "Gold|Large": 6,
+      "Silver|Small": 10,
+      "Silver|Medium": 8,
+      "Rose Gold|Medium": 4,
+      "Rose Gold|Large": 0,
+    },
+    variantImages: {
+      "Gold|Medium":
+        "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80",
+      "Silver|Small":
+        "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=800&q=80",
+    },
+  },
+];
+
+function variantKey(optionValues: Record<string, string>, optionNames: string[]) {
+  return optionNames.map((name) => optionValues[name]).join("|");
+}
+
+function buildVariantRows(product: VariantProductSeed) {
+  const combinations = cartesianProduct(
+    product.options.map((option) =>
+      option.values.map((value) => ({ optionName: option.name, value })),
+    ),
+  );
+
+  const optionNames = product.options.map((option) => option.name);
+
+  return combinations.map((combo) => {
+    const optionValues = Object.fromEntries(
+      combo.map(({ optionName, value }) => [optionName, value]),
+    );
+    const key = variantKey(optionValues, optionNames);
+
+    return {
+      optionValues,
+      sku: buildVariantSku(product.sku, optionValues),
+      price: product.variantPrices?.[key] ?? product.basePrice,
+      quantity: product.variantStock?.[key] ?? 5,
+      imageUrl: product.variantImages?.[key] ?? null,
+      isActive: true,
+    };
+  });
+}
+
+async function clearProductVariants(productId: string) {
+  await prisma.productVariantValue.deleteMany({
+    where: { variant: { productId } },
+  });
+  await prisma.productVariant.deleteMany({ where: { productId } });
+  await prisma.productOptionValue.deleteMany({
+    where: { option: { productId } },
+  });
+  await prisma.productOption.deleteMany({ where: { productId } });
+}
+
+async function seedVariantProduct(product: VariantProductSeed) {
+  const category = await prisma.category.findUnique({
+    where: { slug: product.categorySlug },
+  });
+  const variants = buildVariantRows(product);
+  const totalQuantity = variants.reduce((sum, variant) => sum + variant.quantity, 0);
+  const displayPrice = Math.min(...variants.map((variant) => variant.price));
+
+  const existing = await prisma.product.findUnique({
+    where: { slug: product.slug },
+  });
+
+  if (existing) {
+    await clearProductVariants(existing.id);
+  }
+
+  const record = await prisma.product.upsert({
+    where: { slug: product.slug },
+    update: {
+      name: product.name,
+      sku: product.sku,
+      price: displayPrice,
+      compareAtPrice: product.compareAtPrice ?? null,
+      hasVariants: true,
+      isFeatured: product.isFeatured ?? false,
+      shortDescription: product.shortDescription,
+      description:
+        product.description ??
+        `${product.shortDescription} Each piece is carefully selected for luster, shape, and surface quality.`,
+      categoryId: category?.id ?? null,
+    },
+    create: {
+      name: product.name,
+      slug: product.slug,
+      sku: product.sku,
+      price: displayPrice,
+      compareAtPrice: product.compareAtPrice ?? null,
+      hasVariants: true,
+      isFeatured: product.isFeatured ?? false,
+      shortDescription: product.shortDescription,
+      description:
+        product.description ??
+        `${product.shortDescription} Each piece is carefully selected for luster, shape, and surface quality.`,
+      categoryId: category?.id ?? null,
+      metadata: {
+        specs: {
+          Type: "Variant product",
+          Options: product.options.map((option) => option.name).join(", "),
+        },
+      },
+      images: {
+        create: {
+          url: product.imageUrl,
+          alt: product.name,
+          isPrimary: true,
+        },
+      },
+      inventory: {
+        create: { quantity: totalQuantity },
+      },
+    },
+  });
+
+  const primaryImage = await prisma.productImage.findFirst({
+    where: { productId: record.id, isPrimary: true },
+  });
+
+  if (primaryImage) {
+    await prisma.productImage.update({
+      where: { id: primaryImage.id },
+      data: { url: product.imageUrl, alt: product.name },
+    });
+  } else {
+    await prisma.productImage.create({
+      data: {
+        productId: record.id,
+        url: product.imageUrl,
+        alt: product.name,
+        isPrimary: true,
+      },
+    });
+  }
+
+  await prisma.inventory.upsert({
+    where: { productId: record.id },
+    create: { productId: record.id, quantity: totalQuantity },
+    update: { quantity: totalQuantity },
+  });
+
+  const optionValueMap = new Map<string, string>();
+
+  for (const [index, option] of product.options.entries()) {
+    const createdOption = await prisma.productOption.create({
+      data: {
+        productId: record.id,
+        name: option.name,
+        position: index,
+      },
+    });
+
+    for (const [valueIndex, value] of option.values.entries()) {
+      const createdValue = await prisma.productOptionValue.create({
+        data: {
+          optionId: createdOption.id,
+          value,
+          position: valueIndex,
+        },
+      });
+      optionValueMap.set(`${option.name}::${value}`, createdValue.id);
+    }
+  }
+
+  for (const [index, variant] of variants.entries()) {
+    const createdVariant = await prisma.productVariant.create({
+      data: {
+        productId: record.id,
+        sku: variant.sku,
+        price: variant.price,
+        compareAtPrice: null,
+        imageUrl: variant.imageUrl,
+        quantity: variant.quantity,
+        isActive: variant.isActive,
+        sortOrder: index,
+      },
+    });
+
+    const optionValueIds = Object.entries(variant.optionValues)
+      .map(([optionName, value]) => optionValueMap.get(`${optionName}::${value}`))
+      .filter((id): id is string => Boolean(id));
+
+    await prisma.productVariantValue.createMany({
+      data: optionValueIds.map((optionValueId) => ({
+        variantId: createdVariant.id,
+        optionValueId,
+      })),
+    });
+  }
+
+  return record;
+}
 
 async function main() {
   const passwordHash = await bcrypt.hash("changeme123", 12);
@@ -131,6 +409,7 @@ async function main() {
         compareAtPrice: product.compareAtPrice,
         isFeatured: product.isFeatured,
         shortDescription: product.shortDescription,
+        hasVariants: false,
       },
       create: {
         name: product.name,
@@ -142,6 +421,7 @@ async function main() {
         shortDescription: product.shortDescription,
         description: `${product.shortDescription} Each piece is carefully selected for luster, shape, and surface quality.`,
         categoryId: category?.id,
+        hasVariants: false,
         metadata: {
           specs: {
             Material: "Cultured Pearl",
@@ -163,8 +443,16 @@ async function main() {
     });
   }
 
+  for (const product of variantProducts) {
+    await seedVariantProduct(product);
+  }
+
   console.log("Seed complete.");
   console.log("Admin: admin@bluepearlid.com / changeme123");
+  console.log("");
+  console.log("Variant demo products:");
+  console.log("  • /products/heritage-leather-sneaker  (Color + Shoe size)");
+  console.log("  • /products/adjustable-pearl-cuff-bracelet  (Color + Size)");
 }
 
 main()

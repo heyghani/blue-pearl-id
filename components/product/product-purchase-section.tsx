@@ -1,12 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { ProductActions } from "@/components/product/product-actions";
+import { useProductVariant } from "@/components/product/product-variant-context";
 import { Price } from "@/components/shared/price";
 import {
-  findVariantBySelections,
   getVariantCompareAtPrice,
   getVariantDisplayPrice,
   type SerializedProductOption,
@@ -37,12 +35,7 @@ export function ProductPurchaseSection({
   layout = "inline",
 }: Props) {
   const t = useTranslations();
-  const [selections, setSelections] = useState<Record<string, string>>({});
-
-  const selectedVariant = useMemo(() => {
-    if (!hasVariants) return null;
-    return findVariantBySelections(variants, options, selections);
-  }, [hasVariants, options, selections, variants]);
+  const { selections, setSelection, selectedVariant } = useProductVariant();
 
   const displayPrice = getVariantDisplayPrice(selectedVariant, basePrice);
   const displayCompareAt = getVariantCompareAtPrice(selectedVariant, compareAtPrice);
@@ -52,7 +45,7 @@ export function ProductPurchaseSection({
   const requiresSelection = hasVariants && !selectedVariant;
 
   function handleSelect(optionId: string, value: string) {
-    setSelections((current) => ({ ...current, [optionId]: value }));
+    setSelection(optionId, value);
   }
 
   const purchaseDetails = (

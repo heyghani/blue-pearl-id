@@ -3,9 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
-import { ImageGallery } from "@/components/product/image-gallery";
 import { ProductBackNav, ProductWhatsAppLink } from "@/components/product/product-actions";
 import { ProductPurchaseSection } from "@/components/product/product-purchase-section";
+import {
+  ProductGallery,
+  ProductVariantProvider,
+} from "@/components/product/product-variant-context";
 import { ProductDetailTabs } from "@/components/product/product-detail-tabs";
 import { RelatedProductsSection } from "@/components/product/related-products";
 import { DutiesNotice } from "@/components/shared/duties-notice";
@@ -63,13 +66,16 @@ export default async function ProductDetailPage({ params }: Props) {
     notFound();
   }
 
-  const galleryKey = product.images.map((img) => img.url).join("|") || product.slug;
   const related = await getRelatedProducts(product.categoryId, product.slug);
   const inStock = isInStock(product);
   const specs = parseProductSpecs(product.metadata);
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const productUrl = `${baseUrl}/products/${product.slug}`;
   const { options, variants } = serializeProductVariants(product.options, product.variants);
+  const galleryImages = product.images.map((img) => ({
+    url: img.url,
+    alt: img.alt,
+  }));
 
   return (
     <>
@@ -83,14 +89,15 @@ export default async function ProductDetailPage({ params }: Props) {
         url={productUrl}
       />
 
+      <ProductVariantProvider
+        baseImages={galleryImages}
+        options={options}
+        variants={variants}
+        hasVariants={product.hasVariants}
+      >
       <div className="pb-28 lg:pb-12">
         <div className="-mx-4 lg:hidden">
-          <ImageGallery
-            key={galleryKey}
-            images={product.images}
-            productName={product.name}
-            variant="mobile"
-          />
+          <ProductGallery productName={product.name} variant="mobile" />
         </div>
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -118,12 +125,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
             <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
               <div className="hidden lg:block">
-                <ImageGallery
-                  key={galleryKey}
-                  images={product.images}
-                  productName={product.name}
-                  variant="desktop"
-                />
+                <ProductGallery productName={product.name} variant="desktop" />
               </div>
 
               <div className="space-y-5">
@@ -194,6 +196,7 @@ export default async function ProductDetailPage({ params }: Props) {
                   />
                 </div>
       </div>
+      </ProductVariantProvider>
     </>
   );
 }
