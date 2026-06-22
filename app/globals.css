@@ -1,28 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fcfcfd;
-  --foreground: #0c1222;
+  --background: #faf9f7;
+  --foreground: #0f1419;
   --card: #ffffff;
-  --card-foreground: #0c1222;
+  --card-foreground: #0f1419;
   --popover: #ffffff;
-  --popover-foreground: #0c1222;
-  --primary: #0c1222;
-  --primary-foreground: #fafafa;
-  --secondary: #f0f2f6;
-  --secondary-foreground: #0c1222;
-  --muted: #f4f5f8;
-  --muted-foreground: #64748b;
-  --accent: #e8eef5;
-  --accent-foreground: #0c1222;
+  --popover-foreground: #0f1419;
+  --primary: #0f1419;
+  --primary-foreground: #faf9f7;
+  --secondary: #f0ede8;
+  --secondary-foreground: #0f1419;
+  --muted: #f3f1ed;
+  --muted-foreground: #6b7280;
+  --accent: #e8e2d9;
+  --accent-foreground: #0f1419;
   --destructive: #dc2626;
   --destructive-foreground: #fafafa;
-  --border: #e8ecf2;
-  --input: #e8ecf2;
-  --ring: #1e3a5f;
-  --pearl: #1e3a5f;
-  --pearl-light: #eef3f8;
-  --radius: 0.75rem;
+  --border: #e8e4dd;
+  --input: #e8e4dd;
+  --ring: #2c4a6e;
+  --pearl: #2c4a6e;
+  --pearl-muted: #5a7a9a;
+  --pearl-light: #f0ebe3;
+  --pearl-glow: rgba(44, 74, 110, 0.12);
+  --radius: 1rem;
 }
 
 @theme inline {
@@ -46,11 +48,14 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-pearl: var(--pearl);
+  --color-pearl-muted: var(--pearl-muted);
   --color-pearl-light: var(--pearl-light);
-  --radius-sm: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
   --font-sans: var(--font-inter);
+  --font-display: var(--font-cormorant);
 }
 
 @layer base {
@@ -60,11 +65,35 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, var(--pearl-glow), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(232, 226, 217, 0.4), transparent);
+    background-attachment: fixed;
   }
 
   ::selection {
     background: var(--pearl-light);
     color: var(--foreground);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display), ui-serif, Georgia, serif;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .surface-card {
+    @apply rounded-2xl border border-border/60 bg-card/80 shadow-sm backdrop-blur-sm;
+  }
+
+  .surface-elevated {
+    box-shadow:
+      0 1px 2px rgba(15, 20, 25, 0.04),
+      0 8px 24px rgba(15, 20, 25, 0.06);
   }
 }
 

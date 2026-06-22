@@ -72,7 +72,7 @@ export function ProductActions({
           <Button
             size="lg"
             variant="outline"
-            className="h-12 flex-1 rounded-full text-sm font-semibold"
+            className="h-12 flex-1 rounded-full text-sm font-semibold shadow-sm"
             disabled={!inStock || isPending || requiresSelection}
             onClick={() => handleAdd(false)}
           >

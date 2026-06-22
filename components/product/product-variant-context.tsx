@@ -10,6 +10,7 @@ import {
 
 import { ImageGallery } from "@/components/product/image-gallery";
 import {
+  findPartialVariantPreview,
   findVariantBySelections,
   type SerializedProductOption,
   type SerializedProductVariant,
@@ -21,7 +22,9 @@ type ProductVariantContextValue = {
   selections: Record<string, string>;
   setSelection: (optionId: string, value: string) => void;
   selectedVariant: SerializedProductVariant | null;
+  previewVariant: SerializedProductVariant | null;
   galleryImages: GalleryImage[];
+  activeImageUrl: string | null;
 };
 
 const ProductVariantContext = createContext<ProductVariantContextValue | null>(null);
@@ -58,9 +61,16 @@ export function ProductVariantProvider({
     return findVariantBySelections(variants, options, selections);
   }, [hasVariants, options, selections, variants]);
 
+  const previewVariant = useMemo(() => {
+    if (!hasVariants || selectedVariant) return null;
+    return findPartialVariantPreview(variants, options, selections);
+  }, [hasVariants, options, selections, selectedVariant, variants]);
+
+  const activeVariant = selectedVariant ?? previewVariant;
+
   const galleryImages = useMemo(
-    () => buildGalleryImages(baseImages, selectedVariant?.imageUrl),
-    [baseImages, selectedVariant?.imageUrl],
+    () => buildGalleryImages(baseImages, activeVariant?.imageUrl),
+    [activeVariant?.imageUrl, baseImages],
   );
 
   const value = useMemo(
@@ -70,9 +80,11 @@ export function ProductVariantProvider({
         setSelections((current) => ({ ...current, [optionId]: value }));
       },
       selectedVariant,
+      previewVariant,
       galleryImages,
+      activeImageUrl: galleryImages[0]?.url ?? null,
     }),
-    [galleryImages, selectedVariant, selections],
+    [galleryImages, previewVariant, selectedVariant, selections],
   );
 
   return (
@@ -91,9 +103,11 @@ export function useProductVariant() {
 export function ProductGallery({
   productName,
   variant,
+  compact = false,
 }: {
   productName: string;
   variant: "mobile" | "desktop";
+  compact?: boolean;
 }) {
   const { galleryImages } = useProductVariant();
   const galleryKey = galleryImages.map((image) => image.url).join("|") || productName;
@@ -104,6 +118,7 @@ export function ProductGallery({
       images={galleryImages}
       productName={productName}
       variant={variant}
+      compact={compact}
     />
   );
 }

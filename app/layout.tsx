@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Cormorant_Garamond, Inter } from "next/font/google";
 
 import { LocaleProvider } from "@/components/i18n/locale-provider";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants";
@@ -11,6 +11,12 @@ import "./globals.css";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+});
+
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -33,7 +39,7 @@ export default async function RootLayout({
   const dictionary = getDictionary(locale);
 
   return (
-    <html lang={locale} className={`${inter.variable} h-full`}>
+    <html lang={locale} className={`${inter.variable} ${cormorant.variable} h-full`}>
       <body className="min-h-full flex flex-col font-sans">
         <LocaleProvider locale={locale} dictionary={dictionary}>
           {children}

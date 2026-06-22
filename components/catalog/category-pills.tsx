@@ -62,10 +62,10 @@ export function CategoryPills({
             key={pill.slug ?? "all"}
             href={buildHref(pill.slug)}
             className={cn(
-              "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+              "shrink-0 rounded-full px-4 py-2.5 text-sm font-medium transition-all",
               isActive
-                ? "bg-foreground text-background shadow-sm"
-                : "bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground",
+                ? "bg-foreground text-background shadow-md"
+                : "bg-card/90 text-muted-foreground ring-1 ring-border/80 hover:text-foreground",
             )}
           >
             {pill.label}

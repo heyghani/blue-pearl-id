@@ -39,12 +39,12 @@ export function Footer() {
   ];
 
   return (
-    <footer className="border-t bg-[var(--pearl-light)]/30">
+    <footer className="mt-auto border-t border-white/10 bg-[#0f1419] text-[#f5f3f0]">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-4 lg:col-span-2">
-            <p className="text-lg font-bold tracking-tight">{APP_NAME}</p>
-            <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+            <p className="font-display text-2xl font-semibold tracking-tight">{APP_NAME}</p>
+            <p className="max-w-sm text-sm leading-relaxed text-[#a8a29e]">
               {t.footer.tagline}
             </p>
             <div className="flex flex-col gap-2 text-sm">
@@ -52,13 +52,13 @@ export function Footer() {
                 href={whatsappHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-[#128C7E] hover:underline"
+                className="font-medium text-[#6ee7b7] hover:underline"
               >
-                {t.footer.whatsapp}: {t.whatsapp.label}
+                {t.whatsapp.label}
               </a>
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
-                className="font-medium text-foreground hover:underline"
+                className="text-[#d6d3d1] hover:text-white hover:underline"
               >
                 {SUPPORT_EMAIL}
               </a>
@@ -67,7 +67,9 @@ export function Footer() {
 
           {footerSections.map((section) => (
             <div key={section.title} className="space-y-3">
-              <p className="text-sm font-semibold">{section.title}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#78716c]">
+                {section.title}
+              </p>
               <ul className="space-y-2.5">
                 {section.links.map((link) => (
                   <li key={link.href}>
@@ -76,14 +78,14 @@ export function Footer() {
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        className="text-sm text-[#a8a29e] transition-colors hover:text-white"
                       >
                         {link.label}
                       </a>
                     ) : (
                       <Link
                         href={link.href}
-                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        className="text-sm text-[#a8a29e] transition-colors hover:text-white"
                       >
                         {link.label}
                       </Link>
@@ -95,14 +97,11 @@ export function Footer() {
           ))}
         </div>
 
-        <Separator className="my-10" />
+        <Separator className="my-10 bg-white/10" />
 
-        <div className="flex flex-col items-center justify-between gap-3 text-sm text-muted-foreground sm:flex-row">
-          <p>
-            © {new Date().getFullYear()} {APP_NAME}. {t.footer.copyright}
-          </p>
-          <p>{t.footer.priceNote}</p>
-        </div>
+        <p className="text-center text-xs text-[#78716c] sm:text-left">
+          © {new Date().getFullYear()} {APP_NAME}. {t.footer.copyright}
+        </p>
       </div>
     </footer>
   );

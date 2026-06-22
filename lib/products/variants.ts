@@ -238,6 +238,30 @@ export function serializeProductVariants(
   };
 }
 
+export function findPartialVariantPreview(
+  variants: SerializedProductVariant[],
+  options: SerializedProductOption[],
+  selections: Record<string, string>,
+) {
+  const selectedIds = options
+    .map((option) => {
+      const value = selections[option.id];
+      if (!value) return null;
+      return option.values.find((entry) => entry.value === value)?.id ?? null;
+    })
+    .filter((id): id is string => Boolean(id));
+
+  if (selectedIds.length === 0) return null;
+
+  return (
+    variants.find(
+      (variant) =>
+        variant.isActive &&
+        selectedIds.every((id) => variant.optionValueIds.includes(id)),
+    ) ?? null
+  );
+}
+
 export function findVariantBySelections(
   variants: SerializedProductVariant[],
   options: SerializedProductOption[],

@@ -101,6 +101,7 @@ export interface Dictionary {
     noDescription: string;
     noSpecs: string;
     selectOptions: string;
+    variantPreview: string;
   };
   common: {
     taxNotice: string;
@@ -112,6 +113,7 @@ export interface Dictionary {
   };
   checkout: {
     informationLead: string;
+    backToBag: string;
     secureBadge: string;
     processingTitle: string;
     processingCardNote: string;

@@ -11,7 +11,6 @@ import {
 } from "@/components/product/product-variant-context";
 import { ProductDetailTabs } from "@/components/product/product-detail-tabs";
 import { RelatedProductsSection } from "@/components/product/related-products";
-import { DutiesNotice } from "@/components/shared/duties-notice";
 import { ProductJsonLd } from "@/components/shared/product-json-ld";
 import {
   getProductBySlug,
@@ -77,6 +76,16 @@ export default async function ProductDetailPage({ params }: Props) {
     alt: img.alt,
   }));
 
+  const purchaseProps = {
+    productId: product.id,
+    productName: product.name,
+    basePrice: product.price.toString(),
+    compareAtPrice: product.compareAtPrice?.toString() ?? null,
+    hasVariants: product.hasVariants,
+    inStock,
+    options,
+  };
+
   return (
     <>
       <ProductJsonLd
@@ -95,107 +104,92 @@ export default async function ProductDetailPage({ params }: Props) {
         variants={variants}
         hasVariants={product.hasVariants}
       >
-      <div className="pb-28 lg:pb-12">
-        <div className="-mx-4 lg:hidden">
-          <ProductGallery productName={product.name} variant="mobile" />
-        </div>
+        <div className="pb-28 lg:pb-12">
+          <div className="-mx-4 lg:hidden">
+            <ProductGallery
+              productName={product.name}
+              variant="mobile"
+              compact={product.hasVariants}
+            />
+          </div>
 
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="relative z-10 -mt-5 rounded-t-3xl bg-background px-1 pt-5 sm:mt-0 sm:rounded-none sm:px-0 sm:pt-10">
-            <ProductBackNav />
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="relative z-10 -mt-5 rounded-t-3xl bg-background px-1 pt-5 sm:mt-0 sm:rounded-none sm:px-0 sm:pt-10">
+              <ProductBackNav />
 
-            <nav className="mb-4 hidden text-sm text-muted-foreground lg:block">
-              <Link href="/products" className="hover:text-foreground">
-                {t.nav.shop}
-              </Link>
-              {product.category && (
-                <>
-                  <span className="mx-2">/</span>
-                  <Link
-                    href={`/products?category=${product.category.slug}`}
-                    className="hover:text-foreground"
-                  >
-                    {product.category.name}
-                  </Link>
-                </>
-              )}
-              <span className="mx-2">/</span>
-              <span className="text-foreground">{product.name}</span>
-            </nav>
+              <nav className="mb-4 hidden text-sm text-muted-foreground lg:block">
+                <Link href="/products" className="hover:text-foreground">
+                  {t.nav.shop}
+                </Link>
+                {product.category && (
+                  <>
+                    <span className="mx-2">/</span>
+                    <Link
+                      href={`/products?category=${product.category.slug}`}
+                      className="hover:text-foreground"
+                    >
+                      {product.category.name}
+                    </Link>
+                  </>
+                )}
+                <span className="mx-2">/</span>
+                <span className="text-foreground">{product.name}</span>
+              </nav>
 
-            <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-              <div className="hidden lg:block">
-                <ProductGallery productName={product.name} variant="desktop" />
-              </div>
+              <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
+                <div className="hidden lg:block">
+                  <ProductGallery productName={product.name} variant="desktop" />
+                </div>
 
-              <div className="space-y-5">
-                <div className="space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {product.isFeatured ? (
-                      <Badge className="rounded-full px-2.5">{t.catalog.featured}</Badge>
+                <div className="space-y-5">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {product.isFeatured ? (
+                        <Badge className="rounded-full px-2.5">{t.catalog.featured}</Badge>
+                      ) : null}
+                      {!inStock ? (
+                        <Badge variant="destructive" className="rounded-full px-2.5">
+                          {t.product.outOfStock}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs font-medium text-[var(--pearl)]">
+                          {t.product.inStock}
+                        </span>
+                      )}
+                    </div>
+
+                    <h1 className="font-display text-xl font-semibold leading-snug tracking-tight sm:text-2xl lg:text-3xl">
+                      {product.name}
+                    </h1>
+
+                    {product.shortDescription ? (
+                      <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+                        {product.shortDescription}
+                      </p>
                     ) : null}
-                    {!inStock ? (
-                      <Badge variant="destructive" className="rounded-full px-2.5">
-                        {t.product.outOfStock}
-                      </Badge>
-                    ) : (
-                      <span className="text-xs font-medium text-[var(--pearl)]">
-                        {t.product.inStock}
-                      </span>
-                    )}
                   </div>
 
-                  <h1 className="text-lg font-bold leading-snug tracking-tight sm:text-2xl lg:text-3xl">
-                    {product.name}
-                  </h1>
+                  <div className="lg:hidden">
+                    <ProductPurchaseSection {...purchaseProps} layout="mobile-split" />
+                  </div>
 
-                  {product.shortDescription ? (
-                    <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
-                      {product.shortDescription}
-                    </p>
-                  ) : null}
+                  <div className="hidden lg:block">
+                    <ProductPurchaseSection {...purchaseProps} />
+                  </div>
+
+                  <ProductWhatsAppLink productName={product.name} />
                 </div>
-
-                <div className="hidden lg:block">
-                  <ProductPurchaseSection
-                    productId={product.id}
-                    basePrice={product.price.toString()}
-                    compareAtPrice={product.compareAtPrice?.toString() ?? null}
-                    hasVariants={product.hasVariants}
-                    inStock={inStock}
-                    options={options}
-                    variants={variants}
-                  />
-                </div>
-
-                <ProductWhatsAppLink productName={product.name} />
-
-                <DutiesNotice className="rounded-2xl bg-muted/40 p-3 text-center sm:text-left" />
               </div>
+
+              <ProductDetailTabs
+                description={product.description}
+                specs={specs}
+              />
+
+              <RelatedProductsSection products={related.map(toProductCard)} />
             </div>
-
-            <ProductDetailTabs
-              description={product.description}
-              specs={specs}
-            />
-
-            <RelatedProductsSection products={related.map(toProductCard)} />
           </div>
         </div>
-
-                <div className="lg:hidden">
-                  <ProductPurchaseSection
-                    productId={product.id}
-                    basePrice={product.price.toString()}
-                    compareAtPrice={product.compareAtPrice?.toString() ?? null}
-                    hasVariants={product.hasVariants}
-                    inStock={inStock}
-                    options={options}
-                    variants={variants}
-                    layout="mobile-split"
-                  />
-                </div>
-      </div>
       </ProductVariantProvider>
     </>
   );

@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { ProductActions } from "@/components/product/product-actions";
 import { useProductVariant } from "@/components/product/product-variant-context";
@@ -8,37 +10,78 @@ import {
   getVariantCompareAtPrice,
   getVariantDisplayPrice,
   type SerializedProductOption,
-  type SerializedProductVariant,
   variantInStock,
 } from "@/lib/products/variants";
 import { cn } from "@/lib/utils";
 
 type Props = {
   productId: string;
+  productName: string;
   basePrice: string;
   compareAtPrice: string | null;
   hasVariants: boolean;
   inStock: boolean;
   options: SerializedProductOption[];
-  variants: SerializedProductVariant[];
   layout?: "inline" | "mobile-split";
 };
 
+function VariantImagePreview({
+  options,
+  productName,
+}: {
+  options: SerializedProductOption[];
+  productName: string;
+}) {
+  const t = useTranslations();
+  const { activeImageUrl, previewVariant, selectedVariant, selections } = useProductVariant();
+  const hasSelection = Object.keys(selections).length > 0;
+
+  if (!hasSelection || !activeImageUrl) return null;
+
+  const label = options
+    .map((option) => selections[option.id])
+    .filter(Boolean)
+    .join(" · ");
+
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/30 p-2 lg:hidden">
+      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted">
+        <Image
+          src={activeImageUrl}
+          alt={label || productName}
+          fill
+          className="object-cover"
+          sizes="80px"
+        />
+      </div>
+      <div className="min-w-0 space-y-0.5">
+        <p className="text-xs font-medium text-muted-foreground">
+          {selectedVariant ? label : t.product.variantPreview}
+        </p>
+        {previewVariant && !selectedVariant ? (
+          <p className="text-xs text-muted-foreground">{t.product.selectOptions}</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function ProductPurchaseSection({
   productId,
+  productName,
   basePrice,
   compareAtPrice,
   hasVariants,
   inStock,
   options,
-  variants,
   layout = "inline",
 }: Props) {
   const t = useTranslations();
-  const { selections, setSelection, selectedVariant } = useProductVariant();
+  const { selections, setSelection, selectedVariant, previewVariant } = useProductVariant();
 
-  const displayPrice = getVariantDisplayPrice(selectedVariant, basePrice);
-  const displayCompareAt = getVariantCompareAtPrice(selectedVariant, compareAtPrice);
+  const pricingVariant = selectedVariant ?? previewVariant;
+  const displayPrice = getVariantDisplayPrice(pricingVariant, basePrice);
+  const displayCompareAt = getVariantCompareAtPrice(pricingVariant, compareAtPrice);
   const canPurchase = hasVariants
     ? Boolean(selectedVariant && variantInStock(selectedVariant))
     : inStock;
@@ -58,6 +101,8 @@ export function ProductPurchaseSection({
 
       {hasVariants ? (
         <div className="space-y-4">
+          <VariantImagePreview options={options} productName={productName} />
+
           {options.map((option) => (
             <div key={option.id} className="space-y-2">
               <p className="text-sm font-medium">{option.name}</p>

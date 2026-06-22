@@ -5,7 +5,6 @@ import { CatalogPagination } from "@/components/catalog/catalog-pagination";
 import { CatalogToolbar } from "@/components/catalog/catalog-toolbar";
 import { CategoryPills } from "@/components/catalog/category-pills";
 import { ProductGrid } from "@/components/catalog/product-grid";
-import { DutiesNotice } from "@/components/shared/duties-notice";
 import { parseCatalogParams } from "@/lib/catalog";
 import { getActiveCategories } from "@/lib/categories";
 import { getDictionary } from "@/lib/i18n";
@@ -14,8 +13,7 @@ import { getCatalogProducts, toProductCard } from "@/lib/products";
 
 export const metadata: Metadata = {
   title: "Shop",
-  description:
-    "Browse our collection of premium pearls and fine jewelry. Worldwide shipping in USD.",
+  description: "Browse pearl jewelry and accessories.",
 };
 
 export const revalidate = 60;
@@ -53,9 +51,9 @@ export default async function ProductsPage({
     catalog.total === 1 ? t.catalog.product : t.catalog.products;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-10 pt-4 sm:px-6 sm:py-8 lg:px-8">
-      <div className="mb-4 sm:mb-6">
-        <h1 className="text-xl font-bold tracking-tight sm:text-3xl">{title}</h1>
+    <div className="mx-auto max-w-7xl px-4 pb-12 pt-4 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mb-5 sm:mb-7">
+        <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
         <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
           {catalog.total} {countLabel}
           {params.search ? ` ${t.catalog.searchFor} “${params.search}”` : ""}
@@ -78,8 +76,6 @@ export default async function ProductsPage({
           className="mt-8"
         />
       </Suspense>
-
-      <DutiesNotice className="mt-8 text-center sm:text-left" />
     </div>
   );
 }

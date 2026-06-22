@@ -15,10 +15,12 @@ export function ImageGallery({
   images,
   productName,
   variant = "responsive",
+  compact = false,
 }: {
   images: GalleryImage[];
   productName: string;
   variant?: "mobile" | "desktop" | "responsive";
+  compact?: boolean;
 }) {
   const t = useTranslations();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -43,7 +45,12 @@ export function ImageGallery({
 
   if (!active) {
     return (
-      <div className="flex aspect-[4/5] items-center justify-center bg-muted text-sm text-muted-foreground sm:aspect-square sm:rounded-2xl">
+      <div
+        className={cn(
+          "flex items-center justify-center bg-muted text-sm text-muted-foreground sm:rounded-2xl",
+          compact ? "aspect-square" : "aspect-[4/5] sm:aspect-square",
+        )}
+      >
         {t.product.noImageAvailable}
       </div>
     );
@@ -67,7 +74,10 @@ export function ImageGallery({
           {images.map((image, index) => (
             <div
               key={`${image.url}-${index}`}
-              className="relative aspect-[4/5] w-full shrink-0 snap-center bg-muted"
+              className={cn(
+                "relative w-full shrink-0 snap-center bg-muted",
+                compact ? "aspect-square" : "aspect-[4/5]",
+              )}
             >
               <Image
                 src={image.url}

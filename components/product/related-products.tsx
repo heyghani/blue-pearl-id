@@ -14,7 +14,7 @@ export function RelatedProductsSection({
 
   return (
     <section className="mt-10 border-t pt-8 sm:mt-12 sm:pt-10">
-      <h2 className="text-base font-bold tracking-tight sm:text-lg">
+      <h2 className="font-display text-base font-semibold tracking-tight sm:text-lg">
         {t.product.related}
       </h2>
 
