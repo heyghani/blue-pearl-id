@@ -44,9 +44,9 @@ export const productFormSchema = z
     description: z.string().optional(),
     imageUrl: optionalImageUrlSchema,
     quantity: z.coerce.number().int().min(0, "Quantity cannot be negative."),
-    isActive: z.coerce.boolean(),
-    isFeatured: z.coerce.boolean(),
-    hasVariants: z.coerce.boolean(),
+    isActive: z.boolean(),
+    isFeatured: z.boolean(),
+    hasVariants: z.boolean(),
     variantsPayload: z.string().optional(),
   })
   .superRefine((data, ctx) => {

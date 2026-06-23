@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/admin/require-admin";
-import { uploadProductImage } from "@/lib/storage/r2";
+import { getUploadStorageMode, uploadProductImage } from "@/lib/storage/r2";
 import { uploadFolderSchema } from "@/lib/validations/upload";
 
 export const runtime = "nodejs";
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       folder: folderResult.data,
     });
 
-    return NextResponse.json({ url });
+    return NextResponse.json({ url, storage: getUploadStorageMode() });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Could not upload image.";

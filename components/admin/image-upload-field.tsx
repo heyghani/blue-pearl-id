@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { ImagePlus, Loader2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -101,6 +102,7 @@ export function ImageUploadField({
               fill
               className="object-cover"
               sizes={compact ? "64px" : "320px"}
+              unoptimized={currentUrl.startsWith("http")}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -144,8 +146,22 @@ export function ImageUploadField({
             ) : null}
           </div>
 
+          {!compact ? (
+            <div className="space-y-1">
+              <Input
+                type="url"
+                value={currentUrl}
+                placeholder="Or paste an image URL (https://…)"
+                onChange={(event) => {
+                  setError(null);
+                  updateUrl(event.target.value);
+                }}
+              />
+            </div>
+          ) : null}
+
           <p className="text-xs text-muted-foreground">
-            JPG, PNG, WebP, or GIF up to 5 MB.
+            JPG, PNG, WebP, or GIF up to 5 MB. On production, upload needs R2 or Vercel Blob — or paste a URL.
           </p>
 
           {error ? <p className="text-xs text-destructive">{error}</p> : null}

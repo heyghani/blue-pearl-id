@@ -330,6 +330,14 @@ export async function deleteProduct(id: string) {
   });
 }
 
+export async function setProductActive(id: string, isActive: boolean) {
+  return prisma.product.update({
+    where: { id, deletedAt: null },
+    data: { isActive },
+    select: { slug: true },
+  });
+}
+
 export async function listAdminCategories() {
   return prisma.category.findMany({
     where: { isActive: true },

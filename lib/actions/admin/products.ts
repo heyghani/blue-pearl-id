@@ -9,16 +9,22 @@ import { parseVariantsPayload } from "@/lib/products/variants";
 import {
   createProduct,
   deleteProduct,
+  setProductActive,
   updateProduct,
 } from "@/lib/services/admin/product.service";
 import { productFormSchema } from "@/lib/validations/admin";
 
 export type AdminActionState = {
   error?: string;
+  success?: boolean;
   fieldErrors?: Record<string, string[]>;
 };
 
 type ProductFormData = z.infer<typeof productFormSchema>;
+
+function parseCheckbox(value: FormDataEntryValue | null) {
+  return value === "on" || value === "true";
+}
 
 function parseProductForm(formData: FormData) {
   const compareAt = formData.get("compareAtPrice");
@@ -35,11 +41,21 @@ function parseProductForm(formData: FormData) {
     description: formData.get("description") || undefined,
     imageUrl: formData.get("imageUrl") || undefined,
     quantity: formData.get("quantity"),
-    isActive: formData.get("isActive") === "on",
-    isFeatured: formData.get("isFeatured") === "on",
-    hasVariants: formData.get("hasVariants") === "on",
+    isActive: parseCheckbox(formData.get("isActive")),
+    isFeatured: parseCheckbox(formData.get("isFeatured")),
+    hasVariants: parseCheckbox(formData.get("hasVariants")),
     variantsPayload: formData.get("variantsPayload") || undefined,
   });
+}
+
+function revalidateProductPaths(slug?: string) {
+  revalidatePath("/");
+  revalidatePath("/products");
+  revalidatePath("/admin/products");
+
+  if (slug) {
+    revalidatePath(`/products/${slug}`);
+  }
 }
 
 function buildVariantInput(data: ProductFormData) {
@@ -92,8 +108,7 @@ export async function createProductAction(
       variants: variantData.variants,
     });
 
-    revalidatePath("/admin/products");
-    revalidatePath("/products");
+    revalidateProductPaths();
     redirect(`/admin/products/${product.id}/edit`);
   } catch (error) {
     return {
@@ -139,11 +154,9 @@ export async function updateProductAction(
       variants: variantData.variants,
     });
 
-    revalidatePath("/admin/products");
+    revalidateProductPaths(data.slug);
     revalidatePath(`/admin/products/${productId}/edit`);
-    revalidatePath("/products");
-    revalidatePath(`/products/${data.slug}`);
-    return {};
+    return { success: true };
   } catch (error) {
     return {
       error:
@@ -157,7 +170,18 @@ export async function deleteProductAction(productId: string): Promise<void> {
   if (!admin) return;
 
   await deleteProduct(productId);
-  revalidatePath("/admin/products");
-  revalidatePath("/products");
+  revalidateProductPaths();
   redirect("/admin/products");
+}
+
+export async function toggleProductActiveAction(
+  productId: string,
+  nextActive: boolean,
+): Promise<void> {
+  const admin = await requireAdmin();
+  if (!admin) return;
+
+  const product = await setProductActive(productId, nextActive);
+  revalidateProductPaths(product.slug);
+  revalidatePath(`/admin/products/${productId}/edit`);
 }

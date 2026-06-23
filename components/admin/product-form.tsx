@@ -60,6 +60,8 @@ export function ProductForm({
   const [state, formAction, pending] = useActionState(action, initialState);
   const [baseSku, setBaseSku] = useState(defaults.sku ?? "");
   const [basePrice, setBasePrice] = useState(Number(defaults.price ?? 0) || 0);
+  const [isActive, setIsActive] = useState(defaults.isActive ?? true);
+  const [isFeatured, setIsFeatured] = useState(defaults.isFeatured ?? false);
 
   return (
     <form action={formAction} className="max-w-4xl space-y-6">
@@ -68,6 +70,12 @@ export function ProductForm({
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       )}
+
+      {state.success ? (
+        <Alert>
+          <AlertDescription>Product saved.</AlertDescription>
+        </Alert>
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -232,11 +240,14 @@ export function ProductForm({
           <CardTitle>Visibility</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-6">
+          <input type="hidden" name="isActive" value={isActive ? "true" : "false"} />
+          <input type="hidden" name="isFeatured" value={isFeatured ? "true" : "false"} />
+
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
-              name="isActive"
-              defaultChecked={defaults.isActive ?? true}
+              checked={isActive}
+              onChange={(event) => setIsActive(event.target.checked)}
               className="rounded border-input"
             />
             Active on storefront
@@ -245,8 +256,8 @@ export function ProductForm({
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
-              name="isFeatured"
-              defaultChecked={defaults.isFeatured ?? false}
+              checked={isFeatured}
+              onChange={(event) => setIsFeatured(event.target.checked)}
               className="rounded border-input"
             />
             Featured product

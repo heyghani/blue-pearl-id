@@ -110,11 +110,11 @@ export function ProductVariantsEditor({
   return (
     <div className="space-y-4">
       <input type="hidden" name="variantsPayload" value={payload} />
+      <input type="hidden" name="hasVariants" value={hasVariants ? "true" : "false"} />
 
       <label className="flex items-start gap-3 rounded-lg border p-4">
         <input
           type="checkbox"
-          name="hasVariants"
           checked={hasVariants}
           onChange={(event) => setHasVariants(event.target.checked)}
           className="mt-1 rounded border-input"

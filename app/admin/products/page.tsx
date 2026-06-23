@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { ProductStatusToggle } from "@/components/admin/product-status-toggle";
 import { listAdminProducts } from "@/lib/services/admin/product.service";
 import { Button } from "@/components/ui/button";
 import { Price } from "@/components/shared/price";
@@ -90,10 +91,14 @@ export default async function AdminProductsPage({
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={product.isActive ? "default" : "secondary"}>
                       {product.isActive ? "Active" : "Hidden"}
                     </Badge>
+                    <ProductStatusToggle
+                      productId={product.id}
+                      isActive={product.isActive}
+                    />
                     {product.hasVariants ? (
                       <Badge variant="outline">Variants</Badge>
                     ) : null}
