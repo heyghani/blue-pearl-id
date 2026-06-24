@@ -6,16 +6,18 @@ import { ShoppingBag } from "lucide-react";
 
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { Button } from "@/components/ui/button";
+import { useCartCount } from "@/lib/hooks/use-cart-count";
 import { cn } from "@/lib/utils";
 
 export function CartButton({
-  itemCount,
+  itemCount: initialCount,
   className,
 }: {
   itemCount: number;
   className?: string;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const itemCount = useCartCount(initialCount);
 
   return (
     <>
@@ -34,12 +36,18 @@ export function CartButton({
         )}
       </Button>
 
-      <CartDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <CartDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        itemCount={itemCount}
+      />
     </>
   );
 }
 
-export function CartLink({ itemCount }: { itemCount: number }) {
+export function CartLink({ itemCount: initialCount }: { itemCount: number }) {
+  const itemCount = useCartCount(initialCount);
+
   return (
     <Button variant="ghost" size="icon" className="relative" asChild>
       <Link href="/cart" aria-label={`Cart, ${itemCount} items`}>

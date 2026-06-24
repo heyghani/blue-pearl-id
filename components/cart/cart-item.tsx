@@ -6,6 +6,7 @@ import { Minus, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
+import { notifyCartUpdated } from "@/lib/cart/events";
 import {
   removeCartItemAction,
   updateCartItemAction,
@@ -30,6 +31,7 @@ export function CartItemRow({
   function mutate(action: () => Promise<unknown>) {
     startTransition(async () => {
       await action();
+      notifyCartUpdated();
       router.refresh();
       onUpdated?.();
     });

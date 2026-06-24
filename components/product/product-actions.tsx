@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { ChevronLeft } from "lucide-react";
 
 import { useTranslations } from "@/components/i18n/locale-provider";
+import { notifyCartUpdated } from "@/lib/cart/events";
 import { addToCartAction } from "@/lib/actions/cart";
 import { WHATSAPP_URL } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ export function ProductActions({
         return;
       }
       setAdded(true);
+      notifyCartUpdated();
       router.refresh();
       if (redirectToCart) {
         router.push("/cart");

@@ -7,6 +7,13 @@ import {
 } from "@/lib/cart/cookie";
 import { prisma } from "@/lib/db";
 
+function isUniqueConstraintError(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  );
+}
+
 const cartInclude = {
   items: {
     orderBy: { createdAt: "asc" as const },
@@ -174,6 +181,47 @@ function cartExpiry() {
   return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 }
 
+async function consolidateGuestCarts(sessionId: string) {
+  const carts = await prisma.cart.findMany({
+    where: { sessionId, userId: null },
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    include: { items: true },
+  });
+
+  if (carts.length <= 1) return;
+
+  const [primary, ...duplicates] = carts;
+
+  for (const duplicate of duplicates) {
+    for (const item of duplicate.items) {
+      const existing = await prisma.cartItem.findUnique({
+        where: {
+          cartId_productId_variantKey: {
+            cartId: primary.id,
+            productId: item.productId,
+            variantKey: item.variantKey,
+          },
+        },
+      });
+
+      if (existing) {
+        await prisma.cartItem.update({
+          where: { id: existing.id },
+          data: { quantity: existing.quantity + item.quantity },
+        });
+        await prisma.cartItem.delete({ where: { id: item.id } });
+      } else {
+        await prisma.cartItem.update({
+          where: { id: item.id },
+          data: { cartId: primary.id },
+        });
+      }
+    }
+
+    await prisma.cart.delete({ where: { id: duplicate.id } });
+  }
+}
+
 async function getOrCreateUserCart(userId: string) {
   let cart = await prisma.cart.findUnique({
     where: { userId },
@@ -191,19 +239,33 @@ async function getOrCreateUserCart(userId: string) {
 }
 
 async function getOrCreateGuestCart(sessionId: string) {
-  let cart = await prisma.cart.findFirst({
-    where: { sessionId, userId: null },
-    include: cartInclude,
-  });
+  await consolidateGuestCarts(sessionId);
 
-  if (!cart) {
-    cart = await prisma.cart.create({
-      data: { sessionId, expiresAt: cartExpiry() },
+  try {
+    return await prisma.cart.upsert({
+      where: { sessionId },
+      create: { sessionId, expiresAt: cartExpiry() },
+      update: { expiresAt: cartExpiry() },
       include: cartInclude,
     });
-  }
+  } catch (error) {
+    if (!isUniqueConstraintError(error)) {
+      throw error;
+    }
 
-  return cart;
+    await consolidateGuestCarts(sessionId);
+
+    const cart = await prisma.cart.findUnique({
+      where: { sessionId },
+      include: cartInclude,
+    });
+
+    if (!cart) {
+      throw error;
+    }
+
+    return cart;
+  }
 }
 
 async function getAuthUserId() {
@@ -221,8 +283,10 @@ async function resolveCartRecord(createGuest = false) {
   }
 
   if (sessionId) {
-    const cart = await prisma.cart.findFirst({
-      where: { sessionId, userId: null },
+    await consolidateGuestCarts(sessionId);
+
+    const cart = await prisma.cart.findUnique({
+      where: { sessionId },
       include: cartInclude,
     });
     if (cart) return cart;
@@ -417,8 +481,8 @@ export async function mergeGuestCartOnLogin(userId: string) {
   const sessionId = await getCartSessionId();
   if (!sessionId) return;
 
-  const guestCart = await prisma.cart.findFirst({
-    where: { sessionId, userId: null },
+  const guestCart = await prisma.cart.findUnique({
+    where: { sessionId },
     include: { items: true },
   });
 

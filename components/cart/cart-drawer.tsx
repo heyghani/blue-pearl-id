@@ -22,9 +22,11 @@ import type { CartView } from "@/lib/services/cart.service";
 export function CartDrawer({
   open,
   onClose,
+  itemCount,
 }: {
   open: boolean;
   onClose: () => void;
+  itemCount?: number;
 }) {
   const [cart, setCart] = useState<CartView | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,7 +35,7 @@ export function CartDrawer({
   const loadCart = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/cart");
+      const res = await fetch("/api/cart", { cache: "no-store" });
       const json = await res.json();
       setCart(json.data);
     } finally {
@@ -42,6 +44,7 @@ export function CartDrawer({
   }, []);
 
   const hasItems = cart && cart.items.length > 0;
+  const displayCount = cart?.itemCount ?? itemCount ?? 0;
 
   return (
     <Drawer
@@ -61,9 +64,9 @@ export function CartDrawer({
           <div className="flex items-start justify-between gap-3">
             <div>
               <DrawerTitle>Your cart</DrawerTitle>
-              {hasItems ? (
+              {hasItems || displayCount > 0 ? (
                 <DrawerDescription>
-                  {cart.itemCount} {cart.itemCount === 1 ? "item" : "items"}
+                  {displayCount} {displayCount === 1 ? "item" : "items"}
                 </DrawerDescription>
               ) : null}
             </div>

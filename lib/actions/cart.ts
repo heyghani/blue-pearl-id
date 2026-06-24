@@ -18,6 +18,12 @@ export type CartActionState = {
   success?: string;
 };
 
+function revalidateCartPaths() {
+  revalidatePath("/", "layout");
+  revalidatePath("/cart", "layout");
+  revalidatePath("/products", "layout");
+}
+
 export async function addToCartAction(
   productId: string,
   quantity = 1,
@@ -35,8 +41,7 @@ export async function addToCartAction(
   );
   if (result.error) return { error: result.error };
 
-  revalidatePath("/", "layout");
-  revalidatePath("/cart");
+  revalidateCartPaths();
   return { success: "Added to cart" };
 }
 
@@ -52,8 +57,7 @@ export async function updateCartItemAction(
   const result = await updateCartItem(itemId, parsed.data.quantity);
   if (result.error && !result.cart) return { error: result.error };
 
-  revalidatePath("/", "layout");
-  revalidatePath("/cart");
+  revalidateCartPaths();
   return result.error ? { error: result.error } : { success: "Cart updated" };
 }
 
@@ -63,8 +67,7 @@ export async function removeCartItemAction(
   const result = await removeCartItem(itemId);
   if (result.error) return { error: result.error };
 
-  revalidatePath("/", "layout");
-  revalidatePath("/cart");
+  revalidateCartPaths();
   return { success: "Item removed" };
 }
 

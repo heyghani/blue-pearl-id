@@ -304,7 +304,7 @@ model Cart {
   id        String     @id @default(cuid())
   userId    String?    @unique
   user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionId String?
+  sessionId String? @unique
   items     CartItem[]
 
   createdAt DateTime  @default(now())
