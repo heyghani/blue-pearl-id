@@ -21,9 +21,12 @@ async function fetchCart(): Promise<CartView> {
   return payload.data ?? emptyCart;
 }
 
-export function useCart(initialCart?: CartView) {
+export function useCart(initialItemCount = 0) {
   const pathname = usePathname();
-  const [cart, setCart] = useState<CartView>(initialCart ?? emptyCart);
+  const [cart, setCart] = useState<CartView>(() => ({
+    ...emptyCart,
+    itemCount: initialItemCount,
+  }));
   const [isLoading, setIsLoading] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -36,10 +39,12 @@ export function useCart(initialCart?: CartView) {
   }, []);
 
   useEffect(() => {
-    if (initialCart) {
-      setCart(initialCart);
-    }
-  }, [initialCart]);
+    setCart((current) =>
+      current.items.length === 0
+        ? { ...current, itemCount: initialItemCount }
+        : current,
+    );
+  }, [initialItemCount]);
 
   useEffect(() => {
     void refresh();

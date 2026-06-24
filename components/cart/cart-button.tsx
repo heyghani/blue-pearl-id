@@ -17,12 +17,7 @@ export function CartButton({
   className?: string;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { cart, itemCount, isLoading, refresh } = useCart({
-    id: null,
-    items: [],
-    itemCount: initialCount,
-    subtotal: "0.00",
-  });
+  const { cart, itemCount, isLoading, refresh } = useCart(initialCount);
 
   return (
     <>
@@ -56,12 +51,7 @@ export function CartButton({
 }
 
 export function CartLink({ itemCount: initialCount }: { itemCount: number }) {
-  const { itemCount } = useCart({
-    id: null,
-    items: [],
-    itemCount: initialCount,
-    subtotal: "0.00",
-  });
+  const { itemCount } = useCart(initialCount);
 
   return (
     <Button variant="ghost" size="icon" className="relative" asChild>

@@ -40,9 +40,7 @@ export function CartDrawer({
       direction={direction}
       shouldScaleBackground={false}
       onOpenChange={(next) => {
-        if (next) {
-          void onRefresh();
-        } else {
+        if (!next) {
           onClose();
         }
       }}
