@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useState } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
 
@@ -22,29 +21,18 @@ import type { CartView } from "@/lib/services/cart.service";
 export function CartDrawer({
   open,
   onClose,
-  itemCount,
+  cart,
+  isLoading,
+  onRefresh,
 }: {
   open: boolean;
   onClose: () => void;
-  itemCount?: number;
+  cart: CartView;
+  isLoading: boolean;
+  onRefresh: () => Promise<void>;
 }) {
-  const [cart, setCart] = useState<CartView | null>(null);
-  const [loading, setLoading] = useState(false);
   const direction = useDrawerDirection(open);
-
-  const loadCart = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/cart", { cache: "no-store" });
-      const json = await res.json();
-      setCart(json.data);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const hasItems = cart && cart.items.length > 0;
-  const displayCount = cart?.itemCount ?? itemCount ?? 0;
+  const hasItems = cart.items.length > 0;
 
   return (
     <Drawer
@@ -53,7 +41,7 @@ export function CartDrawer({
       shouldScaleBackground={false}
       onOpenChange={(next) => {
         if (next) {
-          void loadCart();
+          void onRefresh();
         } else {
           onClose();
         }
@@ -64,9 +52,9 @@ export function CartDrawer({
           <div className="flex items-start justify-between gap-3">
             <div>
               <DrawerTitle>Your cart</DrawerTitle>
-              {hasItems || displayCount > 0 ? (
+              {hasItems ? (
                 <DrawerDescription>
-                  {displayCount} {displayCount === 1 ? "item" : "items"}
+                  {cart.itemCount} {cart.itemCount === 1 ? "item" : "items"}
                 </DrawerDescription>
               ) : null}
             </div>
@@ -79,7 +67,7 @@ export function CartDrawer({
         </DrawerHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
-          {loading && !cart ? (
+          {isLoading && !hasItems ? (
             <div className="space-y-4 py-2">
               {[1, 2].map((i) => (
                 <div key={i} className="flex gap-3">
@@ -95,7 +83,7 @@ export function CartDrawer({
             <ul className="divide-y">
               {cart.items.map((item) => (
                 <li key={item.id} className="py-4 first:pt-1">
-                  <CartItemRow item={item} compact onUpdated={loadCart} />
+                  <CartItemRow item={item} compact onUpdated={onRefresh} />
                 </li>
               ))}
             </ul>

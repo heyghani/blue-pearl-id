@@ -5,8 +5,10 @@ import { CartItemRow } from "@/components/cart/cart-item";
 import { OrderSummary } from "@/components/cart/order-summary";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { addToCart, getCart } from "@/lib/services/cart.service";
 import { getProductBySlug } from "@/lib/products";
+import { addToCart, getCart } from "@/lib/services/cart.service";
+
+export const dynamic = "force-dynamic";
 
 export default async function CartPage({
   searchParams,

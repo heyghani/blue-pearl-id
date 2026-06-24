@@ -55,6 +55,7 @@ export function CartItemRow({
             fill
             className="object-cover"
             sizes="80px"
+            unoptimized={item.product.imageUrl.startsWith("http")}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-xs text-muted-foreground">

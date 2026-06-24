@@ -6,7 +6,7 @@ import { ShoppingBag } from "lucide-react";
 
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { Button } from "@/components/ui/button";
-import { useCartCount } from "@/lib/hooks/use-cart-count";
+import { useCart } from "@/lib/hooks/use-cart";
 import { cn } from "@/lib/utils";
 
 export function CartButton({
@@ -17,7 +17,12 @@ export function CartButton({
   className?: string;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const itemCount = useCartCount(initialCount);
+  const { cart, itemCount, isLoading, refresh } = useCart({
+    id: null,
+    items: [],
+    itemCount: initialCount,
+    subtotal: "0.00",
+  });
 
   return (
     <>
@@ -25,7 +30,10 @@ export function CartButton({
         variant="ghost"
         size="icon"
         className={cn("relative", className)}
-        onClick={() => setDrawerOpen(true)}
+        onClick={() => {
+          setDrawerOpen(true);
+          void refresh();
+        }}
         aria-label={`Cart, ${itemCount} items`}
       >
         <ShoppingBag className="h-5 w-5" />
@@ -39,14 +47,21 @@ export function CartButton({
       <CartDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        itemCount={itemCount}
+        cart={cart}
+        isLoading={isLoading}
+        onRefresh={refresh}
       />
     </>
   );
 }
 
 export function CartLink({ itemCount: initialCount }: { itemCount: number }) {
-  const itemCount = useCartCount(initialCount);
+  const { itemCount } = useCart({
+    id: null,
+    items: [],
+    itemCount: initialCount,
+    subtotal: "0.00",
+  });
 
   return (
     <Button variant="ghost" size="icon" className="relative" asChild>

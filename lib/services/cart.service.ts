@@ -5,6 +5,10 @@ import {
   getCartSessionId,
   setCartSessionId,
 } from "@/lib/cart/cookie";
+import {
+  getAvailableQuantity,
+  getItemAvailability,
+} from "@/lib/cart/availability";
 import { prisma } from "@/lib/db";
 
 function isUniqueConstraintError(error: unknown) {
@@ -65,11 +69,6 @@ function emptyCart(): CartView {
   return { id: null, items: [], itemCount: 0, subtotal: "0.00" };
 }
 
-function getAvailableQuantity(inventory?: { quantity: number } | null) {
-  if (!inventory) return 99;
-  return Math.max(0, inventory.quantity);
-}
-
 function getVariantLabel(
   variant?: {
     optionValues: {
@@ -82,29 +81,6 @@ function getVariantLabel(
   return variant.optionValues
     .map((entry) => entry.optionValue.value)
     .join(" / ");
-}
-
-function getItemAvailability(item: {
-  product: {
-    isActive: boolean;
-    deletedAt: Date | null;
-    inventory: { quantity: number } | null;
-  };
-  variant?: { quantity: number; isActive: boolean } | null;
-}) {
-  if (!item.product.isActive || item.product.deletedAt) {
-    return { inStock: false, maxQuantity: 0 };
-  }
-
-  if (item.variant) {
-    const maxQuantity = item.variant.isActive
-      ? Math.max(0, item.variant.quantity)
-      : 0;
-    return { inStock: maxQuantity > 0, maxQuantity };
-  }
-
-  const maxQuantity = getAvailableQuantity(item.product.inventory);
-  return { inStock: maxQuantity > 0, maxQuantity };
 }
 
 function getItemUnitPrice(item: {
@@ -128,6 +104,7 @@ function toLineItem(item: {
     price: Prisma.Decimal;
     isActive: boolean;
     deletedAt: Date | null;
+    hasVariants: boolean;
     images: { url: string }[];
     inventory: { quantity: number } | null;
   };
@@ -279,6 +256,9 @@ async function resolveCartRecord(createGuest = false) {
   const sessionId = await getCartSessionId();
 
   if (userId) {
+    if (sessionId) {
+      await mergeGuestCartOnLogin(userId);
+    }
     return getOrCreateUserCart(userId);
   }
 
