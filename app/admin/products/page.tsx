@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { ProductStatusToggle } from "@/components/admin/product-status-toggle";
 import { listAdminProducts } from "@/lib/services/admin/product.service";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Price } from "@/components/shared/price";
 import { Badge } from "@/components/ui/badge";
 
@@ -21,26 +23,25 @@ export default async function AdminProductsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
-          <p className="text-muted-foreground">Manage catalog and inventory.</p>
-        </div>
-        <Button asChild>
-          <Link href="/admin/products/new">Add product</Link>
-        </Button>
-      </div>
+      <AdminPageHeader
+        title="Products"
+        description="Manage catalog, pricing, and inventory."
+        action={
+          <Button asChild>
+            <Link href="/admin/products/new">Add product</Link>
+          </Button>
+        }
+      />
 
       <form className="max-w-md">
-        <input
+        <Input
           name="search"
           defaultValue={params.search ?? ""}
           placeholder="Search products…"
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
       </form>
 
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="border-b bg-muted/40 text-muted-foreground">
             <tr>
@@ -52,7 +53,20 @@ export default async function AdminProductsPage({
             </tr>
           </thead>
           <tbody className="divide-y">
-            {products.map((product) => (
+            {products.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-12 text-center">
+                  <p className="font-medium">No products yet</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Add your first product to start selling.
+                  </p>
+                  <Button className="mt-4" size="sm" asChild>
+                    <Link href="/admin/products/new">Add product</Link>
+                  </Button>
+                </td>
+              </tr>
+            ) : (
+              products.map((product) => (
               <tr key={product.id} className="hover:bg-muted/30">
                 <td className="px-4 py-3">
                   <Link
@@ -106,7 +120,8 @@ export default async function AdminProductsPage({
                   </div>
                 </td>
               </tr>
-            ))}
+              ))
+            )}
           </tbody>
         </table>
       </div>

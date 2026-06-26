@@ -161,7 +161,7 @@ export function ImageUploadField({
           ) : null}
 
           <p className="text-xs text-muted-foreground">
-            JPG, PNG, WebP, or GIF up to 5 MB. On production, upload needs R2 or Vercel Blob — or paste a URL.
+            JPG, PNG, WebP, or GIF up to 5 MB. You can also paste an image URL.
           </p>
 
           {error ? <p className="text-xs text-destructive">{error}</p> : null}

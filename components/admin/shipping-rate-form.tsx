@@ -38,7 +38,6 @@ export function ShippingRateForm({
     <form action={formAction} className="space-y-4 rounded-lg border p-4">
       <div>
         <h3 className="font-medium">{name}</h3>
-        <p className="text-sm text-muted-foreground">{method}</p>
       </div>
 
       {state.error && (

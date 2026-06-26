@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { authConfig } from "@/lib/auth.config";
 import { prisma } from "@/lib/db";
+import { isEmailVerificationEnabled } from "@/lib/email-verification";
 import { mergeGuestCartOnLogin } from "@/lib/services/cart.service";
 
 class EmailNotVerifiedError extends CredentialsSignin {
@@ -50,7 +51,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
         if (!valid) return null;
 
-        if (!user.emailVerified) {
+        if (!user.emailVerified && isEmailVerificationEnabled()) {
           throw new EmailNotVerifiedError();
         }
 

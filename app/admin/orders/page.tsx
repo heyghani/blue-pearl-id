@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { OrderStatus } from "@prisma/client";
 
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { listAdminOrders } from "@/lib/services/admin/order.service";
+import { Input } from "@/components/ui/input";
 import { Price } from "@/components/shared/price";
 
 export default async function AdminOrdersPage({
@@ -24,18 +26,17 @@ export default async function AdminOrdersPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Orders</h1>
-        <p className="text-muted-foreground">View and fulfill customer orders.</p>
-      </div>
+      <AdminPageHeader
+        title="Orders"
+        description="View, fulfill, and manage customer orders."
+      />
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <form className="max-w-md flex-1">
-          <input
+          <Input
             name="search"
             defaultValue={params.search ?? ""}
             placeholder="Search by order # or email…"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           />
         </form>
         <div className="flex flex-wrap gap-2">
@@ -57,7 +58,7 @@ export default async function AdminOrdersPage({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="border-b bg-muted/40 text-muted-foreground">
             <tr>

@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { listCustomers } from "@/lib/services/admin/customer.service";
+import { Input } from "@/components/ui/input";
 
 export default async function AdminCustomersPage({
   searchParams,
@@ -16,21 +18,20 @@ export default async function AdminCustomersPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Customers</h1>
-        <p className="text-muted-foreground">Registered customer accounts.</p>
-      </div>
+      <AdminPageHeader
+        title="Customers"
+        description="Registered customer accounts and order history."
+      />
 
       <form className="max-w-md">
-        <input
+        <Input
           name="search"
           defaultValue={params.search ?? ""}
           placeholder="Search by name or email…"
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
       </form>
 
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="border-b bg-muted/40 text-muted-foreground">
             <tr>

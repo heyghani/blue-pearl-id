@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 
 import { signIn, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { isEmailVerificationEnabled } from "@/lib/email-verification";
 import {
   sendPasswordResetEmail,
   sendVerificationEmail,
@@ -60,7 +61,8 @@ export async function registerAction(
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
-  const token = generateToken();
+  const requireEmailVerification = isEmailVerificationEnabled();
+  const token = requireEmailVerification ? generateToken() : null;
 
   await prisma.$transaction(async (tx) => {
     await tx.user.create({
@@ -68,23 +70,28 @@ export async function registerAction(
         email,
         name: parsed.data.name,
         passwordHash,
+        ...(requireEmailVerification ? {} : { emailVerified: new Date() }),
       },
     });
 
-    await tx.verificationToken.create({
-      data: {
-        identifier: email,
-        token,
-        expires: verificationExpiry(),
-      },
-    });
+    if (token) {
+      await tx.verificationToken.create({
+        data: {
+          identifier: email,
+          token,
+          expires: verificationExpiry(),
+        },
+      });
+    }
   });
 
-  const emailResult = await sendVerificationEmail(email, token);
-  if (!emailResult.ok) {
-    return {
-      error: "Account created but verification email could not be sent. Please contact support.",
-    };
+  if (token) {
+    const emailResult = await sendVerificationEmail(email, token);
+    if (!emailResult.ok) {
+      return {
+        error: "Account created but verification email could not be sent. Please contact support.",
+      };
+    }
   }
 
   redirect("/login?registered=1");
@@ -106,7 +113,7 @@ export async function loginAction(
   const email = parsed.data.email.toLowerCase();
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (user && !user.emailVerified) {
+  if (user && !user.emailVerified && isEmailVerificationEnabled()) {
     return {
       error:
         "Please verify your email before signing in. Check your inbox for the verification link.",

@@ -1,8 +1,10 @@
 import Link from "next/link";
 
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { StatCard } from "@/components/admin/stat-card";
 import { Price } from "@/components/shared/price";
+import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/currency";
 import { getAdminAnalytics } from "@/lib/services/admin/analytics.service";
 
@@ -11,10 +13,15 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Store overview and recent activity.</p>
-      </div>
+      <AdminPageHeader
+        title="Dashboard"
+        description="Store performance, orders, and inventory at a glance."
+        action={
+          <Button variant="outline" asChild>
+            <Link href="/admin/orders">View all orders</Link>
+          </Button>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Revenue" value={formatPrice(analytics.revenue)} />
@@ -32,7 +39,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-lg border">
+        <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
           <div className="border-b px-4 py-3">
             <h2 className="font-medium">Recent orders</h2>
           </div>
@@ -62,7 +69,7 @@ export default async function AdminDashboardPage() {
           </div>
         </section>
 
-        <section className="rounded-lg border">
+        <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
           <div className="border-b px-4 py-3">
             <h2 className="font-medium">Top products</h2>
           </div>

@@ -17,6 +17,8 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
+    "admin:create": "tsx scripts/admin-user.ts create",
+    "admin:password": "tsx scripts/admin-user.ts password",
     "postinstall": "prisma generate"
   },
   "prisma": {
