@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { ENABLE_CREDIT_CARD_PAYMENT } from "@/lib/constants";
 import { initiatePayment, retryPayment } from "@/lib/services/payment.service";
 
 export async function POST(request: Request) {
@@ -11,6 +12,13 @@ export async function POST(request: Request) {
   if (!orderNumber || !paymentMethod || !idempotencyKey) {
     return NextResponse.json(
       { error: { message: "Invalid request." } },
+      { status: 400 },
+    );
+  }
+
+  if (paymentMethod === "CREDIT_CARD" && !ENABLE_CREDIT_CARD_PAYMENT) {
+    return NextResponse.json(
+      { error: { message: "Credit card payments are not available right now." } },
       { status: 400 },
     );
   }

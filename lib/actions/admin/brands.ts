@@ -110,13 +110,23 @@ export async function updateBrandAction(
   }
 }
 
-export async function deleteBrandAction(brandId: string): Promise<void> {
+export async function deleteBrandAction(formData: FormData): Promise<void> {
   const admin = await requireAdmin();
   if (!admin) return;
 
-  await deleteBrand(brandId);
-  revalidateBrandPaths();
-  redirect("/admin/brands");
+  const brandId = formData.get("id");
+  if (typeof brandId !== "string" || !brandId) return;
+
+  try {
+    await deleteBrand(brandId);
+    revalidateBrandPaths();
+    redirect("/admin/brands");
+  } catch (error) {
+    rethrowIfRedirect(error);
+    redirect(
+      `/admin/brands/${brandId}/edit?error=${encodeURIComponent(formatAdminError(error, "Could not delete brand."))}`,
+    );
+  }
 }
 
 export async function toggleBrandActiveAction(

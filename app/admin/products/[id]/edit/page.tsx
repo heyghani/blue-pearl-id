@@ -77,7 +77,8 @@ export default async function EditProductPage({ params }: Props) {
       />
 
       <ConfirmDeleteForm
-        action={deleteProductAction.bind(null, product.id)}
+        action={deleteProductAction}
+        id={product.id}
         label="Delete product"
         confirmMessage={`Delete "${product.name}"? This cannot be undone.`}
       />

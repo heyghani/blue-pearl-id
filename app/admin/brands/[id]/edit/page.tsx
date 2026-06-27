@@ -45,7 +45,8 @@ export default async function EditBrandPage({ params }: Props) {
 
       {brand._count.products === 0 ? (
         <ConfirmDeleteForm
-          action={deleteBrandAction.bind(null, brand.id)}
+          action={deleteBrandAction}
+          id={brand.id}
           label="Delete brand"
           confirmMessage={`Delete "${brand.name}"? This cannot be undone.`}
         />

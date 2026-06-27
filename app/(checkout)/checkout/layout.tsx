@@ -16,7 +16,10 @@ export default async function CheckoutLayout({
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/60 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="font-display text-lg font-semibold tracking-tight">
+          <Link
+            href="/"
+            className="max-w-[11rem] font-display text-xs font-semibold leading-tight tracking-tight sm:max-w-none sm:text-base md:text-lg"
+          >
             {APP_NAME}
           </Link>
           <Link

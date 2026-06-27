@@ -119,9 +119,12 @@ export async function updateCategoryAction(
   }
 }
 
-export async function deleteCategoryAction(categoryId: string): Promise<void> {
+export async function deleteCategoryAction(formData: FormData): Promise<void> {
   const admin = await requireAdmin();
   if (!admin) return;
+
+  const categoryId = formData.get("id");
+  if (typeof categoryId !== "string" || !categoryId) return;
 
   try {
     await deleteCategory(categoryId);

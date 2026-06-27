@@ -9,6 +9,7 @@ import {
   getCheckoutDraft,
   setCheckoutDraft,
 } from "@/lib/checkout/draft";
+import { ENABLE_CREDIT_CARD_PAYMENT } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import {
   calculateCheckoutTotals,
@@ -171,6 +172,13 @@ export async function placeOrderAction(
 
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };
+  }
+
+  if (
+    parsed.data.paymentMethod === "CREDIT_CARD" &&
+    !ENABLE_CREDIT_CARD_PAYMENT
+  ) {
+    return { error: "Credit card payments are not available right now." };
   }
 
   const idempotencyKey = formData.get("idempotencyKey");

@@ -1,7 +1,9 @@
-export const APP_NAME = "Blue Pearl ID";
+export const APP_NAME = "Global Luxury OEM Factory - Shipping Worldwide";
 export const APP_DESCRIPTION =
-  "Pearl jewelry — necklaces, earrings, bracelets, rings, and more.";
+  "Luxury OEM handbags and accessories — crafted with timeless design, shipped worldwide.";
 export const CURRENCY = "USD";
+export const ENABLE_CREDIT_CARD_PAYMENT =
+  process.env.NEXT_PUBLIC_ENABLE_CREDIT_CARD_PAYMENT === "true";
 export const TAX_NOTICE =
   "Import duties and local taxes are not included. Your carrier may collect them on delivery.";
 export const SUPPORT_EMAIL = "support@bluepearlid.com";

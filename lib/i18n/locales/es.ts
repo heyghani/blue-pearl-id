@@ -13,10 +13,10 @@ export const es: Dictionary = {
     closeMenu: "Cerrar menú",
   },
   home: {
-    eyebrow: "Nueva temporada",
-    headline: "Perlas para el día a día",
+    eyebrow: "Envío mundial",
+    headline: "Diseño eterno, adaptado a la vida moderna",
     subhead:
-      "Collares, aretes, pulseras y anillos — elegidos por brillo y comodidad.",
+      "Bolsos y accesorios de lujo OEM — artesanía atemporal para la vida de hoy.",
     shopNow: "Comprar",
     viewFeatured: "Ver destacados",
     trustLine: "",

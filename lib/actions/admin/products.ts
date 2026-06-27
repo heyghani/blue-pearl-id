@@ -190,13 +190,23 @@ export async function updateProductAction(
   }
 }
 
-export async function deleteProductAction(productId: string): Promise<void> {
+export async function deleteProductAction(formData: FormData): Promise<void> {
   const admin = await requireAdmin();
   if (!admin) return;
 
-  await deleteProduct(productId);
-  revalidateProductPaths();
-  redirect("/admin/products");
+  const productId = formData.get("id");
+  if (typeof productId !== "string" || !productId) return;
+
+  try {
+    await deleteProduct(productId);
+    revalidateProductPaths();
+    redirect("/admin/products");
+  } catch (error) {
+    rethrowIfRedirect(error);
+    redirect(
+      `/admin/products/${productId}/edit?error=${encodeURIComponent(formatAdminError(error, "Could not delete product."))}`,
+    );
+  }
 }
 
 export async function toggleProductActiveAction(

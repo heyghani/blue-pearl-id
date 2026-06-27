@@ -13,9 +13,9 @@ export const zh: Dictionary = {
     closeMenu: "关闭菜单",
   },
   home: {
-    eyebrow: "本季新品",
-    headline: "日常佩戴的珍珠",
-    subhead: "项链、耳环、手链与戒指——注重光泽与日常搭配。",
+    eyebrow: "全球配送",
+    headline: "永恒设计，为现代生活量身定制",
+    subhead: "奢华 OEM 手袋与配饰——永恒工艺，契合当代生活方式。",
     shopNow: "去选购",
     viewFeatured: "看精选",
     trustLine: "",

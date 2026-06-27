@@ -54,11 +54,11 @@ export default async function HomePage() {
       <section className="relative -mx-4 overflow-hidden sm:mx-0 sm:rounded-3xl">
         <div className="relative aspect-[4/5] sm:aspect-[21/9] sm:min-h-[420px]">
           <Image
-            src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=1920&q=80"
+            src="/images/hero-cover.png"
             alt=""
             fill
             priority
-            className="object-cover object-[center_30%]"
+            className="object-cover object-[center_35%]"
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/10 sm:bg-gradient-to-r sm:from-black/70 sm:via-black/35 sm:to-transparent" />

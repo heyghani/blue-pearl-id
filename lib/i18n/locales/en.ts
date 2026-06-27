@@ -13,9 +13,10 @@ export const en: Dictionary = {
     closeMenu: "Close menu",
   },
   home: {
-    eyebrow: "New season",
-    headline: "Pearls for every day",
-    subhead: "Necklaces, earrings, bracelets, and rings — chosen for luster and wearability.",
+    eyebrow: "Worldwide shipping",
+    headline: "Eternal Design, Tailored for Modern Life",
+    subhead:
+      "Luxury OEM handbags and accessories — timeless craftsmanship for the way you live today.",
     shopNow: "Shop now",
     viewFeatured: "See featured",
     trustLine: "",

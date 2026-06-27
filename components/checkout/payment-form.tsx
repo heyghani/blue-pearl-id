@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ENABLE_CREDIT_CARD_PAYMENT } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const initialState: CheckoutActionState = {};
@@ -46,6 +47,28 @@ export function PaymentForm({
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">Payment method</h2>
         <div className="space-y-3">
+          {ENABLE_CREDIT_CARD_PAYMENT ? (
+            <label
+              className={cn(
+                "flex cursor-pointer items-center gap-3 rounded-lg border p-4",
+                "has-[:checked]:border-primary has-[:checked]:bg-muted/30",
+              )}
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="CREDIT_CARD"
+                defaultChecked
+                required
+              />
+              <div>
+                <p className="font-medium">Credit / Debit Card</p>
+                <p className="text-sm text-muted-foreground">
+                  Secure payment via Midtrans
+                </p>
+              </div>
+            </label>
+          ) : null}
           <label
             className={cn(
               "flex cursor-pointer items-center gap-3 rounded-lg border p-4",
@@ -55,24 +78,10 @@ export function PaymentForm({
             <input
               type="radio"
               name="paymentMethod"
-              value="CREDIT_CARD"
-              defaultChecked
+              value="PAYPAL"
+              defaultChecked={!ENABLE_CREDIT_CARD_PAYMENT}
               required
             />
-            <div>
-              <p className="font-medium">Credit / Debit Card</p>
-              <p className="text-sm text-muted-foreground">
-                Secure payment via Midtrans
-              </p>
-            </div>
-          </label>
-          <label
-            className={cn(
-              "flex cursor-pointer items-center gap-3 rounded-lg border p-4",
-              "has-[:checked]:border-primary has-[:checked]:bg-muted/30",
-            )}
-          >
-            <input type="radio" name="paymentMethod" value="PAYPAL" />
             <div>
               <p className="font-medium">PayPal</p>
               <p className="text-sm text-muted-foreground">

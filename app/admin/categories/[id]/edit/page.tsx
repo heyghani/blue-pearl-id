@@ -62,7 +62,8 @@ export default async function EditCategoryPage({ params, searchParams }: Props) 
 
       {category._count.products === 0 && category.children.length === 0 ? (
         <ConfirmDeleteForm
-          action={deleteCategoryAction.bind(null, category.id)}
+          action={deleteCategoryAction}
+          id={category.id}
           label="Delete category"
           confirmMessage={`Delete "${category.name}"? This cannot be undone.`}
         />

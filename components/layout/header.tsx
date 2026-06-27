@@ -31,7 +31,7 @@ export async function Header() {
           <MobileNav />
           <Link
             href="/"
-            className="font-display text-lg font-semibold tracking-tight sm:text-xl"
+            className="max-w-[11rem] font-display text-xs font-semibold leading-tight tracking-tight sm:max-w-none sm:text-base md:text-lg lg:text-xl"
           >
             {APP_NAME}
           </Link>

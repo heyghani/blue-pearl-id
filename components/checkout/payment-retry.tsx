@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ENABLE_CREDIT_CARD_PAYMENT } from "@/lib/constants";
 
 export function PaymentRetry({
   orderNumber,
@@ -66,13 +67,15 @@ export function PaymentRetry({
         )}
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button
-            disabled={loading}
-            onClick={() => retry("CREDIT_CARD")}
-            variant={defaultMethod === "CREDIT_CARD" ? "default" : "outline"}
-          >
-            Try card again
-          </Button>
+          {ENABLE_CREDIT_CARD_PAYMENT ? (
+            <Button
+              disabled={loading}
+              onClick={() => retry("CREDIT_CARD")}
+              variant={defaultMethod === "CREDIT_CARD" ? "default" : "outline"}
+            >
+              Try card again
+            </Button>
+          ) : null}
           <Button
             disabled={loading}
             onClick={() => retry("PAYPAL")}
