@@ -2,10 +2,14 @@ import Link from "next/link";
 
 import { ProductForm } from "@/components/admin/product-form";
 import { Button } from "@/components/ui/button";
-import { listAdminCategories } from "@/lib/services/admin/product.service";
+import { listCategoriesForProductForm } from "@/lib/services/admin/category.service";
+import { listBrandsForProductForm } from "@/lib/services/admin/brand.service";
 
 export default async function NewProductPage() {
-  const categories = await listAdminCategories();
+  const [categories, brands] = await Promise.all([
+    listCategoriesForProductForm(),
+    listBrandsForProductForm(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -19,7 +23,7 @@ export default async function NewProductPage() {
         </Button>
       </div>
 
-      <ProductForm categories={categories} />
+      <ProductForm categories={categories} brands={brands} />
     </div>
   );
 }

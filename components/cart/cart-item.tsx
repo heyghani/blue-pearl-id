@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 import { notifyCartUpdated } from "@/lib/cart/events";
+import { useTranslations } from "@/components/i18n/locale-provider";
 import {
   removeCartItemAction,
   updateCartItemAction,
@@ -25,6 +26,7 @@ export function CartItemRow({
   compact?: boolean;
   onUpdated?: () => void;
 }) {
+  const t = useTranslations();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -85,7 +87,7 @@ export function CartItemRow({
               ) : null}
             </div>
             {!item.product.inStock ? (
-              <p className="mt-1 text-xs text-destructive">Out of stock</p>
+              <p className="mt-1 text-xs text-destructive">{t.cart.outOfStock}</p>
             ) : null}
           </div>
 
@@ -105,7 +107,7 @@ export function CartItemRow({
               onClick={() =>
                 mutate(() => updateCartItemAction(item.id, item.quantity - 1))
               }
-              aria-label="Decrease quantity"
+              aria-label={t.cart.decreaseQuantity}
             >
               <Minus className="h-3 w-3" />
             </Button>
@@ -125,7 +127,7 @@ export function CartItemRow({
               onClick={() =>
                 mutate(() => updateCartItemAction(item.id, item.quantity + 1))
               }
-              aria-label="Increase quantity"
+              aria-label={t.cart.increaseQuantity}
             >
               <Plus className="h-3 w-3" />
             </Button>
@@ -138,7 +140,7 @@ export function CartItemRow({
             className="h-8 w-8 rounded-full text-muted-foreground hover:text-destructive"
             disabled={isPending}
             onClick={() => mutate(() => removeCartItemAction(item.id))}
-            aria-label="Remove item"
+            aria-label={t.cart.removeItem}
           >
             <Trash2 className="h-4 w-4" />
           </Button>

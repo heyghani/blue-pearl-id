@@ -48,6 +48,7 @@ export async function listAdminProducts({
       where,
       include: {
         category: { select: { name: true } },
+        brand: { select: { name: true } },
         images: { where: { isPrimary: true }, take: 1 },
         inventory: true,
         variants: { where: { isActive: true }, select: { quantity: true } },
@@ -67,6 +68,7 @@ export async function getAdminProduct(id: string) {
     where: { id, deletedAt: null },
     include: {
       category: true,
+      brand: true,
       images: { orderBy: { sortOrder: "asc" } },
       inventory: true,
       ...variantInclude,
@@ -81,6 +83,8 @@ export type ProductInput = {
   price: number;
   compareAtPrice?: number | null;
   categoryId?: string | null;
+  brandId?: string | null;
+  tags?: string[];
   shortDescription?: string | null;
   description?: string | null;
   imageUrl?: string | null;
@@ -214,6 +218,8 @@ export async function createProduct(input: ProductInput) {
         price: input.price,
         compareAtPrice: input.compareAtPrice ?? null,
         categoryId: input.categoryId || null,
+        brandId: input.brandId || null,
+        tags: input.tags ?? [],
         shortDescription: input.shortDescription ?? null,
         description: input.description ?? null,
         isActive: input.isActive,
@@ -266,6 +272,8 @@ export async function updateProduct(id: string, input: ProductInput) {
         price: input.price,
         compareAtPrice: input.compareAtPrice ?? null,
         categoryId: input.categoryId || null,
+        brandId: input.brandId || null,
+        tags: input.tags ?? [],
         shortDescription: input.shortDescription ?? null,
         description: input.description ?? null,
         isActive: input.isActive,
@@ -335,14 +343,6 @@ export async function setProductActive(id: string, isActive: boolean) {
     where: { id, deletedAt: null },
     data: { isActive },
     select: { slug: true },
-  });
-}
-
-export async function listAdminCategories() {
-  return prisma.category.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: "asc" },
-    select: { id: true, name: true, slug: true },
   });
 }
 

@@ -40,6 +40,8 @@ export const productFormSchema = z
     price: z.coerce.number().positive("Price must be greater than zero."),
     compareAtPrice: z.coerce.number().positive().optional().or(z.literal("")),
     categoryId: z.string().optional(),
+    brandId: z.string().optional(),
+    tags: z.string().optional(),
     shortDescription: z.string().max(500).optional(),
     description: z.string().optional(),
     imageUrl: optionalImageUrlSchema,
@@ -136,6 +138,31 @@ export const changePasswordSchema = z
     message: "Passwords do not match.",
     path: ["confirmPassword"],
   });
+
+export const categoryFormSchema = z.object({
+  name: z.string().min(2, "Name is required."),
+  slug: z
+    .string()
+    .min(2, "Slug is required.")
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and hyphens."),
+  description: z.string().optional(),
+  imageUrl: optionalImageUrlSchema,
+  parentId: z.string().optional(),
+  sortOrder: z.coerce.number().int().min(0),
+  isActive: z.boolean(),
+});
+
+export const brandFormSchema = z.object({
+  name: z.string().min(2, "Name is required."),
+  slug: z
+    .string()
+    .min(2, "Slug is required.")
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and hyphens."),
+  logoUrl: optionalImageUrlSchema,
+  description: z.string().optional(),
+  sortOrder: z.coerce.number().int().min(0),
+  isActive: z.boolean(),
+});
 
 export const resetAdminPasswordSchema = z
   .object({

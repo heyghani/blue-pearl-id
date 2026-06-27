@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
+import { expandCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/db";
 import { getProductStockSummary } from "@/lib/products/variants";
 
@@ -10,6 +11,7 @@ export interface CatalogParams {
   limit?: number;
   search?: string;
   category?: string | string[];
+  brand?: string | string[];
   sort?: ProductSort;
   featured?: boolean;
 }
@@ -17,7 +19,8 @@ export interface CatalogParams {
 const productInclude = {
   images: { orderBy: { sortOrder: "asc" as const }, take: 1 },
   inventory: true,
-  category: { select: { name: true, slug: true } },
+  category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } },
+  brand: { select: { name: true, slug: true, logoUrl: true } },
   variants: {
     where: { isActive: true },
     select: { quantity: true, isActive: true },
@@ -26,7 +29,8 @@ const productInclude = {
 
 const productDetailInclude = {
   images: { orderBy: { sortOrder: "asc" as const } },
-  category: true,
+  category: { include: { parent: { select: { name: true, slug: true } } } },
+  brand: true,
   inventory: true,
   options: {
     orderBy: { position: "asc" as const },
@@ -57,7 +61,7 @@ function getOrderBy(sort?: ProductSort): Prisma.ProductOrderByWithRelationInput[
   }
 }
 
-function buildWhere(params: CatalogParams): Prisma.ProductWhereInput {
+function buildWhere(params: CatalogParams, categorySlugs?: string[]): Prisma.ProductWhereInput {
   const where: Prisma.ProductWhereInput = {
     isActive: true,
     deletedAt: null,
@@ -67,13 +71,23 @@ function buildWhere(params: CatalogParams): Prisma.ProductWhereInput {
     where.isFeatured = true;
   }
 
-  if (params.category) {
-    const slugs = (
-      Array.isArray(params.category) ? params.category : [params.category]
+  const categories = categorySlugs ?? (
+    params.category
+      ? (Array.isArray(params.category) ? params.category : [params.category]).filter(Boolean)
+      : []
+  );
+
+  if (categories.length > 0) {
+    where.category = { slug: { in: categories } };
+  }
+
+  if (params.brand) {
+    const brandSlugs = (
+      Array.isArray(params.brand) ? params.brand : [params.brand]
     ).filter(Boolean);
 
-    if (slugs.length > 0) {
-      where.category = { slug: { in: slugs } };
+    if (brandSlugs.length > 0) {
+      where.brand = { slug: { in: brandSlugs } };
     }
   }
 
@@ -84,6 +98,8 @@ function buildWhere(params: CatalogParams): Prisma.ProductWhereInput {
       { sku: { contains: search, mode: "insensitive" } },
       { shortDescription: { contains: search, mode: "insensitive" } },
       { description: { contains: search, mode: "insensitive" } },
+      { tags: { hasSome: [search] } },
+      { brand: { name: { contains: search, mode: "insensitive" } } },
     ];
   }
 
@@ -93,26 +109,38 @@ function buildWhere(params: CatalogParams): Prisma.ProductWhereInput {
 export async function getCatalogProducts(params: CatalogParams = {}) {
   const page = Math.max(1, params.page ?? 1);
   const limit = Math.min(48, Math.max(1, params.limit ?? 24));
-  const skip = (page - 1) * limit;
-  const where = buildWhere(params);
 
-  const [products, total] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      include: productInclude,
-      orderBy: getOrderBy(params.sort),
-      skip,
-      take: limit,
-    }),
-    prisma.product.count({ where }),
-  ]);
+  const rawCategories = params.category
+    ? (Array.isArray(params.category) ? params.category : [params.category]).filter(Boolean)
+    : [];
+
+  let categorySlugs: string[] | undefined;
+  if (rawCategories.length > 0) {
+    const expanded = await expandCategorySlugs(rawCategories);
+    categorySlugs = expanded === null ? ["__invalid_category__"] : expanded;
+  }
+
+  const where = buildWhere(params, categorySlugs);
+
+  const total = await prisma.product.count({ where });
+  const totalPages = Math.ceil(total / limit) || 1;
+  const effectivePage = Math.min(page, totalPages);
+  const skip = (effectivePage - 1) * limit;
+
+  const products = await prisma.product.findMany({
+    where,
+    include: productInclude,
+    orderBy: getOrderBy(params.sort),
+    skip,
+    take: limit,
+  });
 
   return {
     products,
     total,
-    page,
+    page: effectivePage,
     limit,
-    totalPages: Math.ceil(total / limit) || 1,
+    totalPages,
   };
 }
 
@@ -194,10 +222,13 @@ export function toProductCard(product: {
   name: string;
   price: { toString(): string };
   compareAtPrice?: { toString(): string } | null;
+  imageUrl?: string | null;
   images: { url: string }[];
   inventory?: { quantity: number } | null;
   hasVariants?: boolean;
   variants?: { quantity: number; isActive: boolean }[];
+  brand?: { name: string; slug: string } | null;
+  tags?: string[];
 }) {
   const stock = getProductStockSummary(product);
 
@@ -208,6 +239,8 @@ export function toProductCard(product: {
     compareAtPrice: product.compareAtPrice?.toString() ?? null,
     imageUrl: product.images[0]?.url ?? null,
     inStock: stock.inStock,
+    brandName: product.brand?.name ?? null,
+    tags: product.tags ?? [],
   };
 }
 

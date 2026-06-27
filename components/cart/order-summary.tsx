@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 
+import { useTranslations } from "@/components/i18n/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { DutiesNotice } from "@/components/shared/duties-notice";
@@ -20,7 +23,11 @@ export function OrderSummary({
   variant?: "full" | "drawer";
   onCheckoutClick?: () => void;
 }) {
-  const itemLabel = cart.itemCount === 1 ? "item" : "items";
+  const t = useTranslations();
+  const itemLabel = cart.itemCount === 1 ? t.cart.item : t.cart.items;
+  const subtotalLabel = t.cart.subtotalWithCount
+    .replace("{count}", String(cart.itemCount))
+    .replace("{label}", itemLabel);
   const isDrawer = variant === "drawer";
 
   return (
@@ -31,20 +38,18 @@ export function OrderSummary({
       )}
     >
       {!isDrawer ? (
-        <h2 className="text-lg font-semibold">Order summary</h2>
+        <h2 className="text-lg font-semibold">{t.cart.orderSummary}</h2>
       ) : null}
 
       <div className={cn("space-y-2", isDrawer ? "text-sm" : "text-sm")}>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-muted-foreground">
-            Subtotal ({cart.itemCount} {itemLabel})
-          </span>
+          <span className="text-muted-foreground">{subtotalLabel}</span>
           <Price amount={cart.subtotal} className={isDrawer ? "text-sm font-semibold" : undefined} />
         </div>
         {!isDrawer ? (
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Shipping</span>
-            <span className="text-muted-foreground">Calculated at checkout</span>
+            <span className="text-muted-foreground">{t.cart.shipping}</span>
+            <span className="text-muted-foreground">{t.cart.shippingAtCheckout}</span>
           </div>
         ) : null}
       </div>
@@ -53,7 +58,7 @@ export function OrderSummary({
         <>
           <Separator />
           <div className="flex justify-between font-medium">
-            <span>Estimated total</span>
+            <span>{t.cart.estimatedTotal}</span>
             <Price amount={cart.subtotal} />
           </div>
           <DutiesNotice />
@@ -67,7 +72,7 @@ export function OrderSummary({
           asChild
         >
           <Link href="/checkout" onClick={onCheckoutClick}>
-            Proceed to checkout
+            {t.cart.proceedToCheckout}
           </Link>
         </Button>
       ) : null}

@@ -13,7 +13,7 @@ type Props = {
   label?: string;
   value?: string | null;
   onChange?: (url: string) => void;
-  folder?: "products" | "variants";
+  folder?: "products" | "variants" | "brands" | "categories";
   compact?: boolean;
   className?: string;
 };

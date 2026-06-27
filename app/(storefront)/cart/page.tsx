@@ -5,6 +5,8 @@ import { CartItemRow } from "@/components/cart/cart-item";
 import { OrderSummary } from "@/components/cart/order-summary";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 import { getProductBySlug } from "@/lib/products";
 import { addToCart, getCart } from "@/lib/services/cart.service";
 
@@ -16,13 +18,16 @@ export default async function CartPage({
   searchParams: Promise<{ buy?: string }>;
 }) {
   const { buy } = await searchParams;
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   if (buy) {
     const product = await getProductBySlug(buy);
-    if (product) {
+    if (product && !product.hasVariants) {
       await addToCart(product.id, 1);
+      redirect("/cart");
     }
-    redirect("/cart");
+    redirect(product ? `/products/${product.slug}` : "/products");
   }
 
   const cart = await getCart();
@@ -30,22 +35,22 @@ export default async function CartPage({
   if (cart.items.length === 0) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center sm:px-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Your cart is empty</h1>
-        <p className="mt-2 text-muted-foreground">
-          Browse our collection and add something you love.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t.cart.emptyTitle}</h1>
+        <p className="mt-2 text-muted-foreground">{t.cart.emptyDescription}</p>
         <Button className="mt-8" asChild>
-          <Link href="/products">Shop all products</Link>
+          <Link href="/products">{t.cart.shopAll}</Link>
         </Button>
       </div>
     );
   }
 
+  const itemLabel = cart.itemCount === 1 ? t.cart.item : t.cart.items;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-semibold tracking-tight">Your cart</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">{t.cart.title}</h1>
       <p className="mt-1 text-muted-foreground">
-        {cart.itemCount} {cart.itemCount === 1 ? "item" : "items"}
+        {cart.itemCount} {itemLabel}
       </p>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_360px]">
@@ -61,7 +66,7 @@ export default async function CartPage({
         <div className="lg:sticky lg:top-24 lg:self-start">
           <OrderSummary cart={cart} />
           <Button variant="link" className="mt-4 px-0" asChild>
-            <Link href="/products">Continue shopping</Link>
+            <Link href="/products">{t.cart.continueShopping}</Link>
           </Button>
         </div>
       </div>

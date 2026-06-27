@@ -2,12 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ProductForm } from "@/components/admin/product-form";
+import { ConfirmDeleteForm } from "@/components/admin/confirm-delete-form";
 import { Button } from "@/components/ui/button";
 import { adminVariantsToFormState } from "@/lib/products/variants";
 import {
   getAdminProduct,
-  listAdminCategories,
 } from "@/lib/services/admin/product.service";
+import { listCategoriesForProductForm } from "@/lib/services/admin/category.service";
+import { listBrandsForProductForm } from "@/lib/services/admin/brand.service";
 import { deleteProductAction } from "@/lib/actions/admin/products";
 
 type Props = {
@@ -16,14 +18,16 @@ type Props = {
 
 export default async function EditProductPage({ params }: Props) {
   const { id } = await params;
-  const [product, categories] = await Promise.all([
-    getAdminProduct(id),
-    listAdminCategories(),
-  ]);
+  const product = await getAdminProduct(id);
 
   if (!product) {
     notFound();
   }
+
+  const [categories, brands] = await Promise.all([
+    listCategoriesForProductForm(product.categoryId),
+    listBrandsForProductForm(product.brandId),
+  ]);
 
   const primaryImage = product.images.find((image) => image.isPrimary) ?? product.images[0];
   const variantState = adminVariantsToFormState(product.options, product.variants);
@@ -50,6 +54,7 @@ export default async function EditProductPage({ params }: Props) {
       <ProductForm
         productId={product.id}
         categories={categories}
+        brands={brands}
         defaults={{
           name: product.name,
           slug: product.slug,
@@ -57,6 +62,8 @@ export default async function EditProductPage({ params }: Props) {
           price: product.price.toString(),
           compareAtPrice: product.compareAtPrice?.toString() ?? null,
           categoryId: product.categoryId,
+          brandId: product.brandId,
+          tags: product.tags,
           shortDescription: product.shortDescription,
           description: product.description,
           imageUrl: primaryImage?.url ?? null,
@@ -69,11 +76,11 @@ export default async function EditProductPage({ params }: Props) {
         }}
       />
 
-      <form action={deleteProductAction.bind(null, product.id)}>
-        <Button type="submit" variant="destructive" size="sm">
-          Delete product
-        </Button>
-      </form>
+      <ConfirmDeleteForm
+        action={deleteProductAction.bind(null, product.id)}
+        label="Delete product"
+        confirmMessage={`Delete "${product.name}"? This cannot be undone.`}
+      />
     </div>
   );
 }

@@ -124,6 +124,17 @@ export default async function ProductDetailPage({ params }: Props) {
                 {product.category && (
                   <>
                     <span className="mx-2">/</span>
+                    {product.category.parent ? (
+                      <>
+                        <Link
+                          href={`/products?category=${product.category.parent.slug}`}
+                          className="hover:text-foreground"
+                        >
+                          {product.category.parent.name}
+                        </Link>
+                        <span className="mx-2">/</span>
+                      </>
+                    ) : null}
                     <Link
                       href={`/products?category=${product.category.slug}`}
                       className="hover:text-foreground"
@@ -144,6 +155,14 @@ export default async function ProductDetailPage({ params }: Props) {
                 <div className="space-y-5">
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
+                      {product.brand ? (
+                        <Link
+                          href={`/products?brand=${product.brand.slug}`}
+                          className="text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
+                        >
+                          {product.brand.name}
+                        </Link>
+                      ) : null}
                       {product.isFeatured ? (
                         <Badge className="rounded-full px-2.5">{t.catalog.featured}</Badge>
                       ) : null}
@@ -161,6 +180,16 @@ export default async function ProductDetailPage({ params }: Props) {
                     <h1 className="font-display text-xl font-semibold leading-snug tracking-tight sm:text-2xl lg:text-3xl">
                       {product.name}
                     </h1>
+
+                    {product.tags.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {product.tags.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="rounded-full px-2.5 text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : null}
 
                     {product.shortDescription ? (
                       <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">

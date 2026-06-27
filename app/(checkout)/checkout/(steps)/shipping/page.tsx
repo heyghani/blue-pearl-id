@@ -5,6 +5,8 @@ import { CheckoutSteps } from "@/components/checkout/checkout-steps";
 import { ShippingForm } from "@/components/checkout/shipping-form";
 import { getCheckoutDraft } from "@/lib/checkout/draft";
 import { requireCheckoutCart } from "@/lib/checkout/guard";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
@@ -13,7 +15,8 @@ export const metadata: Metadata = {
 
 export default async function CheckoutShippingPage() {
   await requireCheckoutCart();
-  const draft = await getCheckoutDraft();
+  const [draft, locale] = await Promise.all([getCheckoutDraft(), getLocale()]);
+  const t = getDictionary(locale);
 
   if (!draft.email) {
     redirect("/checkout/information");
@@ -27,10 +30,8 @@ export default async function CheckoutShippingPage() {
   return (
     <div>
       <CheckoutSteps current="shipping" />
-      <h1 className="text-2xl font-semibold tracking-tight">Shipping</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Where should we deliver your order?
-      </p>
+      <h1 className="text-2xl font-semibold tracking-tight">{t.checkout.shippingTitle}</h1>
+      <p className="mt-1 text-sm text-muted-foreground">{t.checkout.shippingLead}</p>
       <div className="mt-8">
         <ShippingForm
           defaultAddress={{

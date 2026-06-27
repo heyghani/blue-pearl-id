@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { ProductRail } from "@/components/catalog/product-rail";
-import { getActiveCategories } from "@/lib/categories";
+import { getActiveCategoryTree } from "@/lib/categories";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
 import {
@@ -37,10 +37,17 @@ async function getProductSections() {
 export default async function HomePage() {
   const locale = await getLocale();
   const t = getDictionary(locale);
-  const [{ featured, trending }, categories] = await Promise.all([
+  const [{ featured, trending }, categoryTree] = await Promise.all([
     getProductSections(),
-    getActiveCategories().catch(() => []),
+    getActiveCategoryTree().catch(() => []),
   ]);
+
+  const categories = categoryTree.filter(
+    (category) =>
+      category._count.products > 0 ||
+      category.children.length > 0 ||
+      category.children.some((child) => child._count.products > 0),
+  );
 
   return (
     <>

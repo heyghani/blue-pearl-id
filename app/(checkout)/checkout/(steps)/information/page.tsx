@@ -22,7 +22,7 @@ export default async function CheckoutInformationPage() {
   return (
     <div>
       <CheckoutSteps current="information" />
-      <h1 className="text-2xl font-semibold tracking-tight">Contact information</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{t.checkout.contactTitle}</h1>
       <p className="mt-1 text-sm text-muted-foreground">{t.checkout.informationLead}</p>
       <div className="mt-8">
         <CustomerInfoForm

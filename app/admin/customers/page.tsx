@@ -23,9 +23,10 @@ export default async function AdminCustomersPage({
         description="Registered customer accounts and order history."
       />
 
-      <form className="max-w-md">
+      <form className="max-w-md" method="get">
         <Input
           name="search"
+          type="search"
           defaultValue={params.search ?? ""}
           placeholder="Search by name or email…"
         />

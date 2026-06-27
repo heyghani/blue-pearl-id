@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { Search, X } from "lucide-react";
 
 import { useTranslations } from "@/components/i18n/locale-provider";
@@ -15,6 +15,13 @@ export function CatalogSearch({ className }: { className?: string }) {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const currentQuery = searchParams.get("q") ?? "";
+  const [query, setQuery] = useState(currentQuery);
+  const [prevQuery, setPrevQuery] = useState(currentQuery);
+
+  if (currentQuery !== prevQuery) {
+    setPrevQuery(currentQuery);
+    setQuery(currentQuery);
+  }
 
   const updateQuery = useCallback(
     (value: string) => {
@@ -37,31 +44,34 @@ export function CatalogSearch({ className }: { className?: string }) {
       className={cn("relative", className)}
       onSubmit={(e) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        updateQuery((formData.get("q") as string)?.trim() ?? "");
+        updateQuery(query.trim());
       }}
     >
       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         name="q"
-        defaultValue={currentQuery}
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
         placeholder={t.catalog.searchPlaceholder}
         className="rounded-full pl-9 pr-9"
         aria-label={t.nav.search}
       />
-      {currentQuery && (
+      {query ? (
         <Button
           type="button"
           variant="ghost"
           size="icon"
           className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
-          onClick={() => updateQuery("")}
+          onClick={() => {
+            setQuery("");
+            updateQuery("");
+          }}
           aria-label={t.catalog.clearSearch}
         >
           <X className="h-4 w-4" />
         </Button>
-      )}
-      {isPending && <span className="sr-only">{t.catalog.searchPlaceholder}</span>}
+      ) : null}
+      {isPending ? <span className="sr-only">{t.catalog.searchPlaceholder}</span> : null}
     </form>
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { X } from "lucide-react";
 
+import { useTranslations } from "@/components/i18n/locale-provider";
 import { CartItemRow } from "@/components/cart/cart-item";
 import { OrderSummary } from "@/components/cart/order-summary";
 import { Button } from "@/components/ui/button";
@@ -31,8 +32,10 @@ export function CartDrawer({
   isLoading: boolean;
   onRefresh: () => Promise<void>;
 }) {
+  const t = useTranslations();
   const direction = useDrawerDirection(open);
   const hasItems = cart.items.length > 0;
+  const itemLabel = cart.itemCount === 1 ? t.cart.item : t.cart.items;
 
   return (
     <Drawer
@@ -49,15 +52,15 @@ export function CartDrawer({
         <DrawerHeader className="shrink-0 border-b">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <DrawerTitle>Your cart</DrawerTitle>
+              <DrawerTitle>{t.cart.title}</DrawerTitle>
               {hasItems ? (
                 <DrawerDescription>
-                  {cart.itemCount} {cart.itemCount === 1 ? "item" : "items"}
+                  {cart.itemCount} {itemLabel}
                 </DrawerDescription>
               ) : null}
             </div>
             <DrawerClose asChild>
-              <Button variant="ghost" size="icon" className="rounded-full" aria-label="Close">
+              <Button variant="ghost" size="icon" className="rounded-full" aria-label={t.cart.close}>
                 <X className="h-5 w-5" />
               </Button>
             </DrawerClose>
@@ -87,9 +90,9 @@ export function CartDrawer({
             </ul>
           ) : (
             <div className="flex flex-col items-center justify-center px-4 py-14 text-center">
-              <p className="text-sm text-muted-foreground">Your cart is empty.</p>
+              <p className="text-sm text-muted-foreground">{t.cart.emptyDrawer}</p>
               <Button className="mt-5 rounded-full" variant="outline" asChild>
-                <Link href="/products">Continue shopping</Link>
+                <Link href="/products">{t.cart.continueShopping}</Link>
               </Button>
             </div>
           )}
@@ -105,7 +108,7 @@ export function CartDrawer({
             />
             <Button variant="link" className="h-auto w-full py-1 text-sm" asChild>
               <Link href="/cart" onClick={onClose}>
-                View full cart
+                {t.cart.viewFullCart}
               </Link>
             </Button>
           </DrawerFooter>

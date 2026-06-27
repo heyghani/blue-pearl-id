@@ -32,9 +32,10 @@ export default async function AdminOrdersPage({
       />
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <form className="max-w-md flex-1">
+        <form className="max-w-md flex-1" method="get">
           <Input
             name="search"
+            type="search"
             defaultValue={params.search ?? ""}
             placeholder="Search by order # or email…"
           />

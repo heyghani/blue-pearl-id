@@ -1,12 +1,9 @@
+"use client";
+
 import { cn } from "@/lib/utils";
+import { useTranslations } from "@/components/i18n/locale-provider";
 
-const steps = [
-  { id: "information", label: "Information", href: "/checkout/information" },
-  { id: "shipping", label: "Shipping", href: "/checkout/shipping" },
-  { id: "payment", label: "Payment", href: "/checkout/payment" },
-] as const;
-
-export type CheckoutStepId = (typeof steps)[number]["id"];
+export type CheckoutStepId = "information" | "shipping" | "payment";
 
 export function CheckoutSteps({
   current,
@@ -15,10 +12,16 @@ export function CheckoutSteps({
   current: CheckoutStepId;
   className?: string;
 }) {
-  const currentIndex = steps.findIndex((s) => s.id === current);
+  const t = useTranslations();
+  const steps = [
+    { id: "information" as const, label: t.checkout.stepInformation },
+    { id: "shipping" as const, label: t.checkout.stepShipping },
+    { id: "payment" as const, label: t.checkout.stepPayment },
+  ];
+  const currentIndex = steps.findIndex((step) => step.id === current);
 
   return (
-    <nav aria-label="Checkout progress" className={cn("mb-10", className)}>
+    <nav aria-label={t.checkout.progressLabel} className={cn("mb-10", className)}>
       <ol className="flex items-center">
         {steps.map((step, index) => {
           const isComplete = index < currentIndex;

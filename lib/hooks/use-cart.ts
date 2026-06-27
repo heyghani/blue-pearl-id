@@ -39,25 +39,32 @@ export function useCart(initialItemCount = 0) {
   }, []);
 
   useEffect(() => {
-    setCart((current) =>
-      current.items.length === 0
-        ? { ...current, itemCount: initialItemCount }
-        : current,
-    );
-  }, [initialItemCount]);
+    let active = true;
 
-  useEffect(() => {
-    void refresh();
-  }, [pathname, refresh]);
+    void fetchCart().then((data) => {
+      if (active) {
+        setCart(data);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [pathname]);
 
   useEffect(() => {
     const handleUpdate = () => {
-      void refresh();
+      void fetchCart().then(setCart);
     };
 
     window.addEventListener(CART_UPDATED_EVENT, handleUpdate);
     return () => window.removeEventListener(CART_UPDATED_EVENT, handleUpdate);
-  }, [refresh]);
+  }, []);
 
-  return { cart, itemCount: cart.itemCount, isLoading, refresh };
+  const itemCount =
+    cart.items.length === 0 && cart.itemCount === 0
+      ? initialItemCount
+      : cart.itemCount;
+
+  return { cart, itemCount, isLoading, refresh };
 }

@@ -14,6 +14,8 @@ export interface ProductCardData {
   compareAtPrice?: number | string | null;
   imageUrl?: string | null;
   inStock?: boolean;
+  brandName?: string | null;
+  tags?: string[];
 }
 
 export function ProductCard({
@@ -76,6 +78,11 @@ export function ProductCard({
         </div>
 
         <div className={cn("pt-2.5", compact && "pt-2")}>
+          {product.brandName ? (
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {product.brandName}
+            </p>
+          ) : null}
           <h3
             className={cn(
               "line-clamp-2 font-medium leading-snug text-foreground transition-colors group-hover:text-[var(--pearl)]",
@@ -84,6 +91,11 @@ export function ProductCard({
           >
             {product.name}
           </h3>
+          {product.tags && product.tags.length > 0 ? (
+            <p className="mt-1 line-clamp-1 text-[11px] text-muted-foreground">
+              {product.tags.join(" · ")}
+            </p>
+          ) : null}
           {!priceOnImage ? (
             <Price
               amount={product.price}

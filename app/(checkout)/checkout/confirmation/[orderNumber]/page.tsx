@@ -9,6 +9,8 @@ import { DutiesNotice } from "@/components/shared/duties-notice";
 import { Price } from "@/components/shared/price";
 import { getOrderByNumber } from "@/lib/services/order.service";
 import { getSession } from "@/lib/auth";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 type Props = {
   params: Promise<{ orderNumber: string }>;
@@ -28,6 +30,8 @@ export default async function OrderConfirmationPage({ params }: Props) {
   }
 
   const session = await getSession();
+  const locale = await getLocale();
+  const t = getDictionary(locale);
   const email = order.guestEmail ?? session?.user?.email;
 
   return (
@@ -36,14 +40,14 @@ export default async function OrderConfirmationPage({ params }: Props) {
         <div className="text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" />
           <h1 className="mt-4 text-2xl font-semibold tracking-tight">
-            {order.status === "PAID" ? "Thank you for your order" : "Order received"}
+            {order.status === "PAID" ? t.checkout.thankYouPaid : t.checkout.orderReceived}
           </h1>
           <p className="mt-2 text-muted-foreground">
             Order <strong>{order.orderNumber}</strong>
             {email ? (
               <>
                 {" "}
-                — confirmation sent to <strong>{email}</strong>
+                — {t.checkout.confirmationSent} <strong>{email}</strong>
               </>
             ) : null}
           </p>
@@ -51,7 +55,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
 
         <div className="mt-10 rounded-lg border bg-card p-6">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Status</span>
+            <span className="text-sm text-muted-foreground">{t.checkout.status}</span>
             <span className="text-sm font-medium capitalize">
               {order.status.toLowerCase().replace(/_/g, " ")}
             </span>
@@ -74,16 +78,16 @@ export default async function OrderConfirmationPage({ params }: Props) {
 
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
+              <span className="text-muted-foreground">{t.checkout.subtotal}</span>
               <Price amount={order.subtotal.toString()} />
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Shipping</span>
+              <span className="text-muted-foreground">{t.checkout.shippingLabel}</span>
               <Price amount={order.shippingAmount.toString()} />
             </div>
             {Number(order.discountAmount) > 0 && (
               <div className="flex justify-between text-emerald-700">
-                <span>Discount</span>
+                <span>{t.checkout.discount}</span>
                 <span>-<Price amount={order.discountAmount.toString()} /></span>
               </div>
             )}
@@ -92,7 +96,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
           <Separator className="my-4" />
 
           <div className="flex justify-between font-medium">
-            <span>Total</span>
+            <span>{t.checkout.total}</span>
             <Price amount={order.total.toString()} />
           </div>
 
@@ -102,15 +106,15 @@ export default async function OrderConfirmationPage({ params }: Props) {
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           {session?.user ? (
             <Button asChild>
-              <Link href="/account/orders">View order history</Link>
+              <Link href="/account/orders">{t.checkout.viewOrderHistory}</Link>
             </Button>
           ) : (
             <Button asChild>
-              <Link href="/register">Create an account</Link>
+              <Link href="/register">{t.checkout.createAccount}</Link>
             </Button>
           )}
           <Button variant="outline" asChild>
-            <Link href="/products">Continue shopping</Link>
+            <Link href="/products">{t.checkout.continueShopping}</Link>
           </Button>
         </div>
       </main>

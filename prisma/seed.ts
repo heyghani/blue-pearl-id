@@ -8,6 +8,11 @@ import {
 
 const prisma = new PrismaClient();
 
+const brands = [
+  { name: "Blue Pearl", slug: "blue-pearl", sortOrder: 0 },
+  { name: "Heritage", slug: "heritage", sortOrder: 1 },
+];
+
 const categories = [
   { name: "Necklaces", slug: "necklaces" },
   { name: "Earrings", slug: "earrings" },
@@ -16,6 +21,14 @@ const categories = [
   { name: "Sets", slug: "sets" },
   { name: "Footwear", slug: "footwear" },
   { name: "Accessories", slug: "accessories" },
+];
+
+const subCategories = [
+  { name: "Casual Shoes", slug: "casual-shoes", parentSlug: null, sortOrder: 10 },
+  { name: "Sandals", slug: "sandals", parentSlug: null, sortOrder: 11 },
+  { name: "Canvas Shoes", slug: "canvas-shoes", parentSlug: null, sortOrder: 12 },
+  { name: "Mesh", slug: "footwear-mesh", parentSlug: "casual-shoes", sortOrder: 0 },
+  { name: "Cotton", slug: "footwear-cotton", parentSlug: "casual-shoes", sortOrder: 1 },
 ];
 
 const products = [
@@ -83,6 +96,8 @@ type VariantProductSeed = {
   compareAtPrice?: number;
   isFeatured?: boolean;
   categorySlug: string;
+  brandSlug?: string;
+  tags?: string[];
   shortDescription: string;
   description?: string;
   imageUrl: string;
@@ -100,7 +115,9 @@ const variantProducts: VariantProductSeed[] = [
     basePrice: 129,
     compareAtPrice: 159,
     isFeatured: true,
-    categorySlug: "footwear",
+    categorySlug: "casual-shoes",
+    brandSlug: "heritage",
+    tags: ["Breathable", "Mesh", "Summer 2026", "Sports Trend"],
     shortDescription: "Minimal leather sneaker with cushioned insole — available in multiple colors and sizes.",
     description:
       "Demo product for client review: shows Color and Shoe size variants (e.g. for footwear catalog expansion).",
@@ -209,6 +226,9 @@ async function seedVariantProduct(product: VariantProductSeed) {
   const category = await prisma.category.findUnique({
     where: { slug: product.categorySlug },
   });
+  const brand = product.brandSlug
+    ? await prisma.brand.findUnique({ where: { slug: product.brandSlug } })
+    : null;
   const variants = buildVariantRows(product);
   const totalQuantity = variants.reduce((sum, variant) => sum + variant.quantity, 0);
   const displayPrice = Math.min(...variants.map((variant) => variant.price));
@@ -235,6 +255,8 @@ async function seedVariantProduct(product: VariantProductSeed) {
         product.description ??
         `${product.shortDescription} Each piece is carefully selected for luster, shape, and surface quality.`,
       categoryId: category?.id ?? null,
+      brandId: brand?.id ?? null,
+      tags: product.tags ?? [],
     },
     create: {
       name: product.name,
@@ -249,6 +271,8 @@ async function seedVariantProduct(product: VariantProductSeed) {
         product.description ??
         `${product.shortDescription} Each piece is carefully selected for luster, shape, and surface quality.`,
       categoryId: category?.id ?? null,
+      brandId: brand?.id ?? null,
+      tags: product.tags ?? [],
       metadata: {
         specs: {
           Type: "Variant product",
@@ -388,6 +412,14 @@ async function main() {
     });
   }
 
+  for (const [index, brand] of brands.entries()) {
+    await prisma.brand.upsert({
+      where: { slug: brand.slug },
+      update: { sortOrder: brand.sortOrder },
+      create: { ...brand, sortOrder: brand.sortOrder },
+    });
+  }
+
   for (const [index, category] of categories.entries()) {
     await prisma.category.upsert({
       where: { slug: category.slug },
@@ -395,6 +427,32 @@ async function main() {
       create: { ...category, sortOrder: index },
     });
   }
+
+  for (const subCategory of subCategories) {
+    const parent = subCategory.parentSlug
+      ? await prisma.category.findUnique({
+          where: { slug: subCategory.parentSlug },
+        })
+      : null;
+
+    await prisma.category.upsert({
+      where: { slug: subCategory.slug },
+      update: {
+        parentId: parent?.id ?? null,
+        sortOrder: subCategory.sortOrder,
+      },
+      create: {
+        name: subCategory.name,
+        slug: subCategory.slug,
+        parentId: parent?.id ?? null,
+        sortOrder: subCategory.sortOrder,
+      },
+    });
+  }
+
+  const defaultBrand = await prisma.brand.findUnique({
+    where: { slug: "blue-pearl" },
+  });
 
   for (const product of products) {
     const category = await prisma.category.findUnique({
@@ -410,6 +468,7 @@ async function main() {
         isFeatured: product.isFeatured,
         shortDescription: product.shortDescription,
         hasVariants: false,
+        brandId: defaultBrand?.id ?? null,
       },
       create: {
         name: product.name,
@@ -421,6 +480,7 @@ async function main() {
         shortDescription: product.shortDescription,
         description: `${product.shortDescription} Each piece is carefully selected for luster, shape, and surface quality.`,
         categoryId: category?.id,
+        brandId: defaultBrand?.id ?? null,
         hasVariants: false,
         metadata: {
           specs: {

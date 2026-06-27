@@ -36,4 +36,4 @@ export const uploadedImageUrlSchema = z
     "Enter a valid uploaded image.",
   );
 
-export const uploadFolderSchema = z.enum(["products", "variants"]);
+export const uploadFolderSchema = z.enum(["products", "variants", "brands", "categories"]);

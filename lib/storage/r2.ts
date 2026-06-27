@@ -12,7 +12,7 @@ import {
   uploadFolderSchema,
 } from "@/lib/validations/upload";
 
-type UploadFolder = "products" | "variants";
+type UploadFolder = "products" | "variants" | "brands" | "categories";
 
 export type UploadStorageMode = "r2" | "blob" | "local" | "unavailable";
 

@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/admin/require-admin";
+import { formatAdminError } from "@/lib/actions/admin/prisma-error";
+import { rethrowIfRedirect } from "@/lib/actions/admin/redirect-error";
 import { parseVariantsPayload } from "@/lib/products/variants";
 import {
   createProduct,
@@ -29,6 +31,16 @@ function parseCheckbox(value: FormDataEntryValue | null) {
 function parseProductForm(formData: FormData) {
   const compareAt = formData.get("compareAtPrice");
   const categoryId = formData.get("categoryId");
+  const brandId = formData.get("brandId");
+  const tagsRaw = formData.get("tags");
+
+  const tags =
+    typeof tagsRaw === "string"
+      ? tagsRaw
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+      : [];
 
   return productFormSchema.safeParse({
     name: formData.get("name"),
@@ -37,6 +49,8 @@ function parseProductForm(formData: FormData) {
     price: formData.get("price"),
     compareAtPrice: compareAt === "" || compareAt === null ? undefined : compareAt,
     categoryId: categoryId === "" || categoryId === null ? undefined : categoryId,
+    brandId: brandId === "" || brandId === null ? undefined : brandId,
+    tags: tags.length > 0 ? tags.join(", ") : undefined,
     shortDescription: formData.get("shortDescription") || undefined,
     description: formData.get("description") || undefined,
     imageUrl: formData.get("imageUrl") || undefined,
@@ -73,6 +87,14 @@ function buildVariantInput(data: ProductFormData) {
   return parseVariantsPayload({ hasVariants: true, ...(parsedPayload as object) });
 }
 
+function parseTags(tags?: string) {
+  if (!tags) return [];
+  return tags
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+}
+
 export async function createProductAction(
   _prev: AdminActionState,
   formData: FormData,
@@ -97,6 +119,8 @@ export async function createProductAction(
       compareAtPrice:
         typeof data.compareAtPrice === "number" ? data.compareAtPrice : null,
       categoryId: data.categoryId ?? null,
+      brandId: data.brandId ?? null,
+      tags: parseTags(data.tags),
       shortDescription: data.shortDescription ?? null,
       description: data.description ?? null,
       imageUrl: data.imageUrl || null,
@@ -111,9 +135,9 @@ export async function createProductAction(
     revalidateProductPaths();
     redirect(`/admin/products/${product.id}/edit`);
   } catch (error) {
+    rethrowIfRedirect(error);
     return {
-      error:
-        error instanceof Error ? error.message : "Could not create product.",
+      error: formatAdminError(error, "Could not create product."),
     };
   }
 }
@@ -143,6 +167,8 @@ export async function updateProductAction(
       compareAtPrice:
         typeof data.compareAtPrice === "number" ? data.compareAtPrice : null,
       categoryId: data.categoryId ?? null,
+      brandId: data.brandId ?? null,
+      tags: parseTags(data.tags),
       shortDescription: data.shortDescription ?? null,
       description: data.description ?? null,
       imageUrl: data.imageUrl || null,
@@ -159,8 +185,7 @@ export async function updateProductAction(
     return { success: true };
   } catch (error) {
     return {
-      error:
-        error instanceof Error ? error.message : "Could not update product.",
+      error: formatAdminError(error, "Could not update product."),
     };
   }
 }

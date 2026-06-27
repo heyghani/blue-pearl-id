@@ -4,6 +4,8 @@ import { DutiesNotice } from "@/components/shared/duties-notice";
 import { Price } from "@/components/shared/price";
 import { Separator } from "@/components/ui/separator";
 import { getCheckoutDraft } from "@/lib/checkout/draft";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 import { getCheckoutCart } from "@/lib/services/cart.service";
 import { calculateCheckoutTotals } from "@/lib/services/order.service";
 import { cn } from "@/lib/utils";
@@ -15,7 +17,8 @@ export async function CheckoutSummary({
   className?: string;
   showTotals?: boolean;
 }) {
-  const cart = await getCheckoutCart();
+  const [cart, locale] = await Promise.all([getCheckoutCart(), getLocale()]);
+  const t = getDictionary(locale);
   const draft = await getCheckoutDraft();
 
   if (!cart) return null;
@@ -39,7 +42,7 @@ export async function CheckoutSummary({
 
   return (
     <div className={cn("rounded-lg border bg-card p-6", className)}>
-      <h2 className="text-lg font-semibold">Order summary</h2>
+      <h2 className="text-lg font-semibold">{t.checkout.orderSummary}</h2>
 
       <ul className="mt-4 space-y-4">
         {cart.items.map((item) => (
@@ -57,7 +60,9 @@ export async function CheckoutSummary({
             </div>
             <div className="min-w-0 flex-1">
               <p className="line-clamp-2 text-sm font-medium">{item.product.name}</p>
-              <p className="text-xs text-muted-foreground">Qty {item.quantity}</p>
+              <p className="text-xs text-muted-foreground">
+                {t.checkout.qty} {item.quantity}
+              </p>
             </div>
             <Price
               amount={(Number(item.product.price) * item.quantity).toFixed(2)}
@@ -71,22 +76,22 @@ export async function CheckoutSummary({
 
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Subtotal</span>
+          <span className="text-muted-foreground">{t.checkout.subtotal}</span>
           <Price amount={totals?.subtotal ?? subtotal.toFixed(2)} />
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Shipping</span>
+          <span className="text-muted-foreground">{t.checkout.shippingLabel}</span>
           <span>
             {totals ? (
               <Price amount={totals.shipping} />
             ) : (
-              <span className="text-muted-foreground">At next step</span>
+              <span className="text-muted-foreground">{t.checkout.atNextStep}</span>
             )}
           </span>
         </div>
         {totals && Number(totals.discount) > 0 && (
           <div className="flex justify-between text-emerald-700">
-            <span>Discount</span>
+            <span>{t.checkout.discount}</span>
             <span>-<Price amount={totals.discount} /></span>
           </div>
         )}
@@ -96,7 +101,7 @@ export async function CheckoutSummary({
         <>
           <Separator className="my-4" />
           <div className="flex justify-between font-medium">
-            <span>Total</span>
+            <span>{t.checkout.total}</span>
             <Price amount={totals.total} />
           </div>
         </>

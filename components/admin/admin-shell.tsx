@@ -5,11 +5,13 @@ import { usePathname } from "next/navigation";
 import {
   ExternalLink,
   LayoutDashboard,
+  Layers,
   LogOut,
   Menu,
   Package,
   Settings,
   ShoppingBag,
+  Tag,
   Truck,
   Users,
 } from "lucide-react";
@@ -31,6 +33,8 @@ import { cn } from "@/lib/utils";
 export const adminNavItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/products", label: "Products", icon: Package },
+  { href: "/admin/categories", label: "Categories", icon: Layers },
+  { href: "/admin/brands", label: "Brands", icon: Tag },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/shipping", label: "Shipping", icon: Truck },

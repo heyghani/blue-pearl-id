@@ -144,7 +144,7 @@ model Category {
   description String?    @db.Text
   imageUrl    String?
   parentId    String?
-  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
   children    Category[] @relation("CategoryTree")
   products    Product[]
   sortOrder   Int        @default(0)
@@ -156,6 +156,23 @@ model Category {
   @@index([slug])
   @@index([parentId])
   @@map("categories")
+}
+
+model Brand {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  logoUrl     String?
+  description String?   @db.Text
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  products    Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@map("brands")
 }
 
 model Product {
@@ -170,6 +187,9 @@ model Product {
   currency         String   @default("USD") @db.VarChar(3)
   categoryId       String?
   category         Category? @relation(fields: [categoryId], references: [id])
+  brandId          String?
+  brand            Brand?   @relation(fields: [brandId], references: [id])
+  tags             String[] @default([])
   hasVariants      Boolean  @default(false)
   isActive         Boolean  @default(true)
   isFeatured       Boolean  @default(false)
@@ -189,6 +209,7 @@ model Product {
 
   @@index([slug])
   @@index([categoryId])
+  @@index([brandId])
   @@index([isActive, isFeatured])
   @@index([price])
   @@map("products")

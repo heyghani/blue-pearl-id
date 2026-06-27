@@ -33,9 +33,10 @@ export default async function AdminProductsPage({
         }
       />
 
-      <form className="max-w-md">
+      <form className="max-w-md" method="get">
         <Input
           name="search"
+          type="search"
           defaultValue={params.search ?? ""}
           placeholder="Search products…"
         />
@@ -46,6 +47,8 @@ export default async function AdminProductsPage({
           <thead className="border-b bg-muted/40 text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-medium">Product</th>
+              <th className="px-4 py-3 font-medium">Category</th>
+              <th className="px-4 py-3 font-medium">Brand</th>
               <th className="px-4 py-3 font-medium">SKU</th>
               <th className="px-4 py-3 font-medium">Price</th>
               <th className="px-4 py-3 font-medium">Stock</th>
@@ -55,7 +58,7 @@ export default async function AdminProductsPage({
           <tbody className="divide-y">
             {products.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center">
+                <td colSpan={7} className="px-4 py-12 text-center">
                   <p className="font-medium">No products yet</p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Add your first product to start selling.
@@ -86,6 +89,12 @@ export default async function AdminProductsPage({
                     )}
                     <span>{product.name}</span>
                   </Link>
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {product.category?.name ?? "—"}
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {product.brand?.name ?? "—"}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">{product.sku}</td>
                 <td className="px-4 py-3">

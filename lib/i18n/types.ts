@@ -81,6 +81,12 @@ export interface Dictionary {
     previous: string;
     next: string;
     pageOf: string;
+    brands: string;
+    allBrands: string;
+    jewelry: string;
+    footwear: string;
+    moreCategories: string;
+    subcategoryAll: string;
   };
   product: {
     description: string;
@@ -103,6 +109,30 @@ export interface Dictionary {
     selectOptions: string;
     variantPreview: string;
   };
+  cart: {
+    title: string;
+    emptyTitle: string;
+    emptyDescription: string;
+    emptyDrawer: string;
+    continueShopping: string;
+    shopAll: string;
+    viewFullCart: string;
+    item: string;
+    items: string;
+    orderSummary: string;
+    subtotal: string;
+    subtotalWithCount: string;
+    shipping: string;
+    shippingAtCheckout: string;
+    estimatedTotal: string;
+    proceedToCheckout: string;
+    outOfStock: string;
+    decreaseQuantity: string;
+    increaseQuantity: string;
+    removeItem: string;
+    close: string;
+    cartAria: string;
+  };
   common: {
     taxNotice: string;
   };
@@ -112,7 +142,23 @@ export interface Dictionary {
     prefilledMessage: string;
   };
   checkout: {
+    progressLabel: string;
+    stepInformation: string;
+    stepShipping: string;
+    stepPayment: string;
+    contactTitle: string;
     informationLead: string;
+    shippingTitle: string;
+    shippingLead: string;
+    paymentTitle: string;
+    paymentLead: string;
+    orderSummary: string;
+    qty: string;
+    subtotal: string;
+    shippingLabel: string;
+    atNextStep: string;
+    discount: string;
+    total: string;
     backToBag: string;
     secureBadge: string;
     processingTitle: string;
@@ -127,5 +173,12 @@ export interface Dictionary {
     continuePayment: string;
     paymentNotConfigured: string;
     viewOrderStatus: string;
+    thankYouPaid: string;
+    orderReceived: string;
+    confirmationSent: string;
+    status: string;
+    viewOrderHistory: string;
+    createAccount: string;
+    continueShopping: string;
   };
 }

@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import type { ProductOptionInput, ProductVariantInput } from "@/lib/products/variants";
 
 type Category = { id: string; name: string };
+type Brand = { id: string; name: string };
 
 type ProductDefaults = {
   name?: string;
@@ -31,6 +32,8 @@ type ProductDefaults = {
   price?: string;
   compareAtPrice?: string | null;
   categoryId?: string | null;
+  brandId?: string | null;
+  tags?: string[];
   shortDescription?: string | null;
   description?: string | null;
   imageUrl?: string | null;
@@ -46,10 +49,12 @@ const initialState: AdminActionState = {};
 
 export function ProductForm({
   categories,
+  brands,
   productId,
   defaults = {},
 }: {
   categories: Category[];
+  brands: Brand[];
   productId?: string;
   defaults?: ProductDefaults;
 }) {
@@ -114,6 +119,50 @@ export function ProductForm({
                 </option>
               ))}
             </select>
+            <p className="text-xs text-muted-foreground">
+              Manage categories in{" "}
+              <a href="/admin/categories" className="underline">
+                Categories
+              </a>
+              .
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="brandId">Brand</Label>
+            <select
+              id="brandId"
+              name="brandId"
+              defaultValue={defaults.brandId ?? ""}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">No brand</option>
+              {brands.map((brand) => (
+                <option key={brand.id} value={brand.id}>
+                  {brand.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Manage brands in{" "}
+              <a href="/admin/brands" className="underline">
+                Brands
+              </a>
+              .
+            </p>
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="tags">Variety tags</Label>
+            <Input
+              id="tags"
+              name="tags"
+              defaultValue={defaults.tags?.join(", ") ?? ""}
+              placeholder="Breathable, Mesh, Summer 2026"
+            />
+            <p className="text-xs text-muted-foreground">
+              Comma-separated attributes shown on the storefront (e.g. material, season, style).
+            </p>
           </div>
 
           <div className="space-y-2 sm:col-span-2">
