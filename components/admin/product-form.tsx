@@ -9,7 +9,7 @@ import {
 } from "@/lib/actions/admin/products";
 import { useAdminActionRedirect } from "@/components/admin/use-admin-action-redirect";
 import { ProductVariantsEditor } from "@/components/admin/product-variants-editor";
-import { ImageUploadField } from "@/components/admin/image-upload-field";
+import { ProductImagesField } from "@/components/admin/product-images-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +37,7 @@ type ProductDefaults = {
   tags?: string[];
   shortDescription?: string | null;
   description?: string | null;
-  imageUrl?: string | null;
+  imageUrls?: string[];
   quantity?: number;
   isActive?: boolean;
   isFeatured?: boolean;
@@ -192,14 +192,15 @@ export function ProductForm({
       <Card>
         <CardHeader>
           <CardTitle>Media</CardTitle>
-          <CardDescription>Primary product image used in catalog and product detail.</CardDescription>
+          <CardDescription>
+            Upload up to 5 product images. The first image is the primary photo in
+            catalog and product gallery.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <ImageUploadField
-            name="imageUrl"
-            label="Primary image"
-            value={defaults.imageUrl}
-            folder="products"
+          <ProductImagesField
+            value={defaults.imageUrls ?? []}
+            productName={defaults.name}
           />
         </CardContent>
       </Card>

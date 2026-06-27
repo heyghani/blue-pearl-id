@@ -15,7 +15,7 @@ import {
   setProductActive,
   updateProduct,
 } from "@/lib/services/admin/product.service";
-import { productFormSchema } from "@/lib/validations/admin";
+import { productFormSchema, parseProductImageUrls } from "@/lib/validations/admin";
 
 export type { AdminActionState } from "@/lib/actions/admin/types";
 
@@ -50,7 +50,7 @@ function parseProductForm(formData: FormData) {
     tags: tags.length > 0 ? tags.join(", ") : undefined,
     shortDescription: formData.get("shortDescription") || undefined,
     description: formData.get("description") || undefined,
-    imageUrl: formData.get("imageUrl") || undefined,
+    imagesPayload: formData.get("imagesPayload") || undefined,
     quantity: formData.get("quantity"),
     isActive: parseCheckbox(formData.get("isActive")),
     isFeatured: parseCheckbox(formData.get("isFeatured")),
@@ -120,7 +120,7 @@ export async function createProductAction(
       tags: parseTags(data.tags),
       shortDescription: data.shortDescription ?? null,
       description: data.description ?? null,
-      imageUrl: data.imageUrl || null,
+      imageUrls: parseProductImageUrls(data.imagesPayload),
       quantity: data.quantity,
       isActive: data.isActive,
       isFeatured: data.isFeatured,
@@ -167,7 +167,7 @@ export async function updateProductAction(
       tags: parseTags(data.tags),
       shortDescription: data.shortDescription ?? null,
       description: data.description ?? null,
-      imageUrl: data.imageUrl || null,
+      imageUrls: parseProductImageUrls(data.imagesPayload),
       quantity: data.quantity,
       isActive: data.isActive,
       isFeatured: data.isFeatured,

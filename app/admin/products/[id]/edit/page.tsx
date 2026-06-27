@@ -29,8 +29,8 @@ export default async function EditProductPage({ params }: Props) {
     listBrandsForProductForm(product.brandId),
   ]);
 
-  const primaryImage = product.images.find((image) => image.isPrimary) ?? product.images[0];
   const variantState = adminVariantsToFormState(product.options, product.variants);
+  const imageUrls = product.images.map((image) => image.url);
 
   return (
     <div className="space-y-6">
@@ -66,7 +66,7 @@ export default async function EditProductPage({ params }: Props) {
           tags: product.tags,
           shortDescription: product.shortDescription,
           description: product.description,
-          imageUrl: primaryImage?.url ?? null,
+          imageUrls,
           quantity: product.inventory?.quantity ?? 0,
           isActive: product.isActive,
           isFeatured: product.isFeatured,

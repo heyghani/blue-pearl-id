@@ -87,7 +87,7 @@ export type ProductInput = {
   tags?: string[];
   shortDescription?: string | null;
   description?: string | null;
-  imageUrl?: string | null;
+  imageUrls?: string[];
   quantity: number;
   isActive: boolean;
   isFeatured: boolean;
@@ -208,6 +208,31 @@ async function syncProductVariants(
   return { price: pricing.price, quantity: totalQuantity };
 }
 
+async function syncProductImages(
+  tx: Prisma.TransactionClient,
+  productId: string,
+  imageUrls: string[],
+  alt: string,
+) {
+  await tx.productImage.deleteMany({ where: { productId } });
+
+  const urls = imageUrls.map((url) => url.trim()).filter(Boolean);
+
+  if (urls.length === 0) {
+    return;
+  }
+
+  await tx.productImage.createMany({
+    data: urls.map((url, index) => ({
+      productId,
+      url,
+      alt,
+      isPrimary: index === 0,
+      sortOrder: index,
+    })),
+  });
+}
+
 export async function createProduct(input: ProductInput) {
   return prisma.$transaction(async (tx) => {
     const product = await tx.product.create({
@@ -225,16 +250,17 @@ export async function createProduct(input: ProductInput) {
         isActive: input.isActive,
         isFeatured: input.isFeatured,
         hasVariants: input.hasVariants,
-        images: input.imageUrl
-          ? {
-              create: {
-                url: input.imageUrl,
-                alt: input.name,
-                isPrimary: true,
-                sortOrder: 0,
-              },
-            }
-          : undefined,
+        images:
+          input.imageUrls && input.imageUrls.length > 0
+            ? {
+                create: input.imageUrls.map((url, index) => ({
+                  url,
+                  alt: input.name,
+                  isPrimary: index === 0,
+                  sortOrder: index,
+                })),
+              }
+            : undefined,
         inventory: {
           create: { quantity: input.hasVariants ? 0 : input.quantity },
         },
@@ -304,28 +330,7 @@ export async function updateProduct(id: string, input: ProductInput) {
       update: { quantity: inventoryQuantity },
     });
 
-    if (input.imageUrl) {
-      const primary = await tx.productImage.findFirst({
-        where: { productId: id, isPrimary: true },
-      });
-
-      if (primary) {
-        await tx.productImage.update({
-          where: { id: primary.id },
-          data: { url: input.imageUrl, alt: input.name },
-        });
-      } else {
-        await tx.productImage.create({
-          data: {
-            productId: id,
-            url: input.imageUrl,
-            alt: input.name,
-            isPrimary: true,
-            sortOrder: 0,
-          },
-        });
-      }
-    }
+    await syncProductImages(tx, id, input.imageUrls ?? [], input.name);
 
     return product;
   });

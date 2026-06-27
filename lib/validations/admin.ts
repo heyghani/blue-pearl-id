@@ -3,6 +3,8 @@ import { z } from "zod";
 
 import { uploadedImageUrlSchema } from "@/lib/validations/upload";
 
+export const MAX_PRODUCT_IMAGES = 5;
+
 const optionalImageUrlSchema = z
   .string()
   .optional()
@@ -29,6 +31,23 @@ const productVariantSchema = z.object({
   optionValues: z.record(z.string(), z.string()),
 });
 
+export function parseProductImageUrls(payload?: string | null) {
+  if (!payload) return [];
+
+  try {
+    const parsed = JSON.parse(payload);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter((item): item is string => typeof item === "string")
+      .map((url) => url.trim())
+      .filter(Boolean)
+      .slice(0, MAX_PRODUCT_IMAGES);
+  } catch {
+    return [];
+  }
+}
+
 export const productFormSchema = z
   .object({
     name: z.string().min(2, "Name is required."),
@@ -44,7 +63,7 @@ export const productFormSchema = z
     tags: z.string().optional(),
     shortDescription: z.string().max(500).optional(),
     description: z.string().optional(),
-    imageUrl: optionalImageUrlSchema,
+    imagesPayload: z.string().optional(),
     quantity: z.coerce.number().int().min(0, "Quantity cannot be negative."),
     isActive: z.boolean(),
     isFeatured: z.boolean(),
@@ -52,6 +71,26 @@ export const productFormSchema = z
     variantsPayload: z.string().optional(),
   })
   .superRefine((data, ctx) => {
+    const imageUrls = parseProductImageUrls(data.imagesPayload);
+
+    if (imageUrls.length > MAX_PRODUCT_IMAGES) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["imagesPayload"],
+        message: `You can upload up to ${MAX_PRODUCT_IMAGES} images.`,
+      });
+    }
+
+    for (const [index, url] of imageUrls.entries()) {
+      if (!uploadedImageUrlSchema.safeParse(url).success) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["imagesPayload"],
+          message: `Image ${index + 1} is not a valid uploaded image URL.`,
+        });
+      }
+    }
+
     if (!data.hasVariants) return;
 
     let parsed: unknown = null;
