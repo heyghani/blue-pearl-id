@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 import { ImagePlus, Loader2, X } from "lucide-react";
@@ -8,6 +7,7 @@ import { ImagePlus, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { prepareImageForUpload } from "@/lib/uploads/prepare-client-image";
 import {
   extensionForContentType,
   getUnsupportedImageTypeMessage,
@@ -32,6 +32,8 @@ type Props = {
   className?: string;
 };
 
+const MULTIPART_UPLOAD_THRESHOLD_BYTES = 3 * 1024 * 1024;
+
 function formatMaxSize(bytes: number) {
   return `${Math.floor(bytes / (1024 * 1024))} MB`;
 }
@@ -50,6 +52,7 @@ export function ImageUploadField({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadConfig, setUploadConfig] = useState<UploadConfig | null>(null);
+  const [configLoading, setConfigLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,13 +63,17 @@ export function ImageUploadField({
         const payload = (await response.json()) as UploadConfig & { error?: string };
 
         if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Your admin session expired. Please sign in again.");
+          }
+
           throw new Error(payload.error ?? "Could not check upload settings.");
         }
 
         if (!cancelled) {
           setUploadConfig(payload);
         }
-      } catch {
+      } catch (loadError) {
         if (!cancelled) {
           setUploadConfig({
             mode: "unavailable",
@@ -74,8 +81,14 @@ export function ImageUploadField({
             useClientUpload: false,
             maxBytes: 4 * 1024 * 1024,
             message:
-              "Image upload is not available right now. Paste an image URL instead.",
+              loadError instanceof Error
+                ? loadError.message
+                : "Image upload is not available right now. Paste an image URL instead.",
           });
+        }
+      } finally {
+        if (!cancelled) {
+          setConfigLoading(false);
         }
       }
     }
@@ -118,10 +131,12 @@ export function ImageUploadField({
     }
 
     const pathname = `${folder}/${crypto.randomUUID()}.${extension}`;
+
     const blob = await upload(pathname, file, {
       access: "public",
       handleUploadUrl: "/api/admin/upload/client",
       contentType,
+      multipart: file.size >= MULTIPART_UPLOAD_THRESHOLD_BYTES,
     });
 
     return blob.url;
@@ -135,6 +150,11 @@ export function ImageUploadField({
 
     setError(null);
 
+    if (configLoading) {
+      setError("Upload settings are still loading. Please try again in a moment.");
+      return;
+    }
+
     if (!uploadConfig?.available) {
       setError(
         uploadConfig?.message ??
@@ -143,23 +163,25 @@ export function ImageUploadField({
       return;
     }
 
-    const contentType = resolveImageContentType(file);
-    if (!contentType) {
+    if (!resolveImageContentType(file)) {
       setError(getUnsupportedImageTypeMessage(file));
-      return;
-    }
-
-    if (file.size > uploadConfig.maxBytes) {
-      setError(`Image must be ${formatMaxSize(uploadConfig.maxBytes)} or smaller.`);
       return;
     }
 
     setIsUploading(true);
 
     try {
+      const prepared = await prepareImageForUpload(file);
+
+      if (prepared.file.size > uploadConfig.maxBytes) {
+        throw new Error(
+          `Image is too large after processing. Please use a file under ${formatMaxSize(uploadConfig.maxBytes)}.`,
+        );
+      }
+
       const url = uploadConfig.useClientUpload
-        ? await uploadViaBlob(file, contentType)
-        : await uploadViaServer(file);
+        ? await uploadViaBlob(prepared.file, prepared.contentType)
+        : await uploadViaServer(prepared.file);
 
       updateUrl(url);
     } catch (uploadError) {
@@ -176,7 +198,8 @@ export function ImageUploadField({
     setError(null);
   }
 
-  const uploadDisabled = isUploading || uploadConfig?.available === false;
+  const uploadDisabled =
+    isUploading || configLoading || uploadConfig?.available === false;
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -197,13 +220,13 @@ export function ImageUploadField({
           )}
         >
           {currentUrl ? (
-            <Image
+            // Use a plain img preview to avoid mobile browser crashes from large optimized srcsets.
+            <img
               src={currentUrl}
               alt={label || "Uploaded image"}
-              fill
-              className="object-cover"
-              sizes={compact ? "64px" : "320px"}
-              unoptimized={currentUrl.startsWith("http")}
+              className="h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -226,6 +249,8 @@ export function ImageUploadField({
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Uploading…
                 </>
+              ) : configLoading ? (
+                "Checking upload…"
               ) : currentUrl ? (
                 "Replace image"
               ) : (
@@ -263,7 +288,7 @@ export function ImageUploadField({
 
           <p className="text-xs text-muted-foreground">
             {uploadConfig?.available
-              ? `JPG, PNG, WebP, or GIF up to ${formatMaxSize(uploadConfig.maxBytes)}. You can also paste an image URL.`
+              ? `JPG, PNG, WebP, or GIF up to ${formatMaxSize(uploadConfig.maxBytes)}. Large phone photos are resized automatically before upload.`
               : "File upload is not configured on this server. Paste an image URL instead."}
           </p>
 
