@@ -1,12 +1,26 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { upload } from "@vercel/blob/client";
 import { ImagePlus, Loader2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import {
+  extensionForContentType,
+  getUnsupportedImageTypeMessage,
+  resolveImageContentType,
+} from "@/lib/validations/upload";
+
+type UploadConfig = {
+  mode: "r2" | "blob" | "local" | "unavailable";
+  available: boolean;
+  useClientUpload: boolean;
+  maxBytes: number;
+  message: string | null;
+};
 
 type Props = {
   name?: string;
@@ -17,6 +31,10 @@ type Props = {
   compact?: boolean;
   className?: string;
 };
+
+function formatMaxSize(bytes: number) {
+  return `${Math.floor(bytes / (1024 * 1024))} MB`;
+}
 
 export function ImageUploadField({
   name,
@@ -31,10 +49,82 @@ export function ImageUploadField({
   const [currentUrl, setCurrentUrl] = useState(value ?? "");
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadConfig, setUploadConfig] = useState<UploadConfig | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadUploadConfig() {
+      try {
+        const response = await fetch("/api/admin/upload");
+        const payload = (await response.json()) as UploadConfig & { error?: string };
+
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Could not check upload settings.");
+        }
+
+        if (!cancelled) {
+          setUploadConfig(payload);
+        }
+      } catch {
+        if (!cancelled) {
+          setUploadConfig({
+            mode: "unavailable",
+            available: false,
+            useClientUpload: false,
+            maxBytes: 4 * 1024 * 1024,
+            message:
+              "Image upload is not available right now. Paste an image URL instead.",
+          });
+        }
+      }
+    }
+
+    void loadUploadConfig();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function updateUrl(url: string) {
     setCurrentUrl(url);
     onChange?.(url);
+  }
+
+  async function uploadViaServer(file: File) {
+    const body = new FormData();
+    body.append("file", file);
+    body.append("folder", folder);
+
+    const response = await fetch("/api/admin/upload", {
+      method: "POST",
+      body,
+    });
+
+    const payload = (await response.json()) as { url?: string; error?: string };
+
+    if (!response.ok || !payload.url) {
+      throw new Error(payload.error ?? "Upload failed.");
+    }
+
+    return payload.url;
+  }
+
+  async function uploadViaBlob(file: File, contentType: string) {
+    const extension = extensionForContentType(contentType);
+    if (!extension) {
+      throw new Error("Unsupported image type.");
+    }
+
+    const pathname = `${folder}/${crypto.randomUUID()}.${extension}`;
+    const blob = await upload(pathname, file, {
+      access: "public",
+      handleUploadUrl: "/api/admin/upload/client",
+      contentType,
+    });
+
+    return blob.url;
   }
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -44,25 +134,34 @@ export function ImageUploadField({
     if (!file) return;
 
     setError(null);
+
+    if (!uploadConfig?.available) {
+      setError(
+        uploadConfig?.message ??
+          "Image upload is not configured. Paste an image URL instead.",
+      );
+      return;
+    }
+
+    const contentType = resolveImageContentType(file);
+    if (!contentType) {
+      setError(getUnsupportedImageTypeMessage(file));
+      return;
+    }
+
+    if (file.size > uploadConfig.maxBytes) {
+      setError(`Image must be ${formatMaxSize(uploadConfig.maxBytes)} or smaller.`);
+      return;
+    }
+
     setIsUploading(true);
 
     try {
-      const body = new FormData();
-      body.append("file", file);
-      body.append("folder", folder);
+      const url = uploadConfig.useClientUpload
+        ? await uploadViaBlob(file, contentType)
+        : await uploadViaServer(file);
 
-      const response = await fetch("/api/admin/upload", {
-        method: "POST",
-        body,
-      });
-
-      const payload = (await response.json()) as { url?: string; error?: string };
-
-      if (!response.ok || !payload.url) {
-        throw new Error(payload.error ?? "Upload failed.");
-      }
-
-      updateUrl(payload.url);
+      updateUrl(url);
     } catch (uploadError) {
       setError(
         uploadError instanceof Error ? uploadError.message : "Upload failed.",
@@ -76,6 +175,8 @@ export function ImageUploadField({
     updateUrl("");
     setError(null);
   }
+
+  const uploadDisabled = isUploading || uploadConfig?.available === false;
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -117,7 +218,7 @@ export function ImageUploadField({
               type="button"
               variant="outline"
               size={compact ? "sm" : "default"}
-              disabled={isUploading}
+              disabled={uploadDisabled}
               onClick={() => inputRef.current?.click()}
             >
               {isUploading ? (
@@ -161,8 +262,14 @@ export function ImageUploadField({
           ) : null}
 
           <p className="text-xs text-muted-foreground">
-            JPG, PNG, WebP, or GIF up to 5 MB. You can also paste an image URL.
+            {uploadConfig?.available
+              ? `JPG, PNG, WebP, or GIF up to ${formatMaxSize(uploadConfig.maxBytes)}. You can also paste an image URL.`
+              : "File upload is not configured on this server. Paste an image URL instead."}
           </p>
+
+          {uploadConfig && !uploadConfig.available && uploadConfig.message ? (
+            <p className="text-xs text-amber-700">{uploadConfig.message}</p>
+          ) : null}
 
           {error ? <p className="text-xs text-destructive">{error}</p> : null}
         </div>
@@ -171,7 +278,7 @@ export function ImageUploadField({
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
+        accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
         className="hidden"
         onChange={handleFileChange}
       />

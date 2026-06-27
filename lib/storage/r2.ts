@@ -6,8 +6,8 @@ import { put } from "@vercel/blob";
 
 import {
   extensionForContentType,
+  getMaxUploadBytesForMode,
   isAllowedImageContentType,
-  MAX_IMAGE_UPLOAD_BYTES,
   type AllowedImageContentType,
   uploadFolderSchema,
 } from "@/lib/validations/upload";
@@ -161,8 +161,13 @@ export async function uploadProductImage({
     throw new Error("Unsupported image type. Use JPG, PNG, WebP, or GIF.");
   }
 
-  if (buffer.byteLength > MAX_IMAGE_UPLOAD_BYTES) {
-    throw new Error("Image must be 5 MB or smaller.");
+  const maxBytes = getMaxUploadBytesForMode(getUploadStorageMode());
+  if (buffer.byteLength > maxBytes) {
+    throw new Error(
+      process.env.VERCEL && getUploadStorageMode() === "r2"
+        ? "Image must be 4 MB or smaller on Vercel server uploads."
+        : "Image must be 5 MB or smaller.",
+    );
   }
 
   const extension = extensionForContentType(contentType);

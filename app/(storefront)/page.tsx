@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 
 import {
@@ -53,13 +52,11 @@ export default async function HomePage() {
     <>
       <section className="relative -mx-4 overflow-hidden sm:mx-0 sm:rounded-3xl">
         <div className="relative aspect-[4/5] sm:aspect-[21/9] sm:min-h-[420px]">
-          <Image
-            src="/images/hero-cover.png"
-            alt=""
-            fill
-            priority
-            className="object-cover object-[center_35%]"
-            sizes="100vw"
+          <div
+            role="img"
+            aria-label={t.home.headline}
+            className="absolute inset-0 bg-cover bg-[center_35%] bg-no-repeat"
+            style={{ backgroundImage: "url('/images/hero-cover.jpg')" }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/10 sm:bg-gradient-to-r sm:from-black/70 sm:via-black/35 sm:to-transparent" />
 

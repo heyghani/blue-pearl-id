@@ -1,10 +1,37 @@
 import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/admin/require-admin";
-import { getUploadStorageMode, uploadProductImage } from "@/lib/storage/r2";
-import { uploadFolderSchema } from "@/lib/validations/upload";
+import {
+  getUploadStorageMode,
+  getUploadUnavailableMessage,
+  isVercelBlobConfigured,
+  uploadProductImage,
+} from "@/lib/storage/r2";
+import {
+  getMaxUploadBytesForMode,
+  resolveImageContentType,
+  uploadFolderSchema,
+} from "@/lib/validations/upload";
 
 export const runtime = "nodejs";
+
+export async function GET() {
+  const admin = await requireAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  const mode = getUploadStorageMode();
+  const available = mode !== "unavailable";
+
+  return NextResponse.json({
+    mode,
+    available,
+    useClientUpload: mode === "blob",
+    maxBytes: getMaxUploadBytesForMode(mode),
+    message: available ? null : getUploadUnavailableMessage(),
+  });
+}
 
 export async function POST(request: Request) {
   const admin = await requireAdmin();
@@ -34,11 +61,49 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid upload folder." }, { status: 400 });
   }
 
+  const mode = getUploadStorageMode();
+  if (mode === "blob" && isVercelBlobConfigured()) {
+    return NextResponse.json(
+      {
+        error:
+          "Use the browser upload flow for this environment. Refresh the page and try again.",
+      },
+      { status: 400 },
+    );
+  }
+
+  const contentType = resolveImageContentType(file);
+  if (!contentType) {
+    return NextResponse.json(
+      {
+        error:
+          file.name.toLowerCase().endsWith(".heic") ||
+          file.name.toLowerCase().endsWith(".heif")
+            ? "HEIC photos are not supported. Choose a JPG/PNG image or paste an image URL."
+            : "Unsupported image type. Use JPG, PNG, WebP, or GIF.",
+      },
+      { status: 400 },
+    );
+  }
+
+  const maxBytes = getMaxUploadBytesForMode(mode);
+  if (file.size > maxBytes) {
+    return NextResponse.json(
+      {
+        error:
+          mode === "r2" && process.env.VERCEL
+            ? "Image must be 4 MB or smaller on Vercel server uploads."
+            : "Image must be 5 MB or smaller.",
+      },
+      { status: 400 },
+    );
+  }
+
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const url = await uploadProductImage({
       buffer,
-      contentType: file.type || "application/octet-stream",
+      contentType,
       folder: folderResult.data,
     });
 
