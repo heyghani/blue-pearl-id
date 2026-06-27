@@ -8,7 +8,7 @@ import { ChevronLeft } from "lucide-react";
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { notifyCartUpdated } from "@/lib/cart/events";
 import { addToCartAction } from "@/lib/actions/cart";
-import { WHATSAPP_URL } from "@/lib/constants";
+import { WHATSAPP_PHONE, buildWhatsAppUrl } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -156,7 +156,7 @@ export function ProductWhatsAppLink({
 }) {
   const t = useTranslations();
   const message = `${t.whatsapp.prefilledMessage} (${productName})`;
-  const href = `${WHATSAPP_URL}?text=${encodeURIComponent(message)}`;
+  const href = buildWhatsAppUrl(WHATSAPP_PHONE, message);
 
   return (
     <a

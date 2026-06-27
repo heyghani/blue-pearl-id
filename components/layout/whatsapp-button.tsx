@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 
 import { useTranslations } from "@/components/i18n/locale-provider";
-import { WHATSAPP_URL } from "@/lib/constants";
+import { WHATSAPP_PHONE, buildWhatsAppUrl } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export function WhatsAppButton() {
@@ -12,7 +12,7 @@ export function WhatsAppButton() {
   const pathname = usePathname();
   const isProductDetail = /^\/products\/[^/]+$/.test(pathname ?? "");
 
-  const href = `${WHATSAPP_URL}?text=${encodeURIComponent(t.whatsapp.prefilledMessage)}`;
+  const href = buildWhatsAppUrl(WHATSAPP_PHONE, t.whatsapp.prefilledMessage);
 
   return (
     <a

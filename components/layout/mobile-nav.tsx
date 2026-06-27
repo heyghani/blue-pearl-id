@@ -7,7 +7,7 @@ import { useState } from "react";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { Button } from "@/components/ui/button";
-import { WHATSAPP_URL } from "@/lib/constants";
+import { WHATSAPP_CONTACTS, buildWhatsAppUrl } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export function MobileNav({
@@ -26,8 +26,6 @@ export function MobileNav({
     { href: "/#faq", label: t.nav.faq },
     { href: "/legal/shipping", label: t.nav.shipping },
   ];
-
-  const whatsappHref = `${WHATSAPP_URL}?text=${encodeURIComponent(t.whatsapp.prefilledMessage)}`;
 
   return (
     <div className={cn("md:hidden", className)}>
@@ -68,17 +66,19 @@ export function MobileNav({
                 </Link>
               </li>
             ) : null}
-            <li>
-              <a
-                href={whatsappHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-md px-3 py-2.5 text-sm font-medium text-[#128C7E] hover:bg-muted"
-                onClick={() => setOpen(false)}
-              >
-                {t.footer.whatsapp}
-              </a>
-            </li>
+            {WHATSAPP_CONTACTS.map((contact) => (
+              <li key={contact.phone}>
+                <a
+                  href={buildWhatsAppUrl(contact.phone, t.whatsapp.prefilledMessage)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block rounded-md px-3 py-2.5 text-sm font-medium text-[#128C7E] hover:bg-muted"
+                  onClick={() => setOpen(false)}
+                >
+                  {t.footer.whatsapp} {contact.display}
+                </a>
+              </li>
+            ))}
           </ul>
         </nav>
       ) : null}
