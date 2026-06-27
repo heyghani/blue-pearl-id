@@ -10,7 +10,13 @@ import { Button } from "@/components/ui/button";
 import { WHATSAPP_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-export function MobileNav({ className }: { className?: string }) {
+export function MobileNav({
+  className,
+  isAdmin = false,
+}: {
+  className?: string;
+  isAdmin?: boolean;
+}) {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
 
@@ -51,6 +57,17 @@ export function MobileNav({ className }: { className?: string }) {
                 </Link>
               </li>
             ))}
+            {isAdmin ? (
+              <li>
+                <Link
+                  href="/admin"
+                  className="block rounded-md px-3 py-2.5 text-sm font-medium hover:bg-muted"
+                  onClick={() => setOpen(false)}
+                >
+                  Admin
+                </Link>
+              </li>
+            ) : null}
             <li>
               <a
                 href={whatsappHref}

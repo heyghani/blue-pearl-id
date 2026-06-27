@@ -7,6 +7,7 @@ import {
   updateProductAction,
   type AdminActionState,
 } from "@/lib/actions/admin/products";
+import { useAdminActionRedirect } from "@/components/admin/use-admin-action-redirect";
 import { ProductVariantsEditor } from "@/components/admin/product-variants-editor";
 import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -63,6 +64,7 @@ export function ProductForm({
     : createProductAction;
 
   const [state, formAction, pending] = useActionState(action, initialState);
+  useAdminActionRedirect(state);
   const [baseSku, setBaseSku] = useState(defaults.sku ?? "");
   const [basePrice, setBasePrice] = useState(Number(defaults.price ?? 0) || 0);
   const [isActive, setIsActive] = useState(defaults.isActive ?? true);

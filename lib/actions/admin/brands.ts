@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin/require-admin";
 import { formatAdminError } from "@/lib/actions/admin/prisma-error";
 import { rethrowIfRedirect } from "@/lib/actions/admin/redirect-error";
+import { type AdminActionState } from "@/lib/actions/admin/types";
 import {
   createBrand,
   deleteBrand,
@@ -14,11 +15,7 @@ import {
 } from "@/lib/services/admin/brand.service";
 import { brandFormSchema } from "@/lib/validations/admin";
 
-export type AdminActionState = {
-  error?: string;
-  success?: boolean;
-  fieldErrors?: Record<string, string[]>;
-};
+export type { AdminActionState } from "@/lib/actions/admin/types";
 
 function parseCheckbox(value: FormDataEntryValue | null) {
   return value === "on" || value === "true";
@@ -66,9 +63,8 @@ export async function createBrandAction(
     });
 
     revalidateBrandPaths();
-    redirect(`/admin/brands/${brand.id}/edit`);
+    return { redirectTo: `/admin/brands/${brand.id}/edit` };
   } catch (error) {
-    rethrowIfRedirect(error);
     return {
       error: formatAdminError(error, "Could not create brand."),
     };

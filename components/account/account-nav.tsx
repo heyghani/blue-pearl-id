@@ -13,7 +13,7 @@ const links = [
   { href: "/account/profile", label: "Profile" },
 ];
 
-export function AccountNav() {
+export function AccountNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -38,6 +38,21 @@ export function AccountNav() {
           </Link>
         );
       })}
+
+      {isAdmin ? (
+        <Link
+          href="/admin"
+          className={cn(
+            "block rounded-md px-3 py-2 text-sm transition-colors",
+            pathname.startsWith("/admin")
+              ? "bg-muted font-medium text-foreground"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+          )}
+        >
+          Admin dashboard
+        </Link>
+      ) : null}
+
       <div className="pt-4">
         <SignOutButton />
       </div>

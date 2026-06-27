@@ -7,6 +7,7 @@ import {
   updateBrandAction,
   type AdminActionState,
 } from "@/lib/actions/admin/brands";
+import { useAdminActionRedirect } from "@/components/admin/use-admin-action-redirect";
 import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ export function BrandForm({
     : createBrandAction;
 
   const [state, formAction, pending] = useActionState(action, initialState);
+  useAdminActionRedirect(state);
   const [isActive, setIsActive] = useState(defaults.isActive ?? true);
 
   return (

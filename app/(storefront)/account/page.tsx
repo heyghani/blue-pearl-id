@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { UserRole } from "@prisma/client";
 
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { getSession } from "@/lib/auth";
@@ -7,6 +8,8 @@ import { getUserOrders } from "@/lib/services/account.service";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Price } from "@/components/shared/price";
+
+export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   const session = await getSession();
@@ -91,7 +94,7 @@ export default async function AccountPage() {
         </Card>
       )}
 
-      {session?.user?.role === "ADMIN" && (
+      {session?.user?.role === UserRole.ADMIN && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Admin</CardTitle>

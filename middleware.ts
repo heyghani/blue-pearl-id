@@ -1,5 +1,4 @@
 import NextAuth from "next-auth";
-import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 
 import { authConfig } from "@/lib/auth.config";
@@ -10,18 +9,11 @@ import {
 
 const { auth } = NextAuth(authConfig);
 
-export default auth(async (req) => {
-  if (hasSessionCookie(req)) {
-    const token = await getToken({
-      req,
-      secret: process.env.AUTH_SECRET,
-    }).catch(() => null);
-
-    if (!token) {
-      const response = NextResponse.next();
-      clearSessionCookies(req, response);
-      return response;
-    }
+export default auth((req) => {
+  if (hasSessionCookie(req) && !req.auth) {
+    const response = NextResponse.next();
+    clearSessionCookies(req, response);
+    return response;
   }
 });
 

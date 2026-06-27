@@ -7,6 +7,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/require-admin";
 import { formatAdminError } from "@/lib/actions/admin/prisma-error";
 import { rethrowIfRedirect } from "@/lib/actions/admin/redirect-error";
+import { type AdminActionState } from "@/lib/actions/admin/types";
 import { parseVariantsPayload } from "@/lib/products/variants";
 import {
   createProduct,
@@ -16,11 +17,7 @@ import {
 } from "@/lib/services/admin/product.service";
 import { productFormSchema } from "@/lib/validations/admin";
 
-export type AdminActionState = {
-  error?: string;
-  success?: boolean;
-  fieldErrors?: Record<string, string[]>;
-};
+export type { AdminActionState } from "@/lib/actions/admin/types";
 
 type ProductFormData = z.infer<typeof productFormSchema>;
 
@@ -133,9 +130,8 @@ export async function createProductAction(
     });
 
     revalidateProductPaths();
-    redirect(`/admin/products/${product.id}/edit`);
+    return { redirectTo: `/admin/products/${product.id}/edit` };
   } catch (error) {
-    rethrowIfRedirect(error);
     return {
       error: formatAdminError(error, "Could not create product."),
     };

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Search, User } from "lucide-react";
+import { Search, User, LayoutDashboard } from "lucide-react";
+import { UserRole } from "@prisma/client";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { CartButton } from "@/components/cart/cart-button";
@@ -18,6 +19,8 @@ export async function Header() {
   const locale = await getLocale();
   const t = getDictionary(locale);
 
+  const isAdmin = session?.user?.role === UserRole.ADMIN;
+
   const navLinks = [
     { href: "/products", label: t.nav.shop },
     { href: "/products?featured=true", label: t.nav.featured },
@@ -28,7 +31,7 @@ export async function Header() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
       <div className="relative mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:h-[4.25rem] sm:px-6 lg:px-8">
         <div className="flex items-center gap-2 sm:gap-3">
-          <MobileNav />
+          <MobileNav isAdmin={isAdmin} />
           <Link
             href="/"
             className="max-w-[11rem] font-display text-xs font-semibold leading-tight tracking-tight sm:max-w-none sm:text-base md:text-lg lg:text-xl"
@@ -62,6 +65,14 @@ export async function Header() {
 
           {session?.user ? (
             <>
+              {isAdmin ? (
+                <Button variant="ghost" size="sm" className="hidden md:inline-flex" asChild>
+                  <Link href="/admin">
+                    <LayoutDashboard className="mr-1.5 h-4 w-4" />
+                    Admin
+                  </Link>
+                </Button>
+              ) : null}
               <Button variant="ghost" size="sm" className="hidden sm:inline-flex" asChild>
                 <Link href="/account">
                   <User className="mr-1.5 h-4 w-4" />

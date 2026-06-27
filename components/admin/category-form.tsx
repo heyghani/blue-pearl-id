@@ -7,6 +7,7 @@ import {
   updateCategoryAction,
   type AdminActionState,
 } from "@/lib/actions/admin/categories";
+import { useAdminActionRedirect } from "@/components/admin/use-admin-action-redirect";
 import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ export function CategoryForm({
     : createCategoryAction;
 
   const [state, formAction, pending] = useActionState(action, initialState);
+  useAdminActionRedirect(state);
   const [isActive, setIsActive] = useState(defaults.isActive ?? true);
 
   return (
