@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowDown, ArrowUp, Star, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowDown, ArrowUp, ImagePlus, Loader2, Star, X } from "lucide-react";
 
-import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  fetchUploadConfig,
+  uploadImageFiles,
+  type UploadConfig,
+} from "@/lib/uploads/client-image-upload";
 import { MAX_PRODUCT_IMAGES } from "@/lib/validations/admin";
 import { cn } from "@/lib/utils";
 
@@ -15,19 +20,89 @@ type Props = {
   productName?: string;
 };
 
+function formatMaxSize(bytes: number) {
+  return `${Math.floor(bytes / (1024 * 1024))} MB`;
+}
+
 export function ProductImagesField({
   name = "imagesPayload",
   label = "Product images",
   value = [],
   productName,
 }: Props) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<string[]>(value.filter(Boolean));
+  const [urlInput, setUrlInput] = useState("");
+  const [uploadConfig, setUploadConfig] = useState<UploadConfig | null>(null);
+  const [configLoading, setConfigLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(
+    null,
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const remainingSlots = MAX_PRODUCT_IMAGES - images.length;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadUploadConfig() {
+      try {
+        const config = await fetchUploadConfig();
+        if (!cancelled) {
+          setUploadConfig(config);
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          setUploadConfig({
+            mode: "unavailable",
+            available: false,
+            useClientUpload: false,
+            maxBytes: 4 * 1024 * 1024,
+            message:
+              loadError instanceof Error
+                ? loadError.message
+                : "Image upload is not available right now. Paste an image URL instead.",
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          setConfigLoading(false);
+        }
+      }
+    }
+
+    void loadUploadConfig();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function addImage(url: string) {
     const trimmed = url.trim();
-    if (!trimmed || images.length >= MAX_PRODUCT_IMAGES) return;
-    if (images.includes(trimmed)) return;
+    if (!trimmed || images.length >= MAX_PRODUCT_IMAGES) return false;
+    if (images.includes(trimmed)) return false;
+
     setImages((current) => [...current, trimmed]);
+    return true;
+  }
+
+  function addImages(urls: string[]) {
+    setImages((current) => {
+      const next = [...current];
+
+      for (const url of urls) {
+        const trimmed = url.trim();
+        if (!trimmed || next.length >= MAX_PRODUCT_IMAGES) break;
+        if (!next.includes(trimmed)) {
+          next.push(trimmed);
+        }
+      }
+
+      return next;
+    });
   }
 
   function removeImage(index: number) {
@@ -45,12 +120,108 @@ export function ProductImagesField({
     });
   }
 
+  function handleAddUrl() {
+    setError(null);
+    setNotice(null);
+
+    if (!addImage(urlInput)) {
+      if (images.includes(urlInput.trim())) {
+        setError("This image URL is already in the list.");
+      }
+      return;
+    }
+
+    setUrlInput("");
+  }
+
+  async function handleBatchUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const selectedFiles = event.target.files;
+    event.target.value = "";
+
+    if (!selectedFiles?.length) return;
+
+    setError(null);
+    setNotice(null);
+
+    if (configLoading) {
+      setError("Upload settings are still loading. Please try again in a moment.");
+      return;
+    }
+
+    if (!uploadConfig?.available) {
+      setError(
+        uploadConfig?.message ??
+          "Image upload is not configured. Paste image URLs instead.",
+      );
+      return;
+    }
+
+    const files = Array.from(selectedFiles);
+    const overflowCount = Math.max(0, files.length - remainingSlots);
+
+    if (remainingSlots === 0) {
+      setError(`Maximum of ${MAX_PRODUCT_IMAGES} images reached.`);
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress({ current: 0, total: Math.min(files.length, remainingSlots) });
+
+    try {
+      const result = await uploadImageFiles(files, "products", uploadConfig, {
+        maxCount: remainingSlots,
+        existingUrls: images,
+        onProgress: (current, total) => setUploadProgress({ current, total }),
+      });
+
+      if (result.uploaded.length > 0) {
+        addImages(result.uploaded);
+      }
+
+      const messages: string[] = [];
+
+      if (result.uploaded.length > 0) {
+        messages.push(
+          `${result.uploaded.length} image${result.uploaded.length === 1 ? "" : "s"} uploaded.`,
+        );
+      }
+
+      if (overflowCount > 0) {
+        messages.push(
+          `${overflowCount} file${overflowCount === 1 ? "" : "s"} skipped (limit is ${MAX_PRODUCT_IMAGES}).`,
+        );
+      }
+
+      if (result.skipped > 0) {
+        messages.push(`${result.skipped} duplicate image${result.skipped === 1 ? "" : "s"} skipped.`);
+      }
+
+      if (result.errors.length > 0) {
+        setError(result.errors.join(" "));
+      }
+
+      if (messages.length > 0) {
+        setNotice(messages.join(" "));
+      } else if (result.errors.length === 0) {
+        setError("No images were uploaded.");
+      }
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(null);
+    }
+  }
+
+  const uploadDisabled =
+    isUploading || configLoading || uploadConfig?.available === false || remainingSlots === 0;
+
   return (
     <div className="space-y-4">
       <div className="space-y-1">
         <p className="text-sm font-medium">{label}</p>
         <p className="text-xs text-muted-foreground">
-          Add up to {MAX_PRODUCT_IMAGES} images. The first image is used as the primary
+          Upload up to {MAX_PRODUCT_IMAGES} images at once. The first image is used as the primary
           catalog photo and gallery cover.
         </p>
       </div>
@@ -92,7 +263,7 @@ export function ProductImagesField({
                     type="button"
                     size="sm"
                     variant="outline"
-                    disabled={index === 0}
+                    disabled={index === 0 || isUploading}
                     onClick={() => moveImage(index, -1)}
                   >
                     <ArrowUp className="h-4 w-4" />
@@ -101,7 +272,7 @@ export function ProductImagesField({
                     type="button"
                     size="sm"
                     variant="outline"
-                    disabled={index === images.length - 1}
+                    disabled={index === images.length - 1 || isUploading}
                     onClick={() => moveImage(index, 1)}
                   >
                     <ArrowDown className="h-4 w-4" />
@@ -110,6 +281,7 @@ export function ProductImagesField({
                     type="button"
                     size="sm"
                     variant="ghost"
+                    disabled={isUploading}
                     onClick={() => removeImage(index)}
                   >
                     <X className="h-4 w-4" />
@@ -122,25 +294,90 @@ export function ProductImagesField({
         </div>
       ) : (
         <p className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
-          No images yet. Upload the primary product photo below.
+          No images yet. Upload one or more product photos below.
         </p>
       )}
 
-      {images.length < MAX_PRODUCT_IMAGES ? (
-        <div className={cn(images.length > 0 && "border-t pt-4")}>
-          <ImageUploadField
-            key={`product-image-upload-${images.length}`}
-            label={images.length === 0 ? "Primary image" : "Add another image"}
-            value=""
-            folder="products"
-            onChange={addImage}
-          />
+      {remainingSlots > 0 ? (
+        <div className={cn("space-y-3", images.length > 0 && "border-t pt-4")}>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={uploadDisabled}
+              onClick={() => inputRef.current?.click()}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Uploading {uploadProgress?.current ?? 0} of {uploadProgress?.total ?? 0}…
+                </>
+              ) : configLoading ? (
+                "Checking upload…"
+              ) : (
+                <>
+                  <ImagePlus className="h-4 w-4" />
+                  {images.length === 0 ? "Upload images" : "Add more images"}
+                </>
+              )}
+            </Button>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Input
+              type="url"
+              value={urlInput}
+              placeholder="Or paste an image URL (https://…)"
+              disabled={isUploading}
+              onChange={(event) => {
+                setError(null);
+                setNotice(null);
+                setUrlInput(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  handleAddUrl();
+                }
+              }}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={isUploading || !urlInput.trim()}
+              onClick={handleAddUrl}
+            >
+              Add URL
+            </Button>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            {uploadConfig?.available
+              ? `Select multiple files at once. JPG, PNG, WebP, or GIF up to ${formatMaxSize(uploadConfig.maxBytes)} each. ${remainingSlots} slot${remainingSlots === 1 ? "" : "s"} remaining.`
+              : "File upload is not configured on this server. Paste image URLs instead."}
+          </p>
+
+          {uploadConfig && !uploadConfig.available && uploadConfig.message ? (
+            <p className="text-xs text-amber-700">{uploadConfig.message}</p>
+          ) : null}
+
+          {notice ? <p className="text-xs text-emerald-700">{notice}</p> : null}
+          {error ? <p className="text-xs text-destructive">{error}</p> : null}
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">
           Maximum of {MAX_PRODUCT_IMAGES} images reached.
         </p>
       )}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+        className="hidden"
+        multiple
+        onChange={handleBatchUpload}
+      />
     </div>
   );
 }

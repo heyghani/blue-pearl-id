@@ -1,38 +1,31 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { upload } from "@vercel/blob/client";
 import { ImagePlus, Loader2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { prepareImageForUpload } from "@/lib/uploads/prepare-client-image";
 import {
-  extensionForContentType,
+  fetchUploadConfig,
+  uploadImageFile,
+  type UploadConfig,
+} from "@/lib/uploads/client-image-upload";
+import { cn } from "@/lib/utils";
+import {
   getUnsupportedImageTypeMessage,
   resolveImageContentType,
+  type UploadFolder,
 } from "@/lib/validations/upload";
-
-type UploadConfig = {
-  mode: "r2" | "blob" | "local" | "unavailable";
-  available: boolean;
-  useClientUpload: boolean;
-  maxBytes: number;
-  message: string | null;
-};
 
 type Props = {
   name?: string;
   label?: string;
   value?: string | null;
   onChange?: (url: string) => void;
-  folder?: "products" | "variants" | "brands" | "categories";
+  folder?: UploadFolder;
   compact?: boolean;
   className?: string;
 };
-
-const MULTIPART_UPLOAD_THRESHOLD_BYTES = 3 * 1024 * 1024;
 
 function formatMaxSize(bytes: number) {
   return `${Math.floor(bytes / (1024 * 1024))} MB`;
@@ -59,19 +52,9 @@ export function ImageUploadField({
 
     async function loadUploadConfig() {
       try {
-        const response = await fetch("/api/admin/upload");
-        const payload = (await response.json()) as UploadConfig & { error?: string };
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error("Your admin session expired. Please sign in again.");
-          }
-
-          throw new Error(payload.error ?? "Could not check upload settings.");
-        }
-
+        const config = await fetchUploadConfig();
         if (!cancelled) {
-          setUploadConfig(payload);
+          setUploadConfig(config);
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -105,43 +88,6 @@ export function ImageUploadField({
     onChange?.(url);
   }
 
-  async function uploadViaServer(file: File) {
-    const body = new FormData();
-    body.append("file", file);
-    body.append("folder", folder);
-
-    const response = await fetch("/api/admin/upload", {
-      method: "POST",
-      body,
-    });
-
-    const payload = (await response.json()) as { url?: string; error?: string };
-
-    if (!response.ok || !payload.url) {
-      throw new Error(payload.error ?? "Upload failed.");
-    }
-
-    return payload.url;
-  }
-
-  async function uploadViaBlob(file: File, contentType: string) {
-    const extension = extensionForContentType(contentType);
-    if (!extension) {
-      throw new Error("Unsupported image type.");
-    }
-
-    const pathname = `${folder}/${crypto.randomUUID()}.${extension}`;
-
-    const blob = await upload(pathname, file, {
-      access: "public",
-      handleUploadUrl: "/api/admin/upload/client",
-      contentType,
-      multipart: file.size >= MULTIPART_UPLOAD_THRESHOLD_BYTES,
-    });
-
-    return blob.url;
-  }
-
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -155,11 +101,8 @@ export function ImageUploadField({
       return;
     }
 
-    if (!uploadConfig?.available) {
-      setError(
-        uploadConfig?.message ??
-          "Image upload is not configured. Paste an image URL instead.",
-      );
+    if (!uploadConfig) {
+      setError("Upload settings are not available.");
       return;
     }
 
@@ -171,18 +114,7 @@ export function ImageUploadField({
     setIsUploading(true);
 
     try {
-      const prepared = await prepareImageForUpload(file);
-
-      if (prepared.file.size > uploadConfig.maxBytes) {
-        throw new Error(
-          `Image is too large after processing. Please use a file under ${formatMaxSize(uploadConfig.maxBytes)}.`,
-        );
-      }
-
-      const url = uploadConfig.useClientUpload
-        ? await uploadViaBlob(prepared.file, prepared.contentType)
-        : await uploadViaServer(prepared.file);
-
+      const url = await uploadImageFile(file, folder, uploadConfig);
       updateUrl(url);
     } catch (uploadError) {
       setError(

@@ -84,3 +84,5 @@ export const uploadedImageUrlSchema = z
   );
 
 export const uploadFolderSchema = z.enum(["products", "variants", "brands", "categories"]);
+
+export type UploadFolder = z.infer<typeof uploadFolderSchema>;
