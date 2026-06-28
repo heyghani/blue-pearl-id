@@ -84,7 +84,7 @@ export function OrderReferenceFields({
   }, []);
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+    const file = event.target.files?.[0] ?? null;
     event.target.value = "";
 
     if (!file) return;

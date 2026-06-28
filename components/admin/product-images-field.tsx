@@ -32,7 +32,6 @@ export function ProductImagesField({
   productName,
   onUploadingChange,
 }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const imagesRef = useRef<string[]>(value.filter(Boolean));
   const [images, setImages] = useState<string[]>(value.filter(Boolean));
   const [urlInput, setUrlInput] = useState("");
@@ -157,10 +156,13 @@ export function ProductImagesField({
   }
 
   async function handleBatchUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const selectedFiles = event.target.files;
+    const files = Array.from(event.target.files ?? []);
     event.target.value = "";
 
-    if (!selectedFiles?.length) return;
+    if (files.length === 0) {
+      setError("Could not read the selected files. Please try again.");
+      return;
+    }
 
     setError(null);
     setNotice(null);
@@ -178,7 +180,6 @@ export function ProductImagesField({
       return;
     }
 
-    const files = Array.from(selectedFiles);
     const slotsLeft = MAX_PRODUCT_IMAGES - imagesRef.current.length;
     const overflowCount = Math.max(0, files.length - slotsLeft);
 
@@ -189,6 +190,7 @@ export function ProductImagesField({
 
     setIsUploading(true);
     setUploadProgress({ current: 0, total: Math.min(files.length, slotsLeft) });
+    setNotice(`Preparing ${Math.min(files.length, slotsLeft)} image${Math.min(files.length, slotsLeft) === 1 ? "" : "s"}…`);
 
     try {
       const result = await uploadImageFiles(files, "products", uploadConfig, {
@@ -326,28 +328,34 @@ export function ProductImagesField({
 
       {remainingSlots > 0 ? (
         <div className={cn("space-y-3", images.length > 0 && "border-t pt-4")}>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
+          <label
+            className={cn(
+              "inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+              uploadDisabled && "pointer-events-none cursor-not-allowed opacity-50",
+            )}
+          >
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/*,.jpg,.jpeg,.png,.webp,.gif"
+              className="sr-only"
+              multiple
               disabled={uploadDisabled}
-              onClick={() => inputRef.current?.click()}
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Uploading {uploadProgress?.current ?? 0} of {uploadProgress?.total ?? 0}…
-                </>
-              ) : configLoading ? (
-                "Checking upload…"
-              ) : (
-                <>
-                  <ImagePlus className="h-4 w-4" />
-                  {images.length === 0 ? "Upload images" : "Add more images"}
-                </>
-              )}
-            </Button>
-          </div>
+              onChange={handleBatchUpload}
+            />
+            {isUploading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Uploading {uploadProgress?.current ?? 0} of {uploadProgress?.total ?? 0}…
+              </>
+            ) : configLoading ? (
+              "Checking upload…"
+            ) : (
+              <>
+                <ImagePlus className="h-4 w-4" />
+                {images.length === 0 ? "Upload images" : "Add more images"}
+              </>
+            )}
+          </label>
 
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input
@@ -396,14 +404,6 @@ export function ProductImagesField({
         </p>
       )}
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif,image/*,.jpg,.jpeg,.png,.webp,.gif"
-        className="hidden"
-        multiple
-        onChange={handleBatchUpload}
-      />
     </div>
   );
 }
