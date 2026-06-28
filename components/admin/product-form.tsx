@@ -86,6 +86,7 @@ export function ProductForm({
   );
   const [isActive, setIsActive] = useState(defaults.isActive ?? true);
   const [isFeatured, setIsFeatured] = useState(defaults.isFeatured ?? false);
+  const [imagesUploading, setImagesUploading] = useState(false);
 
   function handleNameChange(name: string) {
     handleSlugFromName(name);
@@ -243,6 +244,7 @@ export function ProductForm({
           <ProductImagesField
             value={defaults.imageUrls ?? []}
             productName={defaults.name}
+            onUploadingChange={setImagesUploading}
           />
         </CardContent>
       </Card>
@@ -366,8 +368,8 @@ export function ProductForm({
         </CardContent>
       </Card>
 
-      <Button type="submit" disabled={pending}>
-        {pending ? "Saving…" : productId ? "Save changes" : "Create product"}
+      <Button type="submit" disabled={pending || imagesUploading}>
+        {pending ? "Saving…" : imagesUploading ? "Uploading images…" : productId ? "Save changes" : "Create product"}
       </Button>
     </form>
   );

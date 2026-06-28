@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { ShippingMethodType } from "@prisma/client";
 
+import { uploadedImageUrlSchema } from "@/lib/validations/upload";
+
 export const addressSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required").max(50),
   lastName: z.string().trim().min(1, "Last name is required").max(50),
@@ -34,6 +36,16 @@ export const paymentStepSchema = z.object({
   paymentMethod: z.enum(["CREDIT_CARD", "PAYPAL"]),
   couponCode: z.string().trim().max(50).optional().or(z.literal("")),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
+  orderReferencePhotoUrl: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .refine(
+      (value) => !value || uploadedImageUrlSchema.safeParse(value).success,
+      "Upload a valid reference photo or remove it.",
+    ),
+  orderDimensions: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
 export const checkoutValidateSchema = customerInfoSchema

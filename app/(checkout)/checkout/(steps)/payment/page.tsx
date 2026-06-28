@@ -34,6 +34,8 @@ export default async function CheckoutPaymentPage() {
         <PaymentForm
           email={draft.email}
           defaultCoupon={draft.couponCode ?? ""}
+          defaultOrderReferencePhotoUrl={draft.orderReferencePhotoUrl ?? ""}
+          defaultOrderDimensions={draft.orderDimensions ?? ""}
         />
       </div>
     </div>

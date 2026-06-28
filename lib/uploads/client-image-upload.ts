@@ -9,6 +9,7 @@ import {
 } from "@/lib/validations/upload";
 
 const MULTIPART_UPLOAD_THRESHOLD_BYTES = 3 * 1024 * 1024;
+const BATCH_UPLOAD_YIELD_MS = 50;
 
 export type UploadConfig = {
   mode: "r2" | "blob" | "local" | "unavailable";
@@ -18,18 +19,47 @@ export type UploadConfig = {
   message: string | null;
 };
 
+export type UploadTarget = "admin" | "checkout";
+
+function getUploadEndpoints(target: UploadTarget) {
+  if (target === "checkout") {
+    return {
+      config: "/api/checkout/upload",
+      server: "/api/checkout/upload",
+      blob: "/api/checkout/upload/client",
+    };
+  }
+
+  return {
+    config: "/api/admin/upload",
+    server: "/api/admin/upload",
+    blob: "/api/admin/upload/client",
+  };
+}
+
 function formatMaxSize(bytes: number) {
   return `${Math.floor(bytes / (1024 * 1024))} MB`;
 }
 
-async function uploadViaServer(file: File, folder: UploadFolder) {
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function uploadViaServer(
+  file: File,
+  folder: UploadFolder,
+  target: UploadTarget,
+) {
   const body = new FormData();
   body.append("file", file);
   body.append("folder", folder);
 
-  const response = await fetch("/api/admin/upload", {
+  const response = await fetch(getUploadEndpoints(target).server, {
     method: "POST",
     body,
+    credentials: "same-origin",
   });
 
   const payload = (await response.json()) as { url?: string; error?: string };
@@ -41,7 +71,12 @@ async function uploadViaServer(file: File, folder: UploadFolder) {
   return payload.url;
 }
 
-async function uploadViaBlob(file: File, folder: UploadFolder, contentType: string) {
+async function uploadViaBlob(
+  file: File,
+  folder: UploadFolder,
+  contentType: string,
+  target: UploadTarget,
+) {
   const extension = extensionForContentType(contentType);
   if (!extension) {
     throw new Error("Unsupported image type.");
@@ -51,7 +86,7 @@ async function uploadViaBlob(file: File, folder: UploadFolder, contentType: stri
 
   const blob = await upload(pathname, file, {
     access: "public",
-    handleUploadUrl: "/api/admin/upload/client",
+    handleUploadUrl: getUploadEndpoints(target).blob,
     contentType,
     multipart: file.size >= MULTIPART_UPLOAD_THRESHOLD_BYTES,
   });
@@ -59,13 +94,22 @@ async function uploadViaBlob(file: File, folder: UploadFolder, contentType: stri
   return blob.url;
 }
 
-export async function fetchUploadConfig(): Promise<UploadConfig> {
-  const response = await fetch("/api/admin/upload");
+export async function fetchUploadConfig(
+  target: UploadTarget = "admin",
+): Promise<UploadConfig> {
+  const response = await fetch(getUploadEndpoints(target).config, {
+    credentials: "same-origin",
+    cache: "no-store",
+  });
   const payload = (await response.json()) as UploadConfig & { error?: string };
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error("Your admin session expired. Please sign in again.");
+      throw new Error(
+        target === "admin"
+          ? "Your admin session expired. Please sign in again."
+          : "Your checkout session expired. Please refresh the page.",
+      );
     }
 
     throw new Error(payload.error ?? "Could not check upload settings.");
@@ -78,6 +122,7 @@ export async function uploadImageFile(
   file: File,
   folder: UploadFolder,
   config: UploadConfig,
+  target: UploadTarget = "admin",
 ): Promise<string> {
   if (!config.available) {
     throw new Error(
@@ -98,8 +143,8 @@ export async function uploadImageFile(
   }
 
   return config.useClientUpload
-    ? await uploadViaBlob(prepared.file, folder, prepared.contentType)
-    : await uploadViaServer(prepared.file, folder);
+    ? await uploadViaBlob(prepared.file, folder, prepared.contentType, target)
+    : await uploadViaServer(prepared.file, folder, target);
 }
 
 export type BatchUploadResult = {
@@ -116,35 +161,42 @@ export async function uploadImageFiles(
     maxCount?: number;
     existingUrls?: string[];
     onProgress?: (current: number, total: number) => void;
+    target?: UploadTarget;
   },
 ): Promise<BatchUploadResult> {
   const existing = new Set(options?.existingUrls ?? []);
   const uploaded: string[] = [];
   const errors: string[] = [];
   let skipped = 0;
+  const target = options?.target ?? "admin";
 
   const maxCount = options?.maxCount ?? files.length;
   const queue = files.slice(0, maxCount);
 
-  for (let index = 0; index < queue.length; index += 1) {
-    options?.onProgress?.(index + 1, queue.length);
+  options?.onProgress?.(0, queue.length);
 
+  for (let index = 0; index < queue.length; index += 1) {
     const file = queue[index];
 
     try {
-      const url = await uploadImageFile(file, folder, config);
+      const url = await uploadImageFile(file, folder, config, target);
 
       if (existing.has(url) || uploaded.includes(url)) {
         skipped += 1;
-        continue;
+      } else {
+        uploaded.push(url);
+        existing.add(url);
       }
-
-      uploaded.push(url);
-      existing.add(url);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Upload failed.";
       errors.push(`${file.name}: ${message}`);
+    }
+
+    options?.onProgress?.(index + 1, queue.length);
+
+    if (index < queue.length - 1) {
+      await wait(BATCH_UPLOAD_YIELD_MS);
     }
   }
 

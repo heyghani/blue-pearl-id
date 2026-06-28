@@ -18,6 +18,7 @@ type Props = {
   label?: string;
   value?: string[];
   productName?: string;
+  onUploadingChange?: (uploading: boolean) => void;
 };
 
 function formatMaxSize(bytes: number) {
@@ -29,8 +30,10 @@ export function ProductImagesField({
   label = "Product images",
   value = [],
   productName,
+  onUploadingChange,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const imagesRef = useRef<string[]>(value.filter(Boolean));
   const [images, setImages] = useState<string[]>(value.filter(Boolean));
   const [urlInput, setUrlInput] = useState("");
   const [uploadConfig, setUploadConfig] = useState<UploadConfig | null>(null);
@@ -45,11 +48,19 @@ export function ProductImagesField({
   const remainingSlots = MAX_PRODUCT_IMAGES - images.length;
 
   useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
+
+  useEffect(() => {
+    onUploadingChange?.(isUploading);
+  }, [isUploading, onUploadingChange]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function loadUploadConfig() {
       try {
-        const config = await fetchUploadConfig();
+        const config = await fetchUploadConfig("admin");
         if (!cancelled) {
           setUploadConfig(config);
         }
@@ -80,17 +91,28 @@ export function ProductImagesField({
     };
   }, []);
 
+  function updateImages(next: string[] | ((current: string[]) => string[])) {
+    setImages((current) => {
+      const resolved = typeof next === "function" ? next(current) : next;
+      imagesRef.current = resolved;
+      return resolved;
+    });
+  }
+
   function addImage(url: string) {
     const trimmed = url.trim();
-    if (!trimmed || images.length >= MAX_PRODUCT_IMAGES) return false;
-    if (images.includes(trimmed)) return false;
+    if (!trimmed) return false;
 
-    setImages((current) => [...current, trimmed]);
+    const current = imagesRef.current;
+    if (current.length >= MAX_PRODUCT_IMAGES) return false;
+    if (current.includes(trimmed)) return false;
+
+    updateImages([...current, trimmed]);
     return true;
   }
 
   function addImages(urls: string[]) {
-    setImages((current) => {
+    updateImages((current) => {
       const next = [...current];
 
       for (const url of urls) {
@@ -106,11 +128,11 @@ export function ProductImagesField({
   }
 
   function removeImage(index: number) {
-    setImages((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    updateImages((current) => current.filter((_, itemIndex) => itemIndex !== index));
   }
 
   function moveImage(index: number, direction: -1 | 1) {
-    setImages((current) => {
+    updateImages((current) => {
       const nextIndex = index + direction;
       if (nextIndex < 0 || nextIndex >= current.length) return current;
 
@@ -125,7 +147,7 @@ export function ProductImagesField({
     setNotice(null);
 
     if (!addImage(urlInput)) {
-      if (images.includes(urlInput.trim())) {
+      if (imagesRef.current.includes(urlInput.trim())) {
         setError("This image URL is already in the list.");
       }
       return;
@@ -157,20 +179,22 @@ export function ProductImagesField({
     }
 
     const files = Array.from(selectedFiles);
-    const overflowCount = Math.max(0, files.length - remainingSlots);
+    const slotsLeft = MAX_PRODUCT_IMAGES - imagesRef.current.length;
+    const overflowCount = Math.max(0, files.length - slotsLeft);
 
-    if (remainingSlots === 0) {
+    if (slotsLeft === 0) {
       setError(`Maximum of ${MAX_PRODUCT_IMAGES} images reached.`);
       return;
     }
 
     setIsUploading(true);
-    setUploadProgress({ current: 0, total: Math.min(files.length, remainingSlots) });
+    setUploadProgress({ current: 0, total: Math.min(files.length, slotsLeft) });
 
     try {
       const result = await uploadImageFiles(files, "products", uploadConfig, {
-        maxCount: remainingSlots,
-        existingUrls: images,
+        maxCount: slotsLeft,
+        existingUrls: imagesRef.current,
+        target: "admin",
         onProgress: (current, total) => setUploadProgress({ current, total }),
       });
 
@@ -202,7 +226,9 @@ export function ProductImagesField({
 
       if (messages.length > 0) {
         setNotice(messages.join(" "));
-      } else if (result.errors.length === 0) {
+      } else if (result.errors.length > 0) {
+        setError(result.errors.join(" "));
+      } else {
         setError("No images were uploaded.");
       }
     } catch (uploadError) {
@@ -373,7 +399,7 @@ export function ProductImagesField({
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/*,.jpg,.jpeg,.png,.webp,.gif"
         className="hidden"
         multiple
         onChange={handleBatchUpload}

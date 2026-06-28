@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useMemo } from "react";
+import { useActionState, useMemo, useState } from "react";
 
 import {
   placeOrderAction,
   type CheckoutActionState,
 } from "@/lib/actions/checkout";
+import { OrderReferenceFields } from "@/components/checkout/order-reference-fields";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,12 +19,17 @@ const initialState: CheckoutActionState = {};
 
 export function PaymentForm({
   defaultCoupon = "",
+  defaultOrderReferencePhotoUrl = "",
+  defaultOrderDimensions = "",
   email,
 }: {
   defaultCoupon?: string;
+  defaultOrderReferencePhotoUrl?: string;
+  defaultOrderDimensions?: string;
   email: string;
 }) {
   const idempotencyKey = useMemo(() => crypto.randomUUID(), []);
+  const [referenceUploading, setReferenceUploading] = useState(false);
   const [state, formAction, pending] = useActionState(
     placeOrderAction,
     initialState,
@@ -43,6 +49,13 @@ export function PaymentForm({
         <h2 className="text-lg font-semibold">Contact</h2>
         <p className="text-sm text-muted-foreground">{email}</p>
       </section>
+
+      <OrderReferenceFields
+        defaultPhotoUrl={defaultOrderReferencePhotoUrl}
+        defaultDimensions={defaultOrderDimensions}
+        fieldErrors={state.fieldErrors}
+        onUploadingChange={setReferenceUploading}
+      />
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">Payment method</h2>
@@ -116,8 +129,12 @@ export function PaymentForm({
         <Button variant="outline" asChild>
           <Link href="/checkout/shipping">Back</Link>
         </Button>
-        <Button type="submit" size="lg" disabled={pending}>
-          {pending ? "Placing order…" : "Place order & pay"}
+        <Button type="submit" size="lg" disabled={pending || referenceUploading}>
+          {pending
+            ? "Placing order…"
+            : referenceUploading
+              ? "Uploading photo…"
+              : "Place order & pay"}
         </Button>
       </div>
     </form>

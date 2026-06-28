@@ -29,6 +29,8 @@ export type CreateOrderInput = {
   paymentMethod: PaymentMethod;
   couponCode?: string;
   notes?: string;
+  orderReferencePhotoUrl?: string;
+  orderDimensions?: string;
   idempotencyKey: string;
   userId?: string;
   cartId: string;
@@ -290,6 +292,8 @@ export async function createOrderFromCart(
           couponCode: coupon?.code,
           idempotencyKey: input.idempotencyKey,
           notes: input.notes || null,
+          orderReferencePhotoUrl: input.orderReferencePhotoUrl || null,
+          orderDimensions: input.orderDimensions || null,
           items: {
             create: cart.items.map((item) => {
               const unitPrice = item.variant?.price ?? item.product.price;

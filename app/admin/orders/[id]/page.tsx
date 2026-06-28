@@ -127,6 +127,45 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             ) : null}
           </section>
 
+          {order.orderReferencePhotoUrl || order.orderDimensions || order.notes ? (
+            <section className="rounded-lg border p-4">
+              <h2 className="font-medium">Order details</h2>
+              <div className="mt-3 space-y-3 text-sm">
+                {order.orderReferencePhotoUrl ? (
+                  <div className="space-y-2">
+                    <p className="text-muted-foreground">Reference photo</p>
+                    <a
+                      href={order.orderReferencePhotoUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-block overflow-hidden rounded-md border"
+                    >
+                      <img
+                        src={order.orderReferencePhotoUrl}
+                        alt="Order reference"
+                        className="h-32 w-32 object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </a>
+                  </div>
+                ) : null}
+                {order.orderDimensions ? (
+                  <p>
+                    <span className="text-muted-foreground">Dimensions: </span>
+                    {order.orderDimensions}
+                  </p>
+                ) : null}
+                {order.notes ? (
+                  <p>
+                    <span className="text-muted-foreground">Notes: </span>
+                    {order.notes}
+                  </p>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
+
           <section className="rounded-lg border p-4">
             <h2 className="font-medium">Payments</h2>
             <ul className="mt-4 space-y-3 text-sm">

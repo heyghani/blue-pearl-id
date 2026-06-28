@@ -12,6 +12,8 @@ export type CheckoutDraft = {
   shippingMethod?: ShippingMethodType;
   couponCode?: string;
   notes?: string;
+  orderReferencePhotoUrl?: string;
+  orderDimensions?: string;
 };
 
 const CHECKOUT_DRAFT_COOKIE = "checkout_draft";

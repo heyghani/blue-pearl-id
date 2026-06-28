@@ -398,6 +398,8 @@ model Order {
   couponCode         String?
   idempotencyKey     String?             @unique
   notes              String?             @db.Text
+  orderReferencePhotoUrl String?
+  orderDimensions      String?           @db.VarChar(500)
 
   items     OrderItem[]
   payments  Payment[]

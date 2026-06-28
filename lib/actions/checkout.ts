@@ -168,6 +168,8 @@ export async function placeOrderAction(
     paymentMethod: formData.get("paymentMethod"),
     couponCode: formData.get("couponCode"),
     notes: formData.get("notes"),
+    orderReferencePhotoUrl: formData.get("orderReferencePhotoUrl"),
+    orderDimensions: formData.get("orderDimensions"),
   });
 
   if (!parsed.success) {
@@ -201,6 +203,11 @@ export async function placeOrderAction(
     await setCheckoutDraft({ couponCode: parsed.data.couponCode });
   }
 
+  await setCheckoutDraft({
+    orderReferencePhotoUrl: parsed.data.orderReferencePhotoUrl || undefined,
+    orderDimensions: parsed.data.orderDimensions || undefined,
+  });
+
   const result = await createOrderFromCart({
     email: draft.email,
     phone: draft.phone,
@@ -210,6 +217,8 @@ export async function placeOrderAction(
     paymentMethod,
     couponCode: parsed.data.couponCode || draft.couponCode,
     notes: parsed.data.notes,
+    orderReferencePhotoUrl: parsed.data.orderReferencePhotoUrl || undefined,
+    orderDimensions: parsed.data.orderDimensions || undefined,
     idempotencyKey,
     userId: user?.id,
     cartId: cart.id,
