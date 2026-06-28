@@ -4,6 +4,7 @@ export const es: Dictionary = {
   nav: {
     shop: "Tienda",
     featured: "Destacados",
+    lookbook: "Lookbook",
     faq: "Preguntas",
     shipping: "Envíos",
     signIn: "Iniciar sesión",
@@ -30,6 +31,16 @@ export const es: Dictionary = {
     faqTitle: "Preguntas",
     faqSubtitle: "Respuestas rápidas antes de comprar.",
     shopByCategory: "Categorías",
+    lookbookTitle: "Lookbook",
+    lookbookDesc: "Estilismo editorial y destacados de temporada de la colección.",
+    lookbookCta: "Ver lookbook",
+  },
+  lookbook: {
+    eyebrow: "Editorial",
+    title: "Lookbook",
+    lead: "Una selección de siluetas, texturas y detalles — estilizada para la vida moderna.",
+    closing: "Cada pieza está disponible con envío a todo el mundo.",
+    shopCta: "Ver la colección",
   },
   faqs: [
     {

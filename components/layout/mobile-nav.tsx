@@ -23,6 +23,7 @@ export function MobileNav({
   const links = [
     { href: "/products", label: t.nav.shop },
     { href: "/products?featured=true", label: t.nav.featured },
+    { href: "/lookbook", label: t.nav.lookbook },
     { href: "/#faq", label: t.nav.faq },
     { href: "/legal/shipping", label: t.nav.shipping },
   ];

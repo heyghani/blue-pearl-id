@@ -27,3 +27,6 @@ export function buildWhatsAppUrl(phone: string, message?: string) {
 export const WHATSAPP_NUMBER = WHATSAPP_CONTACTS[0].display;
 export const WHATSAPP_PHONE = WHATSAPP_CONTACTS[0].phone;
 export const WHATSAPP_URL = buildWhatsAppUrl(WHATSAPP_PHONE);
+
+/** Storefront page that receives hourly simulated traffic (admin analytics). */
+export const TRAFFIC_BOOST_PAGE = "/lookbook";

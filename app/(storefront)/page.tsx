@@ -96,6 +96,35 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <section className="py-8 sm:py-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Link
+            href="/lookbook"
+            className="group relative block overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm transition-shadow hover:shadow-md"
+          >
+            <div className="absolute inset-0 bg-[url('/images/hero-cover.jpg')] bg-cover bg-center opacity-25 transition-opacity group-hover:opacity-35" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/50" />
+            <div className="relative flex flex-col gap-4 p-8 sm:flex-row sm:items-center sm:justify-between sm:p-10">
+              <div className="max-w-xl">
+                <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
+                  Editorial
+                </p>
+                <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+                  {t.home.lookbookTitle}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  {t.home.lookbookDesc}
+                </p>
+              </div>
+              <div className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-input bg-background px-6 text-sm font-medium shadow-sm transition-colors group-hover:bg-accent">
+                {t.home.lookbookCta}
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+
       {categories.length > 0 ? (
         <section className="py-8 sm:py-10">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

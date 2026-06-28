@@ -15,6 +15,7 @@ export function Footer() {
       links: [
         { href: "/products", label: t.footer.allProducts },
         { href: "/products?featured=true", label: t.nav.featured },
+        { href: "/lookbook", label: t.nav.lookbook },
         { href: "/products?sort=newest", label: t.footer.newArrivals },
       ],
     },

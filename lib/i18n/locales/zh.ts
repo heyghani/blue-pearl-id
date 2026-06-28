@@ -4,6 +4,7 @@ export const zh: Dictionary = {
   nav: {
     shop: "选购",
     featured: "精选",
+    lookbook: "造型手册",
     faq: "常见问题",
     shipping: "配送",
     signIn: "登录",
@@ -29,6 +30,16 @@ export const zh: Dictionary = {
     faqTitle: "常见问题",
     faqSubtitle: "下单前你可能想知道的。",
     shopByCategory: "分类",
+    lookbookTitle: "造型手册",
+    lookbookDesc: "精选造型与当季亮点，展现系列质感。",
+    lookbookCta: "查看造型手册",
+  },
+  lookbook: {
+    eyebrow: "专题",
+    title: "造型手册",
+    lead: "精选廓形、材质与细节，为现代生活而搭配。",
+    closing: "所有款式均可订购，支持全球配送。",
+    shopCta: "选购系列",
   },
   faqs: [
     {
