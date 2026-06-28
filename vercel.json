@@ -1,9 +1,3 @@
 {
-  "regions": ["sfo1"],
-  "crons": [
-    {
-      "path": "/api/cron/traffic-boost",
-      "schedule": "0 * * * *"
-    }
-  ]
+  "regions": ["sfo1"]
 }

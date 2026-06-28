@@ -1,4 +1,3 @@
-import { TRAFFIC_BOOST_PAGE } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 
 const TRACKABLE_PREFIXES = [
@@ -7,7 +6,7 @@ const TRACKABLE_PREFIXES = [
   "/cart",
   "/checkout",
   "/account",
-  TRAFFIC_BOOST_PAGE,
+  "/lookbook",
 ];
 
 function isTrackablePath(path: string) {
@@ -31,41 +30,6 @@ export async function recordPageView(path: string, referrer?: string | null) {
       referrer: referrer || null,
     },
   });
-}
-
-function getTrafficBoostViewCount() {
-  const min = Number.parseInt(process.env.TRAFFIC_BOOST_VIEWS_MIN ?? "24", 10);
-  const max = Number.parseInt(process.env.TRAFFIC_BOOST_VIEWS_MAX ?? "48", 10);
-  const lower = Number.isFinite(min) ? min : 24;
-  const upper = Number.isFinite(max) ? max : 48;
-
-  if (upper <= lower) {
-    return lower;
-  }
-
-  return lower + Math.floor(Math.random() * (upper - lower + 1));
-}
-
-export async function recordSimulatedPageViews(
-  path: string,
-  count = getTrafficBoostViewCount(),
-) {
-  if (count <= 0) {
-    return 0;
-  }
-
-  const now = Date.now();
-  const hourMs = 60 * 60 * 1000;
-
-  await prisma.pageView.createMany({
-    data: Array.from({ length: count }, () => ({
-      path,
-      referrer: "traffic-boost",
-      createdAt: new Date(now - Math.floor(Math.random() * hourMs)),
-    })),
-  });
-
-  return count;
 }
 
 export async function getPageViewTrafficStats() {
