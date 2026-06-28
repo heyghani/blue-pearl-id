@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { ProductRail } from "@/components/catalog/product-rail";
-import { getActiveCategoryTree } from "@/lib/categories";
+import { HomeCategorySection } from "@/components/home/home-category-section";
+import { getActiveCategoryTree, getHomepageCategoryItems } from "@/lib/categories";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
 import {
@@ -41,11 +42,13 @@ export default async function HomePage() {
     getActiveCategoryTree().catch(() => []),
   ]);
 
-  const categories = categoryTree.filter(
-    (category) =>
-      category._count.products > 0 ||
-      category.children.length > 0 ||
-      category.children.some((child) => child._count.products > 0),
+  const categories = getHomepageCategoryItems(
+    categoryTree.filter(
+      (category) =>
+        category._count.products > 0 ||
+        category.children.length > 0 ||
+        category.children.some((child) => child._count.products > 0),
+    ),
   );
 
   return (
@@ -125,26 +128,15 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {categories.length > 0 ? (
-        <section className="py-8 sm:py-10">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <p className="mb-4 font-display text-lg font-medium tracking-tight sm:text-xl">
-              {t.home.shopByCategory}
-            </p>
-            <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {categories.map((category) => (
-                <Link
-                  key={category.slug}
-                  href={`/products?category=${category.slug}`}
-                  className="shrink-0 rounded-full border border-border/80 bg-card/90 px-5 py-2.5 text-sm font-medium shadow-sm transition-all hover:border-[var(--pearl)] hover:shadow-md active:scale-[0.98]"
-                >
-                  {category.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : null}
+      <HomeCategorySection
+        categories={categories}
+        title={t.home.shopByCategory}
+        description={t.home.shopByCategoryDesc}
+        viewAllLabel={t.home.viewAll}
+        productLabel={t.catalog.product}
+        productsLabel={t.catalog.products}
+        className="border-t border-border/60 bg-muted/20"
+      />
 
       <ProductRail
         title={t.home.featuredTitle}

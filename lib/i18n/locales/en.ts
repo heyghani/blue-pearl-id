@@ -31,6 +31,7 @@ export const en: Dictionary = {
     faqTitle: "Questions",
     faqSubtitle: "Quick answers before you order.",
     shopByCategory: "Categories",
+    shopByCategoryDesc: "Browse by collection — tap a category to shop.",
     lookbookTitle: "The Lookbook",
     lookbookDesc: "Editorial styling and seasonal highlights from the collection.",
     lookbookCta: "Explore lookbook",

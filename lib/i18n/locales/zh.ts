@@ -30,6 +30,7 @@ export const zh: Dictionary = {
     faqTitle: "常见问题",
     faqSubtitle: "下单前你可能想知道的。",
     shopByCategory: "分类",
+    shopByCategoryDesc: "按系列浏览，点击分类开始选购。",
     lookbookTitle: "造型手册",
     lookbookDesc: "精选造型与当季亮点，展现系列质感。",
     lookbookCta: "查看造型手册",

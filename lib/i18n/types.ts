@@ -39,6 +39,7 @@ export interface Dictionary {
     faqTitle: string;
     faqSubtitle: string;
     shopByCategory: string;
+    shopByCategoryDesc: string;
     lookbookTitle: string;
     lookbookDesc: string;
     lookbookCta: string;

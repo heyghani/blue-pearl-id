@@ -47,6 +47,48 @@ export async function getActiveCategoryTree() {
   return categories.filter((category) => !category.parentId);
 }
 
+export type HomepageCategoryItem = {
+  slug: string;
+  name: string;
+  imageUrl: string | null;
+  productCount: number;
+};
+
+export function getHomepageCategoryItems(
+  tree: Awaited<ReturnType<typeof getActiveCategoryTree>>,
+): HomepageCategoryItem[] {
+  const items: HomepageCategoryItem[] = [];
+
+  for (const parent of tree) {
+    const productiveChildren = parent.children.filter(
+      (child) => child._count.products > 0,
+    );
+
+    if (productiveChildren.length > 0) {
+      for (const child of productiveChildren) {
+        items.push({
+          slug: child.slug,
+          name: child.name,
+          imageUrl: child.imageUrl,
+          productCount: child._count.products,
+        });
+      }
+      continue;
+    }
+
+    if (parent._count.products > 0) {
+      items.push({
+        slug: parent.slug,
+        name: parent.name,
+        imageUrl: parent.imageUrl,
+        productCount: parent._count.products,
+      });
+    }
+  }
+
+  return items;
+}
+
 export async function getCategoryBySlug(slug: string) {
   return prisma.category.findFirst({
     where: { slug, isActive: true },
