@@ -7,7 +7,9 @@ import {
   updateProductAction,
   type AdminActionState,
 } from "@/lib/actions/admin/products";
+import { generateBaseSkuFromName } from "@/lib/slug";
 import { useAdminActionRedirect } from "@/components/admin/use-admin-action-redirect";
+import { useAutoSlug } from "@/components/admin/use-auto-slug";
 import { ProductVariantsEditor } from "@/components/admin/product-variants-editor";
 import { ProductImagesField } from "@/components/admin/product-images-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -48,6 +50,9 @@ type ProductDefaults = {
 
 const initialState: AdminActionState = {};
 
+const DEFAULT_PRODUCT_DESCRIPTION =
+  "For more styles, please feel free to contact customer service";
+
 export function ProductForm({
   categories,
   brands,
@@ -63,12 +68,25 @@ export function ProductForm({
     ? updateProductAction.bind(null, productId)
     : createProductAction;
 
+  const isNewProduct = !productId;
   const [state, formAction, pending] = useActionState(action, initialState);
   useAdminActionRedirect(state);
+  const { slug, handleNameChange: handleSlugFromName, handleSlugChange } = useAutoSlug(
+    defaults.slug,
+    isNewProduct,
+  );
   const [baseSku, setBaseSku] = useState(defaults.sku ?? "");
+  const [skuManual, setSkuManual] = useState(Boolean(defaults.sku));
   const [basePrice, setBasePrice] = useState(Number(defaults.price ?? 0) || 0);
   const [isActive, setIsActive] = useState(defaults.isActive ?? true);
   const [isFeatured, setIsFeatured] = useState(defaults.isFeatured ?? false);
+
+  function handleNameChange(name: string) {
+    handleSlugFromName(name);
+
+    if (!isNewProduct || skuManual) return;
+    setBaseSku(generateBaseSkuFromName(name));
+  }
 
   return (
     <form action={formAction} className="max-w-4xl space-y-6">
@@ -92,7 +110,13 @@ export function ProductForm({
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" defaultValue={defaults.name} required />
+            <Input
+              id="name"
+              name="name"
+              defaultValue={defaults.name}
+              required
+              onChange={(event) => handleNameChange(event.target.value)}
+            />
             {state.fieldErrors?.name && (
               <p className="text-sm text-destructive">{state.fieldErrors.name[0]}</p>
             )}
@@ -100,7 +124,16 @@ export function ProductForm({
 
           <div className="space-y-2">
             <Label htmlFor="slug">Slug</Label>
-            <Input id="slug" name="slug" defaultValue={defaults.slug} required />
+            <Input
+              id="slug"
+              name="slug"
+              value={slug}
+              onChange={(event) => handleSlugChange(event.target.value)}
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              Auto-generated from name. Edit manually if needed.
+            </p>
             {state.fieldErrors?.slug && (
               <p className="text-sm text-destructive">{state.fieldErrors.slug[0]}</p>
             )}
@@ -182,7 +215,10 @@ export function ProductForm({
               id="description"
               name="description"
               rows={5}
-              defaultValue={defaults.description ?? ""}
+              defaultValue={
+                defaults.description ??
+                (isNewProduct ? DEFAULT_PRODUCT_DESCRIPTION : "")
+              }
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
           </div>
@@ -218,9 +254,12 @@ export function ProductForm({
             <Input
               id="sku"
               name="sku"
-              defaultValue={defaults.sku}
+              value={baseSku}
               required
-              onChange={(event) => setBaseSku(event.target.value)}
+              onChange={(event) => {
+                setSkuManual(true);
+                setBaseSku(event.target.value);
+              }}
             />
           </div>
 

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { StatCard } from "@/components/admin/stat-card";
+import { TrafficStats } from "@/components/admin/traffic-stats";
 import { Price } from "@/components/shared/price";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/currency";
@@ -37,6 +38,8 @@ export default async function AdminDashboardPage() {
           hint={`${analytics.lowStock} low-stock SKUs`}
         />
       </div>
+
+      <TrafficStats />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="overflow-hidden rounded-xl border bg-card shadow-sm">

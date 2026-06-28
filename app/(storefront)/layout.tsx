@@ -1,6 +1,7 @@
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { WhatsAppButton } from "@/components/layout/whatsapp-button";
+import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 
 export default function StorefrontLayout({
   children,
@@ -9,6 +10,7 @@ export default function StorefrontLayout({
 }) {
   return (
     <>
+      <PageViewTracker />
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />

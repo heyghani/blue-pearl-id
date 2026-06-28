@@ -573,6 +573,17 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  referrer  String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path, createdAt])
+  @@map("page_views")
+}
+
 model AbandonedCheckout {
   id            String    @id @default(cuid())
   email         String

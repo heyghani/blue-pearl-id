@@ -8,6 +8,7 @@ import {
   type AdminActionState,
 } from "@/lib/actions/admin/brands";
 import { useAdminActionRedirect } from "@/components/admin/use-admin-action-redirect";
+import { useAutoSlug } from "@/components/admin/use-auto-slug";
 import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,11 @@ export function BrandForm({
 
   const [state, formAction, pending] = useActionState(action, initialState);
   useAdminActionRedirect(state);
+  const isNewBrand = !brandId;
+  const { slug, handleNameChange, handleSlugChange } = useAutoSlug(
+    defaults.slug,
+    isNewBrand,
+  );
   const [isActive, setIsActive] = useState(defaults.isActive ?? true);
 
   return (
@@ -71,7 +77,13 @@ export function BrandForm({
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" defaultValue={defaults.name} required />
+            <Input
+              id="name"
+              name="name"
+              defaultValue={defaults.name}
+              required
+              onChange={(event) => handleNameChange(event.target.value)}
+            />
             {state.fieldErrors?.name && (
               <p className="text-sm text-destructive">{state.fieldErrors.name[0]}</p>
             )}
@@ -79,7 +91,16 @@ export function BrandForm({
 
           <div className="space-y-2">
             <Label htmlFor="slug">Slug</Label>
-            <Input id="slug" name="slug" defaultValue={defaults.slug} required />
+            <Input
+              id="slug"
+              name="slug"
+              value={slug}
+              onChange={(event) => handleSlugChange(event.target.value)}
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              Auto-generated from name. Edit manually if needed.
+            </p>
             {state.fieldErrors?.slug && (
               <p className="text-sm text-destructive">{state.fieldErrors.slug[0]}</p>
             )}
