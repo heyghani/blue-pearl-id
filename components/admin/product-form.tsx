@@ -53,6 +53,10 @@ const initialState: AdminActionState = {};
 const DEFAULT_PRODUCT_DESCRIPTION =
   "For more styles, please feel free to contact customer service";
 
+const DEFAULT_BASE_PRICE = 120;
+const DEFAULT_COMPARE_AT_PRICE = 888;
+const DEFAULT_INVENTORY_QUANTITY = 99;
+
 export function ProductForm({
   categories,
   brands,
@@ -77,7 +81,9 @@ export function ProductForm({
   );
   const [baseSku, setBaseSku] = useState(defaults.sku ?? "");
   const [skuManual, setSkuManual] = useState(Boolean(defaults.sku));
-  const [basePrice, setBasePrice] = useState(Number(defaults.price ?? 0) || 0);
+  const [basePrice, setBasePrice] = useState(
+    Number(defaults.price ?? (isNewProduct ? DEFAULT_BASE_PRICE : 0)) || 0,
+  );
   const [isActive, setIsActive] = useState(defaults.isActive ?? true);
   const [isFeatured, setIsFeatured] = useState(defaults.isFeatured ?? false);
 
@@ -271,7 +277,7 @@ export function ProductForm({
               type="number"
               step="0.01"
               min="0"
-              defaultValue={defaults.price}
+              defaultValue={defaults.price ?? (isNewProduct ? DEFAULT_BASE_PRICE : undefined)}
               required
               onChange={(event) => setBasePrice(Number(event.target.value) || 0)}
             />
@@ -285,7 +291,9 @@ export function ProductForm({
               type="number"
               step="0.01"
               min="0"
-              defaultValue={defaults.compareAtPrice ?? ""}
+              defaultValue={
+                defaults.compareAtPrice ?? (isNewProduct ? DEFAULT_COMPARE_AT_PRICE : "")
+              }
             />
           </div>
 
@@ -296,7 +304,9 @@ export function ProductForm({
               name="quantity"
               type="number"
               min="0"
-              defaultValue={defaults.quantity ?? 0}
+              defaultValue={
+                defaults.quantity ?? (isNewProduct ? DEFAULT_INVENTORY_QUANTITY : 0)
+              }
             />
             <p className="text-xs text-muted-foreground">
               Used for simple products only. Variant stock is managed below.
