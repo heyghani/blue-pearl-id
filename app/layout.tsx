@@ -19,6 +19,13 @@ const cormorant = Cormorant_Garamond({
   weight: ["400", "500", "600", "700"],
 });
 
+const OG_IMAGE = {
+  url: "/images/og-image.png",
+  width: 787,
+  height: 1024,
+  alt: "The best service around. Treat yourself well",
+};
+
 export const metadata: Metadata = {
   title: {
     default: APP_NAME,
@@ -28,6 +35,18 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   ),
+  openGraph: {
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+    type: "website",
+    images: [OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+    images: [OG_IMAGE.url],
+  },
 };
 
 export default async function RootLayout({
