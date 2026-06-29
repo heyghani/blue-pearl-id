@@ -8,15 +8,8 @@ export const TAX_NOTICE =
   "Import duties and local taxes are not included. Your carrier may collect them on delivery.";
 export const SUPPORT_EMAIL = "support@bluepearlid.com";
 export const NOREPLY_EMAIL = "noreply@bluepearlid.com";
-export type WhatsAppContact = {
-  display: string;
-  phone: string;
-};
-
-export const WHATSAPP_CONTACTS: WhatsAppContact[] = [
-  { display: "+86 188 5972 5373", phone: "8618859725373" },
-  { display: "+86 150 6084 2734", phone: "8615060842734" },
-];
+export const WHATSAPP_NUMBER = "+86 188 5972 5373";
+export const WHATSAPP_PHONE = "8618859725373";
 
 export function buildWhatsAppUrl(phone: string, message?: string) {
   const url = `https://wa.me/${phone}`;
@@ -24,6 +17,4 @@ export function buildWhatsAppUrl(phone: string, message?: string) {
   return `${url}?text=${encodeURIComponent(message)}`;
 }
 
-export const WHATSAPP_NUMBER = WHATSAPP_CONTACTS[0].display;
-export const WHATSAPP_PHONE = WHATSAPP_CONTACTS[0].phone;
 export const WHATSAPP_URL = buildWhatsAppUrl(WHATSAPP_PHONE);

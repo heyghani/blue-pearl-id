@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { Separator } from "@/components/ui/separator";
 import { useTranslations } from "@/components/i18n/locale-provider";
-import { APP_NAME, SUPPORT_EMAIL, WHATSAPP_CONTACTS, buildWhatsAppUrl } from "@/lib/constants";
+import { APP_NAME, SUPPORT_EMAIL, WHATSAPP_PHONE, buildWhatsAppUrl } from "@/lib/constants";
 
 export function Footer() {
   const t = useTranslations();
@@ -24,11 +24,11 @@ export function Footer() {
       links: [
         { href: "/legal/shipping", label: t.nav.shipping },
         { href: "/legal/refunds", label: t.footer.returns },
-        ...WHATSAPP_CONTACTS.map((contact) => ({
-          href: buildWhatsAppUrl(contact.phone, t.whatsapp.prefilledMessage),
-          label: `${t.footer.whatsapp} ${contact.display}`,
+        {
+          href: buildWhatsAppUrl(WHATSAPP_PHONE, t.whatsapp.prefilledMessage),
+          label: t.footer.whatsapp,
           external: true as const,
-        })),
+        },
         { href: `mailto:${SUPPORT_EMAIL}`, label: t.footer.contact },
       ],
     },
@@ -51,17 +51,14 @@ export function Footer() {
               {t.footer.tagline}
             </p>
             <div className="flex flex-col gap-2 text-sm">
-              {WHATSAPP_CONTACTS.map((contact) => (
-                <a
-                  key={contact.phone}
-                  href={buildWhatsAppUrl(contact.phone, t.whatsapp.prefilledMessage)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-[#6ee7b7] hover:underline"
-                >
-                  {t.whatsapp.label} · {contact.display}
-                </a>
-              ))}
+              <a
+                href={buildWhatsAppUrl(WHATSAPP_PHONE, t.whatsapp.prefilledMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-[#6ee7b7] hover:underline"
+              >
+                {t.whatsapp.label}
+              </a>
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
                 className="text-[#d6d3d1] hover:text-white hover:underline"
