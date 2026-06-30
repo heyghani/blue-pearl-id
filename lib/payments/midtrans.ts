@@ -1,5 +1,6 @@
 import crypto from "crypto";
 
+import { PAYMENT_MERCHANT_NAME } from "@/lib/constants";
 import { convertUsdToIdrLive } from "@/lib/payments/usd-idr";
 
 const serverKey = process.env.MIDTRANS_SERVER_KEY ?? "";
@@ -26,12 +27,21 @@ type SnapCustomer = {
   phone?: string;
 };
 
+function midtransItemName(orderNumber?: string) {
+  const label = orderNumber
+    ? `${PAYMENT_MERCHANT_NAME} — ${orderNumber}`
+    : PAYMENT_MERCHANT_NAME;
+  return label.slice(0, 50);
+}
+
 export async function createMidtransSnapToken({
   orderId,
+  orderNumber,
   grossAmountUsd,
   customer,
 }: {
   orderId: string;
+  orderNumber?: string;
   grossAmountUsd: number;
   customer: SnapCustomer;
 }) {
@@ -59,7 +69,7 @@ export async function createMidtransSnapToken({
           id: orderId,
           price: grossAmountIdr,
           quantity: 1,
-          name: `Order ${orderId.slice(0, 8)}…`,
+          name: midtransItemName(orderNumber),
         },
       ],
       customer_details: {

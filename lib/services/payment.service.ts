@@ -90,6 +90,7 @@ export async function initiatePayment(paymentId: string) {
 
     const snap = await createMidtransSnapToken({
       orderId: externalId,
+      orderNumber: payment.order.orderNumber,
       grossAmountUsd: Number(payment.amount),
       customer: {
         email:

@@ -1,3 +1,5 @@
+import { PAYMENT_MERCHANT_NAME } from "@/lib/constants";
+
 const clientId = process.env.PAYPAL_CLIENT_ID ?? "";
 const clientSecret = process.env.PAYPAL_CLIENT_SECRET ?? "";
 const mode = process.env.PAYPAL_MODE ?? "sandbox";
@@ -60,16 +62,18 @@ export async function createPayPalOrder({
       purchase_units: [
         {
           reference_id: referenceId,
+          description: `${PAYMENT_MERCHANT_NAME} order ${referenceId}`,
           amount: {
             currency_code: currency,
             value: amount,
           },
+          soft_descriptor: PAYMENT_MERCHANT_NAME.slice(0, 22).toUpperCase(),
         },
       ],
       application_context: {
         return_url: returnUrl,
         cancel_url: cancelUrl,
-        brand_name: "Blue Pearl ID",
+        brand_name: PAYMENT_MERCHANT_NAME,
         user_action: "PAY_NOW",
       },
     }),

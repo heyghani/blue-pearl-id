@@ -1,6 +1,9 @@
 export const APP_NAME = "Global Luxury OEM Factory - Shipping Worldwide";
 export const APP_DESCRIPTION =
   "Luxury OEM handbags and accessories — crafted with timeless design, shipped worldwide.";
+/** Customer-facing name on PayPal checkout and Midtrans Snap (max ~22 chars for card statements). */
+export const PAYMENT_MERCHANT_NAME =
+  process.env.PAYMENT_MERCHANT_NAME ?? "PrimeLuxr";
 export const CURRENCY = "USD";
 export const ENABLE_CREDIT_CARD_PAYMENT =
   process.env.NEXT_PUBLIC_ENABLE_CREDIT_CARD_PAYMENT === "true";
