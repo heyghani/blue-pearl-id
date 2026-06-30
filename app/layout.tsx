@@ -35,6 +35,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   ),
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION ?? "854c868d465b316a",
+  },
   openGraph: {
     title: APP_NAME,
     description: APP_DESCRIPTION,

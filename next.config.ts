@@ -22,6 +22,14 @@ function getR2RemotePattern() {
 const r2Pattern = getR2RemotePattern();
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: "/google854c868d465b316a.html",
+        destination: "/google-site-verification",
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
