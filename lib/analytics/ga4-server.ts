@@ -2,9 +2,12 @@ import { createSign } from "node:crypto";
 
 export type Ga4DashboardStats = {
   configured: true;
+  realtimeActiveUsers: number;
+  usActiveUsersNow: number;
   todaySessions: number;
   todayActiveUsers: number;
   usSessionsToday: number;
+  topCountriesNow: { country: string; activeUsers: number }[];
   topSources: { source: string; sessions: number }[];
 };
 
@@ -13,7 +16,7 @@ type Ga4DashboardResult =
   | (Ga4DashboardStats & { configured: true })
   | { configured: true; error: string };
 
-type RunReportResponse = {
+type Ga4ReportResponse = {
   rows?: {
     dimensionValues?: { value?: string }[];
     metricValues?: { value?: string }[];
@@ -21,7 +24,7 @@ type RunReportResponse = {
   totals?: { metricValues?: { value?: string }[] }[];
 };
 
-const CACHE_MS = 5 * 60 * 1000;
+const CACHE_MS = 60 * 1000;
 
 let cachedStats: { at: number; data: Ga4DashboardResult } | null = null;
 
@@ -110,7 +113,7 @@ async function runGa4Report(
     },
   );
 
-  const data = (await response.json()) as RunReportResponse & {
+  const data = (await response.json()) as Ga4ReportResponse & {
     error?: { message?: string };
   };
 
@@ -121,14 +124,64 @@ async function runGa4Report(
   return data;
 }
 
-function readMetricTotal(report: RunReportResponse, index = 0) {
-  const value = report.totals?.[0]?.metricValues?.[index]?.value;
+async function runGa4RealtimeReport(
+  accessToken: string,
+  propertyId: string,
+  body: Record<string, unknown>,
+) {
+  const response = await fetch(
+    `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runRealtimeReport`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    },
+  );
+
+  const data = (await response.json()) as Ga4ReportResponse & {
+    error?: { message?: string };
+  };
+
+  if (!response.ok) {
+    throw new Error(data.error?.message ?? "GA4 realtime report request failed.");
+  }
+
+  return data;
+}
+
+function readMetricTotal(report: Ga4ReportResponse, index = 0) {
+  const totalValue = report.totals?.[0]?.metricValues?.[index]?.value;
+  if (totalValue) {
+    return Number(totalValue);
+  }
+
+  return (
+    report.rows?.reduce((sum, row) => {
+      const value = row.metricValues?.[index]?.value;
+      return sum + (value ? Number(value) : 0);
+    }, 0) ?? 0
+  );
+}
+
+function readMetricRow(report: Ga4ReportResponse, index = 0) {
+  const value = report.rows?.[0]?.metricValues?.[index]?.value;
   return value ? Number(value) : 0;
 }
 
-function readMetricRow(report: RunReportResponse, index = 0) {
-  const value = report.rows?.[0]?.metricValues?.[index]?.value;
-  return value ? Number(value) : 0;
+function readDimensionRows(
+  report: Ga4ReportResponse,
+  metricIndex = 0,
+  limit = 5,
+) {
+  return (
+    report.rows?.slice(0, limit).map((row) => ({
+      label: row.dimensionValues?.[0]?.value ?? "(not set)",
+      value: Number(row.metricValues?.[metricIndex]?.value ?? 0),
+    })) ?? []
+  );
 }
 
 async function fetchGa4DashboardStats(): Promise<Ga4DashboardResult> {
@@ -145,41 +198,69 @@ async function fetchGa4DashboardStats(): Promise<Ga4DashboardResult> {
 
     const dateRange = [{ startDate: "today", endDate: "today" }];
 
-    const [overview, usSessions, sources] = await Promise.all([
-      runGa4Report(accessToken, config.propertyId, {
-        dateRanges: dateRange,
-        metrics: [{ name: "sessions" }, { name: "activeUsers" }],
-      }),
-      runGa4Report(accessToken, config.propertyId, {
-        dateRanges: dateRange,
-        dimensions: [{ name: "country" }],
-        dimensionFilter: {
-          filter: {
-            fieldName: "country",
-            stringFilter: { matchType: "EXACT", value: "United States" },
+    const [realtimeUsers, realtimeCountries, usActiveNow, overview, usSessions, sources] =
+      await Promise.all([
+        runGa4RealtimeReport(accessToken, config.propertyId, {
+          metrics: [{ name: "activeUsers" }],
+        }),
+        runGa4RealtimeReport(accessToken, config.propertyId, {
+          dimensions: [{ name: "country" }],
+          metrics: [{ name: "activeUsers" }],
+          orderBys: [{ metric: { metricName: "activeUsers" }, desc: true }],
+          limit: 5,
+        }),
+        runGa4RealtimeReport(accessToken, config.propertyId, {
+          dimensions: [{ name: "country" }],
+          dimensionFilter: {
+            filter: {
+              fieldName: "country",
+              stringFilter: { matchType: "EXACT", value: "United States" },
+            },
           },
-        },
-        metrics: [{ name: "sessions" }],
-      }),
-      runGa4Report(accessToken, config.propertyId, {
-        dateRanges: dateRange,
-        dimensions: [{ name: "sessionSource" }],
-        metrics: [{ name: "sessions" }],
-        orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
-        limit: 5,
-      }),
-    ]);
+          metrics: [{ name: "activeUsers" }],
+        }),
+        runGa4Report(accessToken, config.propertyId, {
+          dateRanges: dateRange,
+          metrics: [{ name: "sessions" }, { name: "activeUsers" }],
+          metricAggregations: ["TOTAL"],
+        }),
+        runGa4Report(accessToken, config.propertyId, {
+          dateRanges: dateRange,
+          dimensions: [{ name: "country" }],
+          dimensionFilter: {
+            filter: {
+              fieldName: "country",
+              stringFilter: { matchType: "EXACT", value: "United States" },
+            },
+          },
+          metrics: [{ name: "sessions" }],
+          metricAggregations: ["TOTAL"],
+        }),
+        runGa4Report(accessToken, config.propertyId, {
+          dateRanges: dateRange,
+          dimensions: [{ name: "sessionSource" }],
+          metrics: [{ name: "sessions" }],
+          orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+          limit: 5,
+          metricAggregations: ["TOTAL"],
+        }),
+      ]);
 
     return {
       configured: true,
+      realtimeActiveUsers: readMetricTotal(realtimeUsers, 0),
+      usActiveUsersNow: readMetricRow(usActiveNow, 0),
       todaySessions: readMetricTotal(overview, 0),
       todayActiveUsers: readMetricTotal(overview, 1),
       usSessionsToday: readMetricRow(usSessions, 0),
-      topSources:
-        sources.rows?.map((row) => ({
-          source: row.dimensionValues?.[0]?.value ?? "(not set)",
-          sessions: Number(row.metricValues?.[0]?.value ?? 0),
-        })) ?? [],
+      topCountriesNow: readDimensionRows(realtimeCountries, 0, 5).map((row) => ({
+        country: row.label,
+        activeUsers: row.value,
+      })),
+      topSources: readDimensionRows(sources, 0, 5).map((row) => ({
+        source: row.label,
+        sessions: row.value,
+      })),
     };
   } catch (error) {
     return {

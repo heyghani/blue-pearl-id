@@ -14,9 +14,12 @@ type TrafficStats = {
     | { configured: false }
     | {
         configured: true;
+        realtimeActiveUsers: number;
+        usActiveUsersNow: number;
         todaySessions: number;
         todayActiveUsers: number;
         usSessionsToday: number;
+        topCountriesNow: { country: string; activeUsers: number }[];
         topSources: { source: string; sessions: number }[];
       }
     | {
@@ -194,51 +197,83 @@ function Ga4TrafficPanel({
   return (
     <section className="space-y-4 overflow-hidden rounded-xl border bg-card shadow-sm">
       <div className="border-b px-4 py-3">
-        <h3 className="text-sm font-medium">Google Analytics (today)</h3>
+        <h3 className="text-sm font-medium">Google Analytics</h3>
         <p className="text-xs text-muted-foreground">
-          Supplementary GA4 data. Refreshes about every 5 minutes.
+          Realtime data refreshes about every minute. Daily sessions can lag behind GA4 Realtime by several hours.
         </p>
       </div>
 
-      <div className="grid gap-4 px-4 pb-4 sm:grid-cols-3">
+      <div className="grid gap-4 px-4 pb-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="GA4 sessions"
+          label="Active users now"
+          value={ga4.realtimeActiveUsers}
+          hint="Matches GA4 Realtime"
+        />
+        <StatCard
+          label="US active users now"
+          value={ga4.usActiveUsersNow}
+          hint="Realtime, United States"
+        />
+        <StatCard
+          label="Sessions today"
           value={ga4.todaySessions}
-          hint="All countries"
+          hint="Daily report — may show 0 early in the day"
         />
         <StatCard
-          label="GA4 active users"
-          value={ga4.todayActiveUsers}
-          hint="All countries"
-        />
-        <StatCard
-          label="US sessions"
+          label="US sessions today"
           value={ga4.usSessionsToday}
-          hint="United States only"
+          hint="Daily report — updates later"
         />
       </div>
 
-      <div className="border-t">
-        <div className="border-b px-4 py-3">
-          <h4 className="text-sm font-medium">Top traffic sources</h4>
-        </div>
-        <div className="divide-y">
-          {ga4.topSources.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">No GA4 sessions yet today.</p>
-          ) : (
-            ga4.topSources.map((source) => (
-              <div
-                key={source.source}
-                className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
-              >
-                <span className="truncate">{source.source}</span>
-                <span className="shrink-0 text-muted-foreground">
-                  {source.sessions} sessions
-                </span>
-              </div>
-            ))
-          )}
-        </div>
+      <div className="grid gap-6 border-t lg:grid-cols-2">
+        <section>
+          <div className="border-b px-4 py-3">
+            <h4 className="text-sm font-medium">Active users by country (now)</h4>
+          </div>
+          <div className="divide-y">
+            {ga4.topCountriesNow.length === 0 ? (
+              <p className="p-4 text-sm text-muted-foreground">No active users right now.</p>
+            ) : (
+              ga4.topCountriesNow.map((row) => (
+                <div
+                  key={row.country}
+                  className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
+                >
+                  <span className="truncate">{row.country}</span>
+                  <span className="shrink-0 text-muted-foreground">
+                    {row.activeUsers} active
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section>
+          <div className="border-b px-4 py-3">
+            <h4 className="text-sm font-medium">Top traffic sources (today)</h4>
+          </div>
+          <div className="divide-y">
+            {ga4.topSources.length === 0 ? (
+              <p className="p-4 text-sm text-muted-foreground">
+                Daily sources appear after GA4 finishes processing today&apos;s data.
+              </p>
+            ) : (
+              ga4.topSources.map((source) => (
+                <div
+                  key={source.source}
+                  className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
+                >
+                  <span className="truncate">{source.source}</span>
+                  <span className="shrink-0 text-muted-foreground">
+                    {source.sessions} sessions
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
       </div>
     </section>
   );
