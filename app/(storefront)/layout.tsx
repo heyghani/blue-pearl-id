@@ -1,7 +1,10 @@
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { WhatsAppButton } from "@/components/layout/whatsapp-button";
+import { Suspense } from "react";
+
+import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { PageViewTracker } from "@/components/analytics/page-view-tracker";
+import { Footer } from "@/components/layout/footer";
+import { Header } from "@/components/layout/header";
+import { WhatsAppButton } from "@/components/layout/whatsapp-button";
 
 export default function StorefrontLayout({
   children,
@@ -10,6 +13,9 @@ export default function StorefrontLayout({
 }) {
   return (
     <>
+      <Suspense fallback={null}>
+        <GoogleAnalytics />
+      </Suspense>
       <PageViewTracker />
       <Header />
       <main className="flex-1">{children}</main>

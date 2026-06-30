@@ -10,6 +10,19 @@ type TrafficStats = {
   todayViews: number;
   minuteBuckets: { minute: string; views: number }[];
   topPagesToday: { path: string; views: number }[];
+  ga4?:
+    | { configured: false }
+    | {
+        configured: true;
+        todaySessions: number;
+        todayActiveUsers: number;
+        usSessionsToday: number;
+        topSources: { source: string; sessions: number }[];
+      }
+    | {
+        configured: true;
+        error: string;
+      };
 };
 
 const POLL_INTERVAL_MS = 10_000;
@@ -135,6 +148,97 @@ export function TrafficStats() {
             )}
           </div>
         </section>
+      </div>
+
+      <Ga4TrafficPanel ga4={stats?.ga4} />
+    </section>
+  );
+}
+
+function Ga4TrafficPanel({
+  ga4,
+}: {
+  ga4: TrafficStats["ga4"];
+}) {
+  if (!ga4) {
+    return null;
+  }
+
+  if (!ga4.configured) {
+    return (
+      <section className="overflow-hidden rounded-xl border border-dashed bg-card shadow-sm">
+        <div className="border-b px-4 py-3">
+          <h3 className="text-sm font-medium">Google Analytics</h3>
+        </div>
+        <p className="p-4 text-sm text-muted-foreground">
+          Add <code className="text-xs">NEXT_PUBLIC_GA_ID</code> for storefront tracking.
+          Optional: set <code className="text-xs">GA4_PROPERTY_ID</code>,{" "}
+          <code className="text-xs">GA4_CLIENT_EMAIL</code>, and{" "}
+          <code className="text-xs">GA4_PRIVATE_KEY</code> to show GA4 summaries here.
+        </p>
+      </section>
+    );
+  }
+
+  if ("error" in ga4) {
+    return (
+      <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
+        <div className="border-b px-4 py-3">
+          <h3 className="text-sm font-medium">Google Analytics</h3>
+        </div>
+        <p className="p-4 text-sm text-destructive">{ga4.error}</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="space-y-4 overflow-hidden rounded-xl border bg-card shadow-sm">
+      <div className="border-b px-4 py-3">
+        <h3 className="text-sm font-medium">Google Analytics (today)</h3>
+        <p className="text-xs text-muted-foreground">
+          Supplementary GA4 data. Refreshes about every 5 minutes.
+        </p>
+      </div>
+
+      <div className="grid gap-4 px-4 pb-4 sm:grid-cols-3">
+        <StatCard
+          label="GA4 sessions"
+          value={ga4.todaySessions}
+          hint="All countries"
+        />
+        <StatCard
+          label="GA4 active users"
+          value={ga4.todayActiveUsers}
+          hint="All countries"
+        />
+        <StatCard
+          label="US sessions"
+          value={ga4.usSessionsToday}
+          hint="United States only"
+        />
+      </div>
+
+      <div className="border-t">
+        <div className="border-b px-4 py-3">
+          <h4 className="text-sm font-medium">Top traffic sources</h4>
+        </div>
+        <div className="divide-y">
+          {ga4.topSources.length === 0 ? (
+            <p className="p-4 text-sm text-muted-foreground">No GA4 sessions yet today.</p>
+          ) : (
+            ga4.topSources.map((source) => (
+              <div
+                key={source.source}
+                className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
+              >
+                <span className="truncate">{source.source}</span>
+                <span className="shrink-0 text-muted-foreground">
+                  {source.sessions} sessions
+                </span>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </section>
   );
