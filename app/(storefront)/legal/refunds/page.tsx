@@ -11,7 +11,7 @@ export default function RefundsPage() {
   return (
     <LegalPage
       title="Returns & Refunds"
-      description="Our policy for returns, exchanges, and refunds on pearl jewelry."
+      description="Our policy for returns, exchanges, and refunds on luxury handbags and accessories."
     >
       <h2>Return window</h2>
       <p>

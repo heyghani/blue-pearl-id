@@ -4,9 +4,10 @@ test.describe("Storefront", () => {
   test("home page shows hero and featured products", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByRole("heading", { name: /pearls of distinction/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /PrimeLuxr/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /eternal design/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Featured" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Shop Collection" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /shop now/i })).toBeVisible();
   });
 
   test("catalog lists products", async ({ page }) => {

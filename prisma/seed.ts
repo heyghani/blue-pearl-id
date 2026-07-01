@@ -9,7 +9,7 @@ import {
 const prisma = new PrismaClient();
 
 const brands = [
-  { name: "Blue Pearl", slug: "blue-pearl", sortOrder: 0 },
+  { name: "PrimeLuxr", slug: "primeluxr", sortOrder: 0 },
   { name: "Heritage", slug: "heritage", sortOrder: 1 },
 ];
 
@@ -374,10 +374,10 @@ async function main() {
   const passwordHash = await bcrypt.hash("changeme123", 12);
 
   await prisma.user.upsert({
-    where: { email: "admin@bluepearlid.com" },
+    where: { email: "admin@primeluxr.com" },
     update: {},
     create: {
-      email: "admin@bluepearlid.com",
+      email: "admin@primeluxr.com",
       name: "Admin",
       role: UserRole.ADMIN,
       passwordHash,
@@ -451,7 +451,7 @@ async function main() {
   }
 
   const defaultBrand = await prisma.brand.findUnique({
-    where: { slug: "blue-pearl" },
+    where: { slug: "primeluxr" },
   });
 
   for (const product of products) {
@@ -508,7 +508,7 @@ async function main() {
   }
 
   console.log("Seed complete.");
-  console.log("Admin: admin@bluepearlid.com / changeme123");
+  console.log("Admin: admin@primeluxr.com / changeme123");
   console.log("");
   console.log("Variant demo products:");
   console.log("  • /products/heritage-leather-sneaker  (Color + Shoe size)");

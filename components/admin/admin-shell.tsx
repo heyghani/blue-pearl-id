@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+import { Logo } from "@/components/brand/logo";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +28,6 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { APP_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export const adminNavItems = [
@@ -146,10 +146,8 @@ export function AdminShell({
       <aside className="hidden w-64 shrink-0 flex-col border-r bg-card/80 p-5 md:flex">
         <div className="mb-8 px-1">
           <Link href="/admin" className="block">
-            <p className="font-display text-xl font-semibold tracking-tight">
-              {APP_NAME}
-            </p>
-            <p className="text-xs text-muted-foreground">Administration</p>
+            <Logo variant="lockup" />
+            <p className="mt-2 text-xs text-muted-foreground">Administration</p>
           </Link>
         </div>
 
@@ -167,10 +165,9 @@ export function AdminShell({
             </DrawerTrigger>
             <DrawerContent className="p-0">
               <DrawerHeader className="border-b px-5 py-4 text-left">
-                <DrawerTitle className="font-display text-lg">
-                  {APP_NAME}
-                </DrawerTitle>
-                <p className="text-xs text-muted-foreground">Administration</p>
+                <DrawerTitle className="sr-only">Admin menu</DrawerTitle>
+                <Logo variant="lockup" href={null} />
+                <p className="mt-2 text-xs text-muted-foreground">Administration</p>
               </DrawerHeader>
               <div className="flex flex-1 flex-col px-4 py-4">
                 <AdminNav onNavigate={() => setMobileOpen(false)} />

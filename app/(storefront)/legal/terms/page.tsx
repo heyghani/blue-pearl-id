@@ -23,7 +23,7 @@ export default function TermsPage() {
       <p>
         All prices are listed in {CURRENCY}. We reserve the right to correct pricing errors
         and to limit quantities. Product images are representative; natural variations may
-        occur in pearl jewelry.
+        occur in natural leather, fabrics, and handcrafted goods.
       </p>
 
       <h2>Orders & payment</h2>

@@ -11,7 +11,7 @@ export default function RegisterPage() {
   return (
     <AuthCard
       title="Create account"
-      description="Join Blue Pearl ID to track orders and checkout faster."
+      description="Join PrimeLuxr to track orders and checkout faster."
     >
       <RegisterForm />
     </AuthCard>

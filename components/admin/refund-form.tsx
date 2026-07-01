@@ -29,7 +29,7 @@ export function RefundForm({
     <form action={formAction} className="space-y-4 rounded-lg border p-4">
       <h3 className="font-medium">Issue refund</h3>
       <p className="text-sm text-muted-foreground">
-        Records the refund in Blue Pearl ID. Process the payment refund in your payment provider dashboard.
+        Records the refund in PrimeLuxr. Process the payment refund in your payment provider dashboard.
       </p>
 
       <input type="hidden" name="paymentId" value={paymentId} />

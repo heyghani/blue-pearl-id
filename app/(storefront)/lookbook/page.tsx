@@ -9,7 +9,7 @@ import { getLocale } from "@/lib/i18n/server";
 
 export const metadata: Metadata = {
   title: "Lookbook",
-  description: "Editorial highlights from the Blue Pearl collection.",
+  description: "Editorial highlights from the PrimeLuxr collection.",
 };
 
 const LOOKBOOK_IMAGES = [

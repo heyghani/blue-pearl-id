@@ -19,8 +19,8 @@ function usage() {
   npm run admin:password -- --email <email> --password <new-password>
 
 Examples:
-  npm run admin:create -- --email bluepearlid99@gmail.com --password secret123 --name "Admin"
-  npm run admin:password -- --email admin@bluepearlid.com --password newpass123
+  npm run admin:create -- --email admin@primeluxr.com --password secret123 --name "Admin"
+  npm run admin:password -- --email admin@primeluxr.com --password newpass123
 
 Prefer the admin UI at /admin/settings when the app is running.`);
 }

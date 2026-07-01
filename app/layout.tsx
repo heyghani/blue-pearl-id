@@ -23,7 +23,7 @@ const OG_IMAGE = {
   url: "/images/og-image.png",
   width: 787,
   height: 1024,
-  alt: "The best service around. Treat yourself well",
+  alt: "PrimeLuxr — Luxury OEM handbags and accessories",
 };
 
 export const metadata: Metadata = {

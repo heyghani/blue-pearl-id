@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { Separator } from "@/components/ui/separator";
 import { useTranslations } from "@/components/i18n/locale-provider";
+import { Logo } from "@/components/brand/logo";
 import { APP_NAME, SUPPORT_EMAIL, WHATSAPP_PHONE, buildWhatsAppUrl } from "@/lib/constants";
 
 export function Footer() {
@@ -46,7 +47,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-4 lg:col-span-2">
-            <p className="font-display text-2xl font-semibold tracking-tight">{APP_NAME}</p>
+            <Logo variant="full" className="w-44" />
             <p className="max-w-sm text-sm leading-relaxed text-[#a8a29e]">
               {t.footer.tagline}
             </p>

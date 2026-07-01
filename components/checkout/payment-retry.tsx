@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ENABLE_CREDIT_CARD_PAYMENT } from "@/lib/constants";
+import { ENABLE_CREDIT_CARD_PAYMENT, SUPPORT_EMAIL } from "@/lib/constants";
 
 export function PaymentRetry({
   orderNumber,
@@ -86,7 +86,7 @@ export function PaymentRetry({
         </div>
 
         <Button variant="link" className="px-0" asChild>
-          <Link href={`mailto:support@bluepearlid.com?subject=Payment%20help%20${orderNumber}`}>
+          <Link href={`mailto:${SUPPORT_EMAIL}?subject=Payment%20help%20${orderNumber}`}>
             Contact support
           </Link>
         </Button>

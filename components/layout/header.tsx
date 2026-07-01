@@ -8,7 +8,7 @@ import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
-import { APP_NAME } from "@/lib/constants";
+import { Logo } from "@/components/brand/logo";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
 import { getCartItemCount } from "@/lib/services/cart.service";
@@ -33,12 +33,7 @@ export async function Header() {
       <div className="relative mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:h-[4.25rem] sm:px-6 lg:px-8">
         <div className="flex items-center gap-2 sm:gap-3">
           <MobileNav isAdmin={isAdmin} />
-          <Link
-            href="/"
-            className="max-w-[11rem] font-display text-xs font-semibold leading-tight tracking-tight sm:max-w-none sm:text-base md:text-lg lg:text-xl"
-          >
-            {APP_NAME}
-          </Link>
+          <Logo variant="lockup" />
         </div>
 
         <nav className="hidden items-center gap-8 md:flex">

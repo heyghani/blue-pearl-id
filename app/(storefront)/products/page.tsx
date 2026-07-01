@@ -17,7 +17,7 @@ import { getCatalogProducts, toProductCard } from "@/lib/products";
 
 export const metadata: Metadata = {
   title: "Shop",
-  description: "Browse pearl jewelry, footwear, and accessories.",
+  description: "Browse luxury OEM handbags, footwear, and accessories.",
 };
 
 export const revalidate = 60;

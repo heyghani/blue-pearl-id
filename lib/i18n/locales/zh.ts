@@ -66,7 +66,7 @@ export const zh: Dictionary = {
     returns: "退换",
   },
   footer: {
-    tagline: "为日常佩戴而选的珍珠首饰。",
+    tagline: "奢华 OEM 手袋与配饰，全球配送。",
     shop: "选购",
     support: "帮助",
     legal: "法律",

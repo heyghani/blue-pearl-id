@@ -71,7 +71,7 @@ export const es: Dictionary = {
     returns: "Devoluciones",
   },
   footer: {
-    tagline: "Joyería de perlas hecha para usar y durar.",
+    tagline: "Bolsos y accesorios OEM de lujo con envío mundial.",
     shop: "Tienda",
     support: "Ayuda",
     legal: "Legal",

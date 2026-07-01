@@ -71,7 +71,7 @@ export const en: Dictionary = {
     returns: "Returns",
   },
   footer: {
-    tagline: "Pearl jewelry, made to wear and made to last.",
+    tagline: "Luxury OEM handbags and accessories, shipped worldwide.",
     shop: "Shop",
     support: "Help",
     legal: "Legal",
