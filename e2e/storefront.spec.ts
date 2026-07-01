@@ -1,14 +1,15 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Storefront", () => {
-  test("home page shows hero and featured products", async ({ page }) => {
+  test("home page shows recommendations card and hero", async ({ page }) => {
     await page.goto("/");
 
     await expect(page.getByRole("link", { name: /PrimeLuxr/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Recommendations" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Featured" })).toBeVisible();
     await expect(page.getByRole("heading", { name: /eternal design/i })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Featured" }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: /shop now/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /store recommendations/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /see featured/i })).toBeVisible();
   });
 
   test("catalog lists products", async ({ page }) => {

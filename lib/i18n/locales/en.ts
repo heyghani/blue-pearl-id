@@ -38,10 +38,6 @@ export const en: Dictionary = {
     recommendationsTitle: "Recommendations",
     recommendationsDesc: "Curated picks from the collection — starting with our featured edit.",
     featuredCategoryDesc: "Handpicked pieces we keep coming back to.",
-    storeRecommendationsTitle: "Store recommendations",
-    storeRecommendationsDesc: "Fresh arrivals and popular picks from the shop.",
-    storeRecommendationsCta: "Browse store recommendations",
-    viewStoreRecommendations: "Store recommendations",
   },
   lookbook: {
     eyebrow: "Editorial",

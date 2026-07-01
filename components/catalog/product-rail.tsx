@@ -13,8 +13,6 @@ export function ProductRail({
   products,
   viewAllLabel,
   viewAllHref = "/products",
-  ctaLabel,
-  ctaHref,
   className,
 }: {
   id?: string;
@@ -23,8 +21,6 @@ export function ProductRail({
   products: ProductCardData[];
   viewAllLabel: string;
   viewAllHref?: string;
-  ctaLabel?: string;
-  ctaHref?: string;
   className?: string;
 }) {
   if (products.length === 0) return null;
@@ -54,14 +50,6 @@ export function ProductRail({
             </div>
           ))}
         </div>
-
-        {ctaLabel && ctaHref ? (
-          <div className="mt-6 flex justify-center">
-            <Button size="lg" className="rounded-full px-8" asChild>
-              <Link href={ctaHref}>{ctaLabel}</Link>
-            </Button>
-          </div>
-        ) : null}
 
         <div className="mt-5 sm:hidden">
           <Button variant="outline" size="sm" className="w-full rounded-full" asChild>

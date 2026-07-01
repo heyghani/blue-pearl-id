@@ -8,45 +8,35 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { ProductRail } from "@/components/catalog/product-rail";
 import { HomeCategorySection } from "@/components/home/home-category-section";
-import { HomeRecommendationsSection } from "@/components/home/home-recommendations-section";
+import { HomeRecommendationCard } from "@/components/home/home-recommendation-card";
 import { getActiveCategoryTree, getHomepageCategoryItems } from "@/lib/categories";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
-import {
-  getBestSellerProducts,
-  getFeaturedProductCount,
-  getFeaturedProducts,
-  toProductCard,
-} from "@/lib/products";
+import { getFeaturedProductCount, getFeaturedProducts } from "@/lib/products";
 
-async function getProductSections() {
+async function getFeaturedSection() {
   try {
-    const [featured, trending, featuredCount] = await Promise.all([
-      getFeaturedProducts(),
-      getBestSellerProducts(),
+    const [featured, featuredCount] = await Promise.all([
+      getFeaturedProducts(1),
       getFeaturedProductCount(),
     ]);
     return {
-      featured: featured.map(toProductCard),
-      trending: trending.map(toProductCard),
       featuredCount,
       featuredImageUrl: featured[0]?.images[0]?.url ?? null,
     };
   } catch {
-    return { featured: [], trending: [], featuredCount: 0, featuredImageUrl: null };
+    return { featuredCount: 0, featuredImageUrl: null };
   }
 }
 
 export default async function HomePage() {
   const locale = await getLocale();
   const t = getDictionary(locale);
-  const [{ featured, trending, featuredCount, featuredImageUrl }, categoryTree] =
-    await Promise.all([
-      getProductSections(),
-      getActiveCategoryTree().catch(() => []),
-    ]);
+  const [{ featuredCount, featuredImageUrl }, categoryTree] = await Promise.all([
+    getFeaturedSection(),
+    getActiveCategoryTree().catch(() => []),
+  ]);
 
   const categories = getHomepageCategoryItems(
     categoryTree.filter(
@@ -56,23 +46,6 @@ export default async function HomePage() {
         category.children.some((child) => child._count.products > 0),
     ),
   );
-
-  const recommendationCategories =
-    featuredCount > 0
-      ? [
-          {
-            slug: "featured",
-            title: t.home.featuredTitle,
-            description: t.home.featuredCategoryDesc,
-            href: "/products?featured=true",
-            imageUrl: featuredImageUrl,
-            productCount: featuredCount,
-            productLabel: t.catalog.product,
-            productsLabel: t.catalog.products,
-            shopLabel: t.home.viewAll,
-          },
-        ]
-      : [];
 
   return (
     <>
@@ -114,15 +87,7 @@ export default async function HomePage() {
                   className="h-12 rounded-full border-white/40 bg-white/10 px-8 text-white backdrop-blur hover:bg-white/20 hover:text-white"
                   asChild
                 >
-                  <Link href="/products?featured=true">{t.home.viewFeatured}</Link>
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-12 rounded-full border-white/40 bg-white/10 px-8 text-white backdrop-blur hover:bg-white/20 hover:text-white"
-                  asChild
-                >
-                  <Link href="/#store-recommendations">{t.home.viewStoreRecommendations}</Link>
+                  <Link href="/#recommendations">{t.home.viewFeatured}</Link>
                 </Button>
               </div>
             </div>
@@ -130,13 +95,21 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <ProductRail
-        title={t.home.featuredTitle}
-        description={t.home.featuredDesc}
-        products={featured}
-        viewAllLabel={t.home.viewAll}
-        viewAllHref="/products?featured=true"
-      />
+      {featuredCount > 0 ? (
+        <HomeRecommendationCard
+          id="recommendations"
+          title={t.home.recommendationsTitle}
+          description={t.home.recommendationsDesc}
+          cardTitle={t.home.featuredTitle}
+          cardDescription={t.home.featuredCategoryDesc}
+          href="/products?featured=true"
+          imageUrl={featuredImageUrl}
+          productCount={featuredCount}
+          productLabel={t.catalog.product}
+          productsLabel={t.catalog.products}
+          viewAllLabel={t.home.viewAll}
+        />
+      ) : null}
 
       <section className="py-8 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -167,25 +140,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <HomeRecommendationsSection
-        categories={recommendationCategories}
-        title={t.home.recommendationsTitle}
-        description={t.home.recommendationsDesc}
-        className="border-t border-border/60 bg-muted/20"
-      />
-
-      <ProductRail
-        id="store-recommendations"
-        title={t.home.storeRecommendationsTitle}
-        description={t.home.storeRecommendationsDesc}
-        products={trending}
-        viewAllLabel={t.home.viewAll}
-        viewAllHref="/products?sort=popular"
-        ctaLabel={t.home.storeRecommendationsCta}
-        ctaHref="/products?sort=popular"
-        className="border-t border-border/60 bg-muted/30"
-      />
-
       <HomeCategorySection
         categories={categories}
         title={t.home.shopByCategory}
@@ -193,10 +147,10 @@ export default async function HomePage() {
         viewAllLabel={t.home.viewAll}
         productLabel={t.catalog.product}
         productsLabel={t.catalog.products}
-        className="border-t border-border/60"
+        className="border-t border-border/60 bg-muted/20"
       />
 
-      {featured.length === 0 && trending.length === 0 ? (
+      {featuredCount === 0 ? (
         <section className="py-16">
           <p className="mx-auto max-w-md rounded-2xl border border-dashed p-12 text-center text-sm text-muted-foreground">
             {t.home.emptyProducts}
