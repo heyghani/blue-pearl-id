@@ -6,7 +6,7 @@ test.describe("Storefront", () => {
 
     await expect(page.getByRole("link", { name: /PrimeLuxr/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Recommendations" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Featured" })).toBeVisible();
+    await expect(page.locator("#recommendations a[href*='featured=true']").first()).toBeVisible();
     await expect(page.getByRole("heading", { name: /eternal design/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /shop now/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /see featured/i })).toBeVisible();

@@ -9,31 +9,25 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { HomeCategorySection } from "@/components/home/home-category-section";
-import { HomeRecommendationCard } from "@/components/home/home-recommendation-card";
+import { HomeRecommendationsSection } from "@/components/home/home-recommendation-card";
 import { getActiveCategoryTree, getHomepageCategoryItems } from "@/lib/categories";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
-import { getFeaturedProductCount, getFeaturedProducts } from "@/lib/products";
+import { getFeaturedRecommendationsByCategory } from "@/lib/products";
 
 async function getFeaturedSection() {
   try {
-    const [featured, featuredCount] = await Promise.all([
-      getFeaturedProducts(1),
-      getFeaturedProductCount(),
-    ]);
-    return {
-      featuredCount,
-      featuredImageUrl: featured[0]?.images[0]?.url ?? null,
-    };
+    const categories = await getFeaturedRecommendationsByCategory();
+    return { categories };
   } catch {
-    return { featuredCount: 0, featuredImageUrl: null };
+    return { categories: [] };
   }
 }
 
 export default async function HomePage() {
   const locale = await getLocale();
   const t = getDictionary(locale);
-  const [{ featuredCount, featuredImageUrl }, categoryTree] = await Promise.all([
+  const [{ categories: featuredCategories }, categoryTree] = await Promise.all([
     getFeaturedSection(),
     getActiveCategoryTree().catch(() => []),
   ]);
@@ -46,6 +40,15 @@ export default async function HomePage() {
         category.children.some((child) => child._count.products > 0),
     ),
   );
+
+  const recommendationCards = featuredCategories.map((category) => ({
+    slug: category.slug,
+    title: category.name,
+    description: category.description?.trim() || t.home.featuredCategoryDesc,
+    href: `/products?featured=true&category=${category.slug}`,
+    imageUrl: category.imageUrl,
+    productCount: category.productCount,
+  }));
 
   return (
     <>
@@ -95,16 +98,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {featuredCount > 0 ? (
-        <HomeRecommendationCard
+      {recommendationCards.length > 0 ? (
+        <HomeRecommendationsSection
           id="recommendations"
           title={t.home.recommendationsTitle}
           description={t.home.recommendationsDesc}
-          cardTitle={t.home.featuredTitle}
-          cardDescription={t.home.featuredCategoryDesc}
-          href="/products?featured=true"
-          imageUrl={featuredImageUrl}
-          productCount={featuredCount}
+          cards={recommendationCards}
           productLabel={t.catalog.product}
           productsLabel={t.catalog.products}
           viewAllLabel={t.home.viewAll}
@@ -150,7 +149,7 @@ export default async function HomePage() {
         className="border-t border-border/60 bg-muted/20"
       />
 
-      {featuredCount === 0 ? (
+      {recommendationCards.length === 0 ? (
         <section className="py-16">
           <p className="mx-auto max-w-md rounded-2xl border border-dashed p-12 text-center text-sm text-muted-foreground">
             {t.home.emptyProducts}

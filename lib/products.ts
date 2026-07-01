@@ -207,6 +207,61 @@ export async function getFeaturedProductCount() {
   });
 }
 
+export type FeaturedCategoryRecommendation = {
+  slug: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  productCount: number;
+  sortOrder: number;
+};
+
+export async function getFeaturedRecommendationsByCategory() {
+  const featured = await prisma.product.findMany({
+    where: { isActive: true, isFeatured: true, deletedAt: null },
+    include: {
+      images: { orderBy: { sortOrder: "asc" }, take: 1 },
+      category: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          imageUrl: true,
+          sortOrder: true,
+        },
+      },
+    },
+    orderBy: [{ category: { sortOrder: "asc" } }, { createdAt: "desc" }],
+  });
+
+  const grouped = new Map<string, FeaturedCategoryRecommendation>();
+
+  for (const product of featured) {
+    if (!product.category) continue;
+
+    const existing = grouped.get(product.category.id);
+    if (existing) {
+      existing.productCount += 1;
+      if (!existing.imageUrl && product.images[0]?.url) {
+        existing.imageUrl = product.images[0].url;
+      }
+      continue;
+    }
+
+    grouped.set(product.category.id, {
+      slug: product.category.slug,
+      name: product.category.name,
+      description: product.category.description,
+      imageUrl: product.category.imageUrl ?? product.images[0]?.url ?? null,
+      productCount: 1,
+      sortOrder: product.category.sortOrder,
+    });
+  }
+
+  return [...grouped.values()].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+}
+
 export async function getBestSellerProducts(limit = 8) {
   return prisma.product.findMany({
     where: { isActive: true, deletedAt: null },
