@@ -10,37 +10,43 @@ import {
 import { Button } from "@/components/ui/button";
 import { ProductRail } from "@/components/catalog/product-rail";
 import { HomeCategorySection } from "@/components/home/home-category-section";
+import { HomeRecommendationsSection } from "@/components/home/home-recommendations-section";
 import { getActiveCategoryTree, getHomepageCategoryItems } from "@/lib/categories";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
 import {
   getBestSellerProducts,
+  getFeaturedProductCount,
   getFeaturedProducts,
   toProductCard,
 } from "@/lib/products";
 
 async function getProductSections() {
   try {
-    const [featured, trending] = await Promise.all([
+    const [featured, trending, featuredCount] = await Promise.all([
       getFeaturedProducts(),
       getBestSellerProducts(),
+      getFeaturedProductCount(),
     ]);
     return {
       featured: featured.map(toProductCard),
       trending: trending.map(toProductCard),
+      featuredCount,
+      featuredImageUrl: featured[0]?.images[0]?.url ?? null,
     };
   } catch {
-    return { featured: [], trending: [] };
+    return { featured: [], trending: [], featuredCount: 0, featuredImageUrl: null };
   }
 }
 
 export default async function HomePage() {
   const locale = await getLocale();
   const t = getDictionary(locale);
-  const [{ featured, trending }, categoryTree] = await Promise.all([
-    getProductSections(),
-    getActiveCategoryTree().catch(() => []),
-  ]);
+  const [{ featured, trending, featuredCount, featuredImageUrl }, categoryTree] =
+    await Promise.all([
+      getProductSections(),
+      getActiveCategoryTree().catch(() => []),
+    ]);
 
   const categories = getHomepageCategoryItems(
     categoryTree.filter(
@@ -50,6 +56,23 @@ export default async function HomePage() {
         category.children.some((child) => child._count.products > 0),
     ),
   );
+
+  const recommendationCategories =
+    featuredCount > 0
+      ? [
+          {
+            slug: "featured",
+            title: t.home.featuredTitle,
+            description: t.home.featuredCategoryDesc,
+            href: "/products?featured=true",
+            imageUrl: featuredImageUrl,
+            productCount: featuredCount,
+            productLabel: t.catalog.product,
+            productsLabel: t.catalog.products,
+            shopLabel: t.home.viewAll,
+          },
+        ]
+      : [];
 
   return (
     <>
@@ -93,11 +116,27 @@ export default async function HomePage() {
                 >
                   <Link href="/products?featured=true">{t.home.viewFeatured}</Link>
                 </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-12 rounded-full border-white/40 bg-white/10 px-8 text-white backdrop-blur hover:bg-white/20 hover:text-white"
+                  asChild
+                >
+                  <Link href="/#store-recommendations">{t.home.viewStoreRecommendations}</Link>
+                </Button>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      <ProductRail
+        title={t.home.featuredTitle}
+        description={t.home.featuredDesc}
+        products={featured}
+        viewAllLabel={t.home.viewAll}
+        viewAllHref="/products?featured=true"
+      />
 
       <section className="py-8 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -128,6 +167,25 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <HomeRecommendationsSection
+        categories={recommendationCategories}
+        title={t.home.recommendationsTitle}
+        description={t.home.recommendationsDesc}
+        className="border-t border-border/60 bg-muted/20"
+      />
+
+      <ProductRail
+        id="store-recommendations"
+        title={t.home.storeRecommendationsTitle}
+        description={t.home.storeRecommendationsDesc}
+        products={trending}
+        viewAllLabel={t.home.viewAll}
+        viewAllHref="/products?sort=popular"
+        ctaLabel={t.home.storeRecommendationsCta}
+        ctaHref="/products?sort=popular"
+        className="border-t border-border/60 bg-muted/30"
+      />
+
       <HomeCategorySection
         categories={categories}
         title={t.home.shopByCategory}
@@ -135,23 +193,7 @@ export default async function HomePage() {
         viewAllLabel={t.home.viewAll}
         productLabel={t.catalog.product}
         productsLabel={t.catalog.products}
-        className="border-t border-border/60 bg-muted/20"
-      />
-
-      <ProductRail
-        title={t.home.featuredTitle}
-        description={t.home.featuredDesc}
-        products={featured}
-        viewAllLabel={t.home.viewAll}
-        viewAllHref="/products?featured=true"
-      />
-
-      <ProductRail
-        title={t.home.trendingTitle}
-        description={t.home.trendingDesc}
-        products={trending}
-        viewAllLabel={t.home.viewAll}
-        className="border-t border-border/60 bg-muted/30"
+        className="border-t border-border/60"
       />
 
       {featured.length === 0 && trending.length === 0 ? (

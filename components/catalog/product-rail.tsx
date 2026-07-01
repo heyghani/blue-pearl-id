@@ -7,24 +7,30 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function ProductRail({
+  id,
   title,
   description,
   products,
   viewAllLabel,
   viewAllHref = "/products",
+  ctaLabel,
+  ctaHref,
   className,
 }: {
+  id?: string;
   title: string;
   description: string;
   products: ProductCardData[];
   viewAllLabel: string;
   viewAllHref?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
   className?: string;
 }) {
   if (products.length === 0) return null;
 
   return (
-    <section className={cn("py-10 sm:py-14", className)}>
+    <section id={id} className={cn("py-10 sm:py-14 scroll-mt-20", className)}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
@@ -48,6 +54,14 @@ export function ProductRail({
             </div>
           ))}
         </div>
+
+        {ctaLabel && ctaHref ? (
+          <div className="mt-6 flex justify-center">
+            <Button size="lg" className="rounded-full px-8" asChild>
+              <Link href={ctaHref}>{ctaLabel}</Link>
+            </Button>
+          </div>
+        ) : null}
 
         <div className="mt-5 sm:hidden">
           <Button variant="outline" size="sm" className="w-full rounded-full" asChild>

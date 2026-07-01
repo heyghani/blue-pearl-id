@@ -35,6 +35,13 @@ export const en: Dictionary = {
     lookbookTitle: "The Lookbook",
     lookbookDesc: "Editorial styling and seasonal highlights from the collection.",
     lookbookCta: "Explore lookbook",
+    recommendationsTitle: "Recommendations",
+    recommendationsDesc: "Curated picks from the collection — starting with our featured edit.",
+    featuredCategoryDesc: "Handpicked pieces we keep coming back to.",
+    storeRecommendationsTitle: "Store recommendations",
+    storeRecommendationsDesc: "Fresh arrivals and popular picks from the shop.",
+    storeRecommendationsCta: "Browse store recommendations",
+    viewStoreRecommendations: "Store recommendations",
   },
   lookbook: {
     eyebrow: "Editorial",

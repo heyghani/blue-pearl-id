@@ -43,6 +43,13 @@ export interface Dictionary {
     lookbookTitle: string;
     lookbookDesc: string;
     lookbookCta: string;
+    recommendationsTitle: string;
+    recommendationsDesc: string;
+    featuredCategoryDesc: string;
+    storeRecommendationsTitle: string;
+    storeRecommendationsDesc: string;
+    storeRecommendationsCta: string;
+    viewStoreRecommendations: string;
   };
   lookbook: {
     eyebrow: string;

@@ -6,8 +6,9 @@ test.describe("Storefront", () => {
 
     await expect(page.getByRole("link", { name: /PrimeLuxr/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: /eternal design/i })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Featured" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Featured" }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: /shop now/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /store recommendations/i })).toBeVisible();
   });
 
   test("catalog lists products", async ({ page }) => {

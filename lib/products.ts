@@ -201,6 +201,12 @@ export async function getFeaturedProducts(limit = 8) {
   });
 }
 
+export async function getFeaturedProductCount() {
+  return prisma.product.count({
+    where: { isActive: true, isFeatured: true, deletedAt: null },
+  });
+}
+
 export async function getBestSellerProducts(limit = 8) {
   return prisma.product.findMany({
     where: { isActive: true, deletedAt: null },

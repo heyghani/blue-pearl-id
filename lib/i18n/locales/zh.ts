@@ -34,6 +34,13 @@ export const zh: Dictionary = {
     lookbookTitle: "造型手册",
     lookbookDesc: "精选造型与当季亮点，展现系列质感。",
     lookbookCta: "查看造型手册",
+    recommendationsTitle: "推荐",
+    recommendationsDesc: "精选系列——从精选款开始浏览。",
+    featuredCategoryDesc: "我们反复挑选的匠心之作。",
+    storeRecommendationsTitle: "店铺推荐",
+    storeRecommendationsDesc: "新品与热门款式，来自店铺精选。",
+    storeRecommendationsCta: "浏览店铺推荐",
+    viewStoreRecommendations: "店铺推荐",
   },
   lookbook: {
     eyebrow: "专题",
