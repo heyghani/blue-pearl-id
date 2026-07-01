@@ -38,6 +38,13 @@ export const metadata: Metadata = {
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION ?? "854c868d465b316a",
   },
+  icons: {
+    icon: [
+      { url: "/images/logo-icon.png", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: [{ url: "/apple-icon.png", type: "image/png" }],
+  },
   openGraph: {
     title: APP_NAME,
     description: APP_DESCRIPTION,
