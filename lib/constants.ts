@@ -12,8 +12,17 @@ export const TAX_NOTICE =
   "Import duties and local taxes are not included. Your carrier may collect them on delivery.";
 export const SUPPORT_EMAIL = "support@primeluxr.com";
 export const NOREPLY_EMAIL = "noreply@primeluxr.com";
-export const WHATSAPP_NUMBER = "+86 188 5972 5373";
-export const WHATSAPP_PHONE = "8618859725373";
+const DEFAULT_WHATSAPP_PHONE = "8618859725373";
+const DEFAULT_WHATSAPP_NUMBER = "+86 188 5972 5373";
+
+/** Digits-only number for wa.me links (set via NEXT_PUBLIC_WHATSAPP_PHONE). */
+export const WHATSAPP_PHONE =
+  process.env.NEXT_PUBLIC_WHATSAPP_PHONE?.replace(/\D/g, "") ||
+  DEFAULT_WHATSAPP_PHONE;
+
+/** Human-readable display number (set via NEXT_PUBLIC_WHATSAPP_NUMBER). */
+export const WHATSAPP_NUMBER =
+  process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.trim() || DEFAULT_WHATSAPP_NUMBER;
 
 export function buildWhatsAppUrl(phone: string, message?: string) {
   const url = `https://wa.me/${phone}`;
