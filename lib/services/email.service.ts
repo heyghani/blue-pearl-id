@@ -1,13 +1,16 @@
 import { Resend } from "resend";
 
-import { APP_NAME, NOREPLY_EMAIL, SUPPORT_EMAIL } from "@/lib/constants";
+import {
+  APP_NAME,
+  EMAIL_REPLY_TO,
+  NOREPLY_EMAIL,
+  SUPPORT_EMAIL,
+} from "@/lib/constants";
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-const from = process.env.EMAIL_FROM ?? NOREPLY_EMAIL;
-const replyTo = process.env.EMAIL_REPLY_TO ?? SUPPORT_EMAIL;
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 type SendResult = { ok: true } | { ok: false; error: string };
@@ -27,9 +30,9 @@ async function sendEmail({
   }
 
   const { error } = await resend.emails.send({
-    from,
+    from: NOREPLY_EMAIL,
     to,
-    replyTo,
+    replyTo: EMAIL_REPLY_TO,
     subject,
     html,
   });

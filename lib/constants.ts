@@ -10,8 +10,24 @@ export const ENABLE_CREDIT_CARD_PAYMENT =
   process.env.NEXT_PUBLIC_ENABLE_CREDIT_CARD_PAYMENT === "true";
 export const TAX_NOTICE =
   "Import duties and local taxes are not included. Your carrier may collect them on delivery.";
-export const SUPPORT_EMAIL = "support@primeluxr.com";
-export const NOREPLY_EMAIL = "noreply@primeluxr.com";
+const DEFAULT_SUPPORT_EMAIL = "support@primeluxr.com";
+const DEFAULT_NOREPLY_EMAIL = "noreply@primeluxr.com";
+
+/** Sender address for transactional email (Resend). Set via EMAIL_FROM. */
+export const NOREPLY_EMAIL =
+  process.env.EMAIL_FROM?.trim() || DEFAULT_NOREPLY_EMAIL;
+
+/** Reply-To header for outbound email (server). Set via EMAIL_REPLY_TO. */
+export const EMAIL_REPLY_TO =
+  process.env.EMAIL_REPLY_TO?.trim() ||
+  process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() ||
+  DEFAULT_SUPPORT_EMAIL;
+
+/** Customer-facing support address (footer, legal pages). Set via NEXT_PUBLIC_SUPPORT_EMAIL. */
+export const SUPPORT_EMAIL =
+  process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() ||
+  process.env.EMAIL_REPLY_TO?.trim() ||
+  DEFAULT_SUPPORT_EMAIL;
 const DEFAULT_WHATSAPP_PHONE = "8618859725373";
 const DEFAULT_WHATSAPP_NUMBER = "+86 188 5972 5373";
 
