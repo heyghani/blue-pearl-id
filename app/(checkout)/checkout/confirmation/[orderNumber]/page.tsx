@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 
+import { MetaPixelPurchase } from "@/components/analytics/meta-pixel-purchase";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { DutiesNotice } from "@/components/shared/duties-notice";
@@ -36,6 +37,14 @@ export default async function OrderConfirmationPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-muted/20">
+      {order.status === "PAID" ? (
+        <MetaPixelPurchase
+          orderNumber={order.orderNumber}
+          value={Number(order.total)}
+          currency={order.currency}
+          contentIds={order.items.map((item) => item.productId)}
+        />
+      ) : null}
       <main className="mx-auto max-w-2xl px-4 py-16">
         <div className="text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" />
