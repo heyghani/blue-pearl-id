@@ -21,6 +21,14 @@ import {
   paymentStepSchema,
   shippingStepSchema,
 } from "@/lib/validations/checkout";
+import { combinePhone } from "@/lib/phone";
+
+function readPhoneFromForm(formData: FormData) {
+  return combinePhone(
+    formData.get("phoneDialCode")?.toString(),
+    formData.get("phoneLocal")?.toString(),
+  );
+}
 
 export type CheckoutActionState = {
   error?: string;
@@ -69,7 +77,7 @@ export async function saveCustomerInfoAction(
 ): Promise<CheckoutActionState> {
   const parsed = customerInfoSchema.safeParse({
     email: formData.get("email"),
-    phone: formData.get("phone"),
+    phone: readPhoneFromForm(formData),
   });
 
   if (!parsed.success) {
@@ -112,7 +120,7 @@ export async function saveShippingAction(
     state: formData.get("state"),
     postalCode: formData.get("postalCode"),
     country: formData.get("country"),
-    phone: formData.get("phone") || draft.phone,
+    phone: readPhoneFromForm(formData) || draft.phone,
   };
 
   const parsed = shippingStepSchema.safeParse({

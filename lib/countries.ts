@@ -20,3 +20,10 @@ export const COUNTRIES = [
   { code: "NL", name: "Netherlands" },
   { code: "CH", name: "Switzerland" },
 ] as const;
+
+export type CountryCode = (typeof COUNTRIES)[number]["code"];
+
+export function getCountryByCode(code?: string | null) {
+  if (!code) return null;
+  return COUNTRIES.find((country) => country.code === code.toUpperCase()) ?? null;
+}

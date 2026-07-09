@@ -7,6 +7,7 @@ import {
   saveCustomerInfoAction,
   type CheckoutActionState,
 } from "@/lib/actions/checkout";
+import { PhoneField } from "@/components/checkout/phone-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,16 +53,10 @@ export function CustomerInfoForm({
         </p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="phone">Phone (optional)</Label>
-        <Input
-          id="phone"
-          name="phone"
-          type="tel"
-          autoComplete="tel"
-          defaultValue={defaultPhone}
-        />
-      </div>
+      <PhoneField
+        defaultPhone={defaultPhone}
+        fieldErrors={state.fieldErrors?.phone}
+      />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
         <Button variant="outline" asChild>

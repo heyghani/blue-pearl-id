@@ -6,6 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { DutiesNotice } from "@/components/shared/duties-notice";
 import { Price } from "@/components/shared/price";
+import {
+  formatCityStatePostal,
+  formatCustomerName,
+  getAddressLine1,
+  getAddressLine2,
+  type StoredShippingAddress,
+} from "@/lib/addresses";
+import { formatPhoneDisplay, getCountryName } from "@/lib/phone";
 import { getSession } from "@/lib/auth";
 import { getUserOrder } from "@/lib/services/account.service";
 
@@ -27,16 +35,11 @@ export default async function AccountOrderDetailPage({ params }: Props) {
     notFound();
   }
 
-  const shippingAddress = order.shippingAddress as {
-    firstName?: string;
-    lastName?: string;
-    line1?: string;
-    line2?: string;
-    city?: string;
-    state?: string;
-    postalCode?: string;
-    country?: string;
-  };
+  const shippingAddress = order.shippingAddress as StoredShippingAddress;
+  const formattedPhone = formatPhoneDisplay(
+    shippingAddress.phone,
+    shippingAddress.country,
+  );
 
   return (
     <div className="space-y-6">
@@ -101,21 +104,25 @@ export default async function AccountOrderDetailPage({ params }: Props) {
       <div className="rounded-lg border bg-card p-5">
         <h3 className="font-medium">Shipping address</h3>
         <address className="mt-3 not-italic text-sm text-muted-foreground">
-          {shippingAddress.firstName} {shippingAddress.lastName}
+          {formatCustomerName(shippingAddress)}
           <br />
-          {shippingAddress.line1}
-          {shippingAddress.line2 ? (
+          {getAddressLine1(shippingAddress)}
+          {getAddressLine2(shippingAddress) ? (
             <>
               <br />
-              {shippingAddress.line2}
+              {getAddressLine2(shippingAddress)}
             </>
           ) : null}
           <br />
-          {shippingAddress.city}
-          {shippingAddress.state ? `, ${shippingAddress.state}` : ""}{" "}
-          {shippingAddress.postalCode}
+          {formatCityStatePostal(shippingAddress)}
           <br />
-          {shippingAddress.country}
+          {getCountryName(shippingAddress.country) ?? shippingAddress.country}
+          {formattedPhone ? (
+            <>
+              <br />
+              {formattedPhone}
+            </>
+          ) : null}
         </address>
       </div>
 

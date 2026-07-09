@@ -2,11 +2,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PaymentStatus } from "@prisma/client";
 
+import { AdminPaymentDetails } from "@/components/admin/payment-details";
 import { OrderStatusForm } from "@/components/admin/order-status-form";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { RefundForm } from "@/components/admin/refund-form";
 import { DutiesNotice } from "@/components/shared/duties-notice";
 import { Price } from "@/components/shared/price";
+import {
+  formatCityStatePostal,
+  formatCustomerName,
+  getAddressLine1,
+  getAddressLine2,
+  type StoredShippingAddress,
+} from "@/lib/addresses";
+import { formatPhoneDisplay, getCountryName } from "@/lib/phone";
 import { getAdminOrder } from "@/lib/services/admin/order.service";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -23,17 +32,13 @@ export default async function AdminOrderDetailPage({ params }: Props) {
     notFound();
   }
 
-  const shippingAddress = order.shippingAddress as {
-    firstName?: string;
-    lastName?: string;
-    address1?: string;
-    address2?: string;
-    city?: string;
-    state?: string;
-    postalCode?: string;
-    country?: string;
-    phone?: string;
-  };
+  const shippingAddress = order.shippingAddress as StoredShippingAddress;
+  const addressLine1 = getAddressLine1(shippingAddress);
+  const addressLine2 = getAddressLine2(shippingAddress);
+  const formattedPhone = formatPhoneDisplay(
+    shippingAddress.phone,
+    shippingAddress.country,
+  );
 
   const capturedPayment = order.payments.find(
     (payment) => payment.status === PaymentStatus.CAPTURED,
@@ -99,23 +104,23 @@ export default async function AdminOrderDetailPage({ params }: Props) {
           <section className="rounded-lg border p-4">
             <h2 className="font-medium">Shipping address</h2>
             <address className="mt-3 not-italic text-sm text-muted-foreground">
-              {shippingAddress.firstName} {shippingAddress.lastName}
+              {formatCustomerName(shippingAddress)}
               <br />
-              {shippingAddress.address1}
-              {shippingAddress.address2 ? (
+              {addressLine1}
+              {addressLine2 ? (
                 <>
                   <br />
-                  {shippingAddress.address2}
+                  {addressLine2}
                 </>
               ) : null}
               <br />
-              {shippingAddress.city}, {shippingAddress.state} {shippingAddress.postalCode}
+              {formatCityStatePostal(shippingAddress)}
               <br />
-              {shippingAddress.country}
-              {shippingAddress.phone ? (
+              {getCountryName(shippingAddress.country) ?? shippingAddress.country}
+              {formattedPhone ? (
                 <>
                   <br />
-                  {shippingAddress.phone}
+                  {formattedPhone}
                 </>
               ) : null}
             </address>
@@ -168,18 +173,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
 
           <section className="rounded-lg border p-4">
             <h2 className="font-medium">Payments</h2>
-            <ul className="mt-4 space-y-3 text-sm">
-              {order.payments.map((payment) => (
-                <li key={payment.id} className="flex justify-between gap-4">
-                  <span className="capitalize text-muted-foreground">
-                    {payment.provider.toLowerCase()} · {payment.method.toLowerCase().replace(/_/g, " ")}
-                  </span>
-                  <span>
-                    {payment.status.toLowerCase()} · <Price amount={payment.amount.toString()} />
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <AdminPaymentDetails payments={order.payments} />
           </section>
         </div>
 

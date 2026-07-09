@@ -1,7 +1,10 @@
+"use client";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { COUNTRIES } from "@/lib/countries";
 import type { AddressInput } from "@/lib/validations/checkout";
+import { PhoneField } from "@/components/checkout/phone-field";
 
 export function AddressFields({
   prefix = "",
@@ -13,6 +16,7 @@ export function AddressFields({
   fieldErrors?: Record<string, string[]>;
 }) {
   const field = (name: keyof AddressInput) => (prefix ? `${prefix}.${name}` : name);
+  const countryFieldId = field("country");
 
   return (
     <div className="space-y-4">
@@ -102,9 +106,9 @@ export function AddressFields({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor={field("country")}>Country</Label>
+          <Label htmlFor={countryFieldId}>Country</Label>
           <select
-            id={field("country")}
+            id={countryFieldId}
             name={field("country")}
             defaultValue={defaultValues?.country ?? "US"}
             required
@@ -119,15 +123,12 @@ export function AddressFields({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor={field("phone")}>Phone (optional)</Label>
-        <Input
-          id={field("phone")}
-          name={field("phone")}
-          type="tel"
-          defaultValue={defaultValues?.phone ?? ""}
-        />
-      </div>
+      <PhoneField
+        defaultPhone={defaultValues?.phone}
+        defaultCountry={defaultValues?.country ?? "US"}
+        countryFieldId={countryFieldId}
+        fieldErrors={fieldErrors?.phone}
+      />
     </div>
   );
 }
