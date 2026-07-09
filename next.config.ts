@@ -31,6 +31,8 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    // Serve images directly (Blob, R2, /uploads) — avoids Vercel Image Optimization quota/billing limits.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
