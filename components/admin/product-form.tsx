@@ -236,8 +236,8 @@ export function ProductForm({
         <CardHeader>
           <CardTitle>Media</CardTitle>
           <CardDescription>
-            Upload up to 5 product images. The first image is the primary photo in
-            catalog and product gallery.
+            Upload as many product images as you need. The first image is the primary
+            photo in catalog and product gallery.
           </CardDescription>
         </CardHeader>
         <CardContent>

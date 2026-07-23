@@ -25,7 +25,11 @@ export async function POST(request: Request) {
   }
 
   const totals = await calculateCheckoutTotals(
-    cart.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+    cart.items.map((i) => ({
+      productId: i.productId,
+      variantId: i.variantId,
+      quantity: i.quantity,
+    })),
     parsed.data.shippingMethod!,
     parsed.data.couponCode,
   );

@@ -8,6 +8,7 @@ import {
 
 import { generateOrderNumber } from "@/lib/order-number";
 import { prisma } from "@/lib/db";
+import { getVariantLabel } from "@/lib/products/variants";
 import type { AddressInput } from "@/lib/validations/checkout";
 
 export type CheckoutTotals = {
@@ -202,7 +203,15 @@ export async function createOrderFromCart(
       items: {
         include: {
           product: { include: { inventory: true } },
-          variant: true,
+          variant: {
+            include: {
+              optionValues: {
+                include: {
+                  optionValue: { include: { option: true } },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -297,7 +306,10 @@ export async function createOrderFromCart(
           items: {
             create: cart.items.map((item) => {
               const unitPrice = item.variant?.price ?? item.product.price;
-              const productName = item.product.name;
+              const variantLabel = getVariantLabel(item.variant);
+              const productName = variantLabel
+                ? `${item.product.name} — ${variantLabel}`
+                : item.product.name;
               const productSku = item.variant?.sku ?? item.product.sku;
 
               return {

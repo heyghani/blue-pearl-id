@@ -238,6 +238,64 @@ export function serializeProductVariants(
   };
 }
 
+export function getVariantLabel(
+  variant?: {
+    optionValues: {
+      optionValue: { value: string; option?: { name: string; position?: number } };
+    }[];
+  } | null,
+) {
+  if (!variant?.optionValues.length) return null;
+
+  const ordered = [...variant.optionValues].sort((a, b) => {
+    const positionDiff =
+      (a.optionValue.option?.position ?? 0) - (b.optionValue.option?.position ?? 0);
+    if (positionDiff !== 0) return positionDiff;
+    return (a.optionValue.option?.name ?? "").localeCompare(
+      b.optionValue.option?.name ?? "",
+    );
+  });
+
+  return ordered.map((entry) => entry.optionValue.value).join(" / ");
+}
+
+/** Prefer the exact SKU image; otherwise inherit from a sibling sharing options (e.g. same Color). */
+export function resolveVariantImageUrl(
+  variant:
+    | {
+        imageUrl: string | null;
+        optionValueIds: string[];
+      }
+    | null
+    | undefined,
+  siblings: {
+    imageUrl: string | null;
+    optionValueIds: string[];
+    isActive?: boolean;
+  }[],
+  fallbackUrl: string | null = null,
+): string | null {
+  if (variant?.imageUrl) return variant.imageUrl;
+  if (!variant) return fallbackUrl;
+
+  let best: { url: string; score: number } | null = null;
+
+  for (const sibling of siblings) {
+    if (!sibling.imageUrl || sibling.isActive === false) continue;
+
+    const shared = sibling.optionValueIds.filter((id) =>
+      variant.optionValueIds.includes(id),
+    ).length;
+
+    if (shared === 0) continue;
+    if (!best || shared > best.score) {
+      best = { url: sibling.imageUrl, score: shared };
+    }
+  }
+
+  return best?.url ?? fallbackUrl;
+}
+
 export function findPartialVariantPreview(
   variants: SerializedProductVariant[],
   options: SerializedProductOption[],

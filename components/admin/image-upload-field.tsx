@@ -220,7 +220,7 @@ export function ImageUploadField({
 
           <p className="text-xs text-muted-foreground">
             {uploadConfig?.available
-              ? `JPG, PNG, WebP, or GIF up to ${formatMaxSize(uploadConfig.maxBytes)}. Large phone photos are resized automatically before upload.`
+              ? `JPG, PNG, WebP, or GIF up to ${formatMaxSize(uploadConfig.maxBytes)}.`
               : "File upload is not configured on this server. Paste an image URL instead."}
           </p>
 

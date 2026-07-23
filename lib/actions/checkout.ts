@@ -140,7 +140,11 @@ export async function saveShippingAction(
   }
 
   const totals = await calculateCheckoutTotals(
-    cart.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+    cart.items.map((i) => ({
+      productId: i.productId,
+      variantId: i.variantId,
+      quantity: i.quantity,
+    })),
     parsed.data.shippingMethod,
     draft.couponCode,
   );

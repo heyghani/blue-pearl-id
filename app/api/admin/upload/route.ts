@@ -90,10 +90,7 @@ export async function POST(request: Request) {
   if (file.size > maxBytes) {
     return NextResponse.json(
       {
-        error:
-          mode === "r2" && process.env.VERCEL
-            ? "Image must be 4 MB or smaller on Vercel server uploads."
-            : "Image must be 5 MB or smaller.",
+        error: `Image must be ${Math.floor(maxBytes / (1024 * 1024))} MB or smaller.`,
       },
       { status: 400 },
     );

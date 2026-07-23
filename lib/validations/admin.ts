@@ -3,8 +3,6 @@ import { z } from "zod";
 
 import { uploadedImageUrlSchema } from "@/lib/validations/upload";
 
-export const MAX_PRODUCT_IMAGES = 5;
-
 const optionalImageUrlSchema = z
   .union([z.string(), z.null()])
   .optional()
@@ -42,8 +40,7 @@ export function parseProductImageUrls(payload?: string | null) {
     return parsed
       .filter((item): item is string => typeof item === "string")
       .map((url) => url.trim())
-      .filter(Boolean)
-      .slice(0, MAX_PRODUCT_IMAGES);
+      .filter(Boolean);
   } catch {
     return [];
   }
@@ -73,14 +70,6 @@ export const productFormSchema = z
   })
   .superRefine((data, ctx) => {
     const imageUrls = parseProductImageUrls(data.imagesPayload);
-
-    if (imageUrls.length > MAX_PRODUCT_IMAGES) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["imagesPayload"],
-        message: `You can upload up to ${MAX_PRODUCT_IMAGES} images.`,
-      });
-    }
 
     for (const [index, url] of imageUrls.entries()) {
       if (!uploadedImageUrlSchema.safeParse(url).success) {

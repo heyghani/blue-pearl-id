@@ -10,6 +10,10 @@ import {
   getItemAvailability,
 } from "@/lib/cart/availability";
 import { prisma } from "@/lib/db";
+import {
+  getVariantLabel,
+  resolveVariantImageUrl,
+} from "@/lib/products/variants";
 
 function isUniqueConstraintError(error: unknown) {
   return (
@@ -26,6 +30,14 @@ const cartInclude = {
         include: {
           images: { where: { isPrimary: true }, take: 1 },
           inventory: true,
+          variants: {
+            where: { isActive: true, imageUrl: { not: null } },
+            select: {
+              imageUrl: true,
+              isActive: true,
+              optionValues: { select: { optionValueId: true } },
+            },
+          },
         },
       },
       variant: {
@@ -69,20 +81,6 @@ function emptyCart(): CartView {
   return { id: null, items: [], itemCount: 0, subtotal: "0.00" };
 }
 
-function getVariantLabel(
-  variant?: {
-    optionValues: {
-      optionValue: { value: string; option: { name: string } };
-    }[];
-  } | null,
-) {
-  if (!variant) return null;
-
-  return variant.optionValues
-    .map((entry) => entry.optionValue.value)
-    .join(" / ");
-}
-
 function getItemUnitPrice(item: {
   product: { price: Prisma.Decimal };
   variant?: { price: Prisma.Decimal | null } | null;
@@ -107,6 +105,11 @@ function toLineItem(item: {
     hasVariants: boolean;
     images: { url: string }[];
     inventory: { quantity: number } | null;
+    variants?: {
+      imageUrl: string | null;
+      isActive: boolean;
+      optionValues: { optionValueId: string }[];
+    }[];
   };
   variant?: {
     price: Prisma.Decimal | null;
@@ -114,11 +117,22 @@ function toLineItem(item: {
     isActive: boolean;
     imageUrl: string | null;
     optionValues: {
-      optionValue: { value: string; option: { name: string } };
+      optionValueId?: string;
+      optionValue: { id?: string; value: string; option: { name: string } };
     }[];
   } | null;
 }): CartLineItem {
   const availability = getItemAvailability(item);
+  const optionValueIds =
+    item.variant?.optionValues.map(
+      (entry) => entry.optionValueId ?? entry.optionValue.id ?? "",
+    ).filter(Boolean) ?? [];
+
+  const siblings = (item.product.variants ?? []).map((sibling) => ({
+    imageUrl: sibling.imageUrl,
+    isActive: sibling.isActive,
+    optionValueIds: sibling.optionValues.map((entry) => entry.optionValueId),
+  }));
 
   return {
     id: item.id,
@@ -128,7 +142,13 @@ function toLineItem(item: {
       slug: item.product.slug,
       name: item.product.name,
       price: getItemUnitPrice(item),
-      imageUrl: item.variant?.imageUrl ?? item.product.images[0]?.url ?? null,
+      imageUrl: resolveVariantImageUrl(
+        item.variant
+          ? { imageUrl: item.variant.imageUrl, optionValueIds }
+          : null,
+        siblings,
+        item.product.images[0]?.url ?? null,
+      ),
       variantLabel: getVariantLabel(item.variant),
       inStock: availability.inStock,
       maxQuantity: availability.inStock ? availability.maxQuantity : 0,

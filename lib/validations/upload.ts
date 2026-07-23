@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
+export const MAX_IMAGE_UPLOAD_BYTES = 50 * 1024 * 1024;
 export const VERCEL_SERVER_UPLOAD_MAX_BYTES = 4 * 1024 * 1024;
 
 export const ALLOWED_IMAGE_CONTENT_TYPES = [
@@ -64,15 +64,24 @@ export function getUnsupportedImageTypeMessage(file: Pick<File, "name" | "type">
 }
 
 export function getMaxUploadBytesForMode(mode: "blob" | "r2" | "local" | "unavailable") {
-  if (mode === "blob") {
+  if (mode === "blob" || mode === "local") {
     return MAX_IMAGE_UPLOAD_BYTES;
   }
 
+  // R2 via the Node route still goes through the serverless request body.
   if (process.env.VERCEL) {
     return VERCEL_SERVER_UPLOAD_MAX_BYTES;
   }
 
   return MAX_IMAGE_UPLOAD_BYTES;
+}
+
+export function formatMaxUploadSize(bytes: number) {
+  if (bytes >= 1024 * 1024) {
+    return `${Math.floor(bytes / (1024 * 1024))} MB`;
+  }
+
+  return `${Math.floor(bytes / 1024)} KB`;
 }
 
 export const uploadedImageUrlSchema = z

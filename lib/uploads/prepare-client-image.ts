@@ -3,9 +3,8 @@ import {
   resolveImageContentType,
 } from "@/lib/validations/upload";
 
-const COMPRESS_THRESHOLD_BYTES = 1.5 * 1024 * 1024;
-const MAX_IMAGE_DIMENSION = 1920;
-const JPEG_QUALITY = 0.82;
+const COMPRESS_THRESHOLD_BYTES = 20 * 1024 * 1024;
+const JPEG_QUALITY = 0.92;
 
 function replaceExtension(filename: string, extension: string) {
   const base = filename.replace(/\.[^.]+$/, "") || "upload";
@@ -63,27 +62,23 @@ function getImageDimensions(source: CanvasImageSource) {
   throw new Error("Could not read this image file.");
 }
 
+/** Re-encode very large files without downscaling, so uploads stay within platform limits. */
 async function compressImageFile(file: File): Promise<File> {
   const { source, cleanup } = await loadImageSource(file);
 
   try {
     const { width, height } = getImageDimensions(source);
-    const largestSide = Math.max(width, height);
-    const scale =
-      largestSide > MAX_IMAGE_DIMENSION ? MAX_IMAGE_DIMENSION / largestSide : 1;
-    const targetWidth = Math.max(1, Math.round(width * scale));
-    const targetHeight = Math.max(1, Math.round(height * scale));
 
     const canvas = document.createElement("canvas");
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
+    canvas.width = Math.max(1, width);
+    canvas.height = Math.max(1, height);
 
     const context = canvas.getContext("2d");
     if (!context) {
       return file;
     }
 
-    context.drawImage(source, 0, 0, targetWidth, targetHeight);
+    context.drawImage(source, 0, 0, canvas.width, canvas.height);
 
     const blob = await new Promise<Blob | null>((resolve) => {
       canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY);

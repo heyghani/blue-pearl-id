@@ -12,6 +12,7 @@ import { ImageGallery } from "@/components/product/image-gallery";
 import {
   findPartialVariantPreview,
   findVariantBySelections,
+  resolveVariantImageUrl,
   type SerializedProductOption,
   type SerializedProductVariant,
 } from "@/lib/products/variants";
@@ -68,10 +69,22 @@ export function ProductVariantProvider({
 
   const activeVariant = selectedVariant ?? previewVariant;
 
-  const galleryImages = useMemo(
-    () => buildGalleryImages(baseImages, activeVariant?.imageUrl),
-    [activeVariant?.imageUrl, baseImages],
-  );
+  const galleryImages = useMemo(() => {
+    const resolvedImageUrl = resolveVariantImageUrl(
+      activeVariant
+        ? {
+            imageUrl: activeVariant.imageUrl,
+            optionValueIds: activeVariant.optionValueIds,
+          }
+        : null,
+      variants,
+      baseImages[0]?.url ?? null,
+    );
+
+    // Only promote a sibling/color image when a variant selection is active.
+    const variantImageUrl = activeVariant ? resolvedImageUrl : null;
+    return buildGalleryImages(baseImages, variantImageUrl);
+  }, [activeVariant, baseImages, variants]);
 
   const value = useMemo(
     () => ({

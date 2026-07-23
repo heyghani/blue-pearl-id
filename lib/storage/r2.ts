@@ -164,9 +164,7 @@ export async function uploadProductImage({
   const maxBytes = getMaxUploadBytesForMode(getUploadStorageMode());
   if (buffer.byteLength > maxBytes) {
     throw new Error(
-      process.env.VERCEL && getUploadStorageMode() === "r2"
-        ? "Image must be 4 MB or smaller on Vercel server uploads."
-        : "Image must be 5 MB or smaller.",
+      `Image must be ${Math.floor(maxBytes / (1024 * 1024))} MB or smaller.`,
     );
   }
 
