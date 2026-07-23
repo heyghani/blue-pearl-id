@@ -110,6 +110,12 @@ function resolveVariantPricing(variants: ProductVariantInput[], fallbackPrice: n
   return { price: minPrice, compareAtPrice: null as number | null };
 }
 
+/** Interactive transactions time out at 5s by default; variant sync can exceed that on remote DBs. */
+const PRODUCT_TX_OPTIONS = {
+  maxWait: 10_000,
+  timeout: 30_000,
+} as const;
+
 async function syncProductVariants(
   tx: Prisma.TransactionClient,
   productId: string,
@@ -143,24 +149,25 @@ async function syncProductVariants(
         productId,
         name: option.name,
         position: optionIndex,
+        values: {
+          create: option.values.map((value, valueIndex) => ({
+            value,
+            position: valueIndex,
+          })),
+        },
       },
+      include: { values: true },
     });
 
-    for (const [valueIndex, value] of option.values.entries()) {
-      const createdValue = await tx.productOptionValue.create({
-        data: {
-          optionId: createdOption.id,
-          value,
-          position: valueIndex,
-        },
-      });
-      optionValueMap.set(`${option.name}::${value}`, createdValue.id);
+    for (const createdValue of createdOption.values) {
+      optionValueMap.set(`${option.name}::${createdValue.value}`, createdValue.id);
     }
   }
 
+  const variantOptionValueIds: string[][] = [];
   let totalQuantity = 0;
 
-  for (const [index, variant] of variants.entries()) {
+  for (const variant of variants) {
     const optionValueIds = Object.entries(variant.optionValues)
       .map(([optionName, value]) => optionValueMap.get(`${optionName}::${value}`))
       .filter((id): id is string => Boolean(id));
@@ -169,29 +176,44 @@ async function syncProductVariants(
       throw new Error(`Variant "${variant.sku}" has invalid option values.`);
     }
 
-    const createdVariant = await tx.productVariant.create({
-      data: {
-        productId,
-        sku: variant.sku,
-        price: variant.price ?? null,
-        compareAtPrice: variant.compareAtPrice ?? null,
-        imageUrl: variant.imageUrl ?? null,
-        quantity: variant.quantity,
-        isActive: variant.isActive,
-        sortOrder: index,
-      },
-    });
-
-    await tx.productVariantValue.createMany({
-      data: optionValueIds.map((optionValueId) => ({
-        variantId: createdVariant.id,
-        optionValueId,
-      })),
-    });
-
+    variantOptionValueIds.push(optionValueIds);
     if (variant.isActive) {
       totalQuantity += variant.quantity;
     }
+  }
+
+  await tx.productVariant.createMany({
+    data: variants.map((variant, index) => ({
+      productId,
+      sku: variant.sku,
+      price: variant.price ?? null,
+      compareAtPrice: variant.compareAtPrice ?? null,
+      imageUrl: variant.imageUrl ?? null,
+      quantity: variant.quantity,
+      isActive: variant.isActive,
+      sortOrder: index,
+    })),
+  });
+
+  const createdVariants = await tx.productVariant.findMany({
+    where: { productId },
+    select: { id: true, sku: true },
+  });
+  const skuToId = new Map(createdVariants.map((row) => [row.sku, row.id]));
+
+  const variantValueRows = variants.flatMap((variant, index) => {
+    const variantId = skuToId.get(variant.sku);
+    if (!variantId) {
+      throw new Error(`Variant "${variant.sku}" was not created.`);
+    }
+    return variantOptionValueIds[index].map((optionValueId) => ({
+      variantId,
+      optionValueId,
+    }));
+  });
+
+  if (variantValueRows.length > 0) {
+    await tx.productVariantValue.createMany({ data: variantValueRows });
   }
 
   const pricing = resolveVariantPricing(variants, fallbackPrice);
@@ -284,7 +306,7 @@ export async function createProduct(input: ProductInput) {
     }
 
     return product;
-  });
+  }, PRODUCT_TX_OPTIONS);
 }
 
 export async function updateProduct(id: string, input: ProductInput) {
@@ -333,7 +355,7 @@ export async function updateProduct(id: string, input: ProductInput) {
     await syncProductImages(tx, id, input.imageUrls ?? [], input.name);
 
     return product;
-  });
+  }, PRODUCT_TX_OPTIONS);
 }
 
 export async function deleteProduct(id: string) {
