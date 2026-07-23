@@ -143,7 +143,8 @@ export function ProductVariantsEditor({
 
   return (
     <div className="space-y-4">
-      <input type="hidden" name="variantsPayload" value={payload} />
+      {/* textarea avoids HTML attribute size/escaping issues with large JSON payloads */}
+      <textarea name="variantsPayload" hidden readOnly value={payload} />
       <input type="hidden" name="hasVariants" value={hasVariants ? "true" : "false"} />
 
       <label className="flex items-start gap-3 rounded-lg border p-4">
@@ -171,7 +172,8 @@ export function ProductVariantsEditor({
               <div>
                 <h3 className="text-sm font-semibold">Options</h3>
                 <p className="text-xs text-muted-foreground">
-                  Example: Color → Red, Blue · Size → 38, 39, 40
+                  Option name is the attribute (Color, Size). Values are the choices
+                  (Red, Blue, Black). Example: Color → Red, Blue · Size → 38, 39, 40
                 </p>
               </div>
               <Button type="button" variant="outline" size="sm" onClick={addOption}>
