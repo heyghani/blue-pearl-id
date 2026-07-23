@@ -6,12 +6,12 @@ import { uploadedImageUrlSchema } from "@/lib/validations/upload";
 export const MAX_PRODUCT_IMAGES = 5;
 
 const optionalImageUrlSchema = z
-  .string()
+  .union([z.string(), z.null()])
   .optional()
-  .or(z.literal(""))
   .refine(
     (value) =>
-      !value ||
+      value == null ||
+      value === "" ||
       uploadedImageUrlSchema.safeParse(value).success,
     "Upload a valid image.",
   );
@@ -26,6 +26,7 @@ const productVariantSchema = z.object({
   price: z.number().positive().nullable().optional(),
   compareAtPrice: z.number().positive().nullable().optional(),
   quantity: z.number().int().min(0),
+  // Generated variants use imageUrl: null until an image is uploaded.
   imageUrl: optionalImageUrlSchema,
   isActive: z.boolean().optional(),
   optionValues: z.record(z.string(), z.string()),
@@ -113,7 +114,15 @@ export const productFormSchema = z
     const options = z.array(productOptionSchema).safeParse(payload.options ?? []);
     const variants = z.array(productVariantSchema).safeParse(payload.variants ?? []);
 
-    if (!options.success || options.data.length === 0) {
+    if (!options.success) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["variantsPayload"],
+        message:
+          options.error.issues[0]?.message ??
+          "Option data is invalid. Check option names and values.",
+      });
+    } else if (options.data.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["variantsPayload"],
@@ -121,7 +130,15 @@ export const productFormSchema = z
       });
     }
 
-    if (!variants.success || variants.data.length === 0) {
+    if (!variants.success) {
+      const issue = variants.error.issues[0];
+      const field = issue?.path?.length ? issue.path.join(".") : "variant";
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["variantsPayload"],
+        message: `Invalid variant data (${field}): ${issue?.message ?? "check SKU, price, and images."}`,
+      });
+    } else if (variants.data.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["variantsPayload"],
