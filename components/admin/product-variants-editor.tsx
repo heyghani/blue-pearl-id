@@ -43,11 +43,21 @@ export function ProductVariantsEditor({
   const [variants, setVariants] = useState<ProductVariantInput[]>(
     initialState?.variants ?? [],
   );
+  // Keep raw text while typing so trailing commas ("Red, ") are not wiped
+  // by parse → join on every keystroke.
+  const [valueDrafts, setValueDrafts] = useState<Record<number, string>>({});
 
   const payload = useMemo(
     () => JSON.stringify({ hasVariants, options, variants }),
     [hasVariants, options, variants],
   );
+
+  function parseOptionValues(raw: string) {
+    return raw
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+  }
 
   function updateOption(index: number, patch: Partial<ProductOptionInput>) {
     setOptions((current) =>
@@ -63,10 +73,34 @@ export function ProductVariantsEditor({
 
   function removeOption(index: number) {
     setOptions((current) => current.filter((_, optionIndex) => optionIndex !== index));
+    setValueDrafts((current) => {
+      const next: Record<number, string> = {};
+      for (const [key, value] of Object.entries(current)) {
+        const optionIndex = Number(key);
+        if (optionIndex < index) next[optionIndex] = value;
+        else if (optionIndex > index) next[optionIndex - 1] = value;
+      }
+      return next;
+    });
   }
 
   function generateVariants() {
-    const generated = generateVariantCombinations(options, baseSku, basePrice);
+    // Commit any in-progress drafts before generating combinations.
+    const committedOptions = options.map((option, index) =>
+      valueDrafts[index] !== undefined
+        ? { ...option, values: parseOptionValues(valueDrafts[index]) }
+        : option,
+    );
+    if (Object.keys(valueDrafts).length > 0) {
+      setOptions(committedOptions);
+      setValueDrafts({});
+    }
+
+    const generated = generateVariantCombinations(
+      committedOptions,
+      baseSku,
+      basePrice,
+    );
     setVariants((current) => {
       const existing = new Map(
         current.map((variant) => [
@@ -163,16 +197,26 @@ export function ProductVariantsEditor({
                 <div className="space-y-2">
                   <Label>Values (comma separated)</Label>
                   <Input
-                    value={option.values.join(", ")}
+                    value={valueDrafts[index] ?? option.values.join(", ")}
                     placeholder="Red, Blue, Black"
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      const raw = event.target.value;
+                      setValueDrafts((current) => ({ ...current, [index]: raw }));
+                      updateOption(index, { values: parseOptionValues(raw) });
+                    }}
+                    onBlur={() => {
+                      setValueDrafts((current) => {
+                        if (current[index] === undefined) return current;
+                        const next = { ...current };
+                        delete next[index];
+                        return next;
+                      });
                       updateOption(index, {
-                        values: event.target.value
-                          .split(",")
-                          .map((value) => value.trim())
-                          .filter(Boolean),
-                      })
-                    }
+                        values: parseOptionValues(
+                          valueDrafts[index] ?? option.values.join(", "),
+                        ),
+                      });
+                    }}
                   />
                 </div>
                 <div className="flex items-end">
