@@ -23,7 +23,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { ProductOptionInput, ProductVariantInput } from "@/lib/products/variants";
+import {
+  deriveVariantDefaultQuantity,
+  type ProductOptionInput,
+  type ProductVariantInput,
+} from "@/lib/products/variants";
 
 type Category = { id: string; name: string };
 type Brand = { id: string; name: string };
@@ -84,6 +88,15 @@ export function ProductForm({
   const [basePrice, setBasePrice] = useState(
     Number(defaults.price ?? (isNewProduct ? DEFAULT_BASE_PRICE : 0)) || 0,
   );
+  const [inventoryQuantity, setInventoryQuantity] = useState(() => {
+    if (defaults.hasVariants && defaults.variants?.length) {
+      return deriveVariantDefaultQuantity(
+        defaults.variants,
+        defaults.quantity ?? DEFAULT_INVENTORY_QUANTITY,
+      );
+    }
+    return defaults.quantity ?? (isNewProduct ? DEFAULT_INVENTORY_QUANTITY : 0);
+  });
   const [isActive, setIsActive] = useState(defaults.isActive ?? true);
   const [isFeatured, setIsFeatured] = useState(defaults.isFeatured ?? false);
   const [imagesUploading, setImagesUploading] = useState(false);
@@ -253,7 +266,8 @@ export function ProductForm({
         <CardHeader>
           <CardTitle>Pricing & inventory</CardTitle>
           <CardDescription>
-            For simple products, set price and stock here. Variant products use per-variant stock.
+            Set base price and stock here. For variant products, inventory quantity
+            is the default stock applied to each variant.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -306,12 +320,15 @@ export function ProductForm({
               name="quantity"
               type="number"
               min="0"
-              defaultValue={
-                defaults.quantity ?? (isNewProduct ? DEFAULT_INVENTORY_QUANTITY : 0)
+              value={inventoryQuantity}
+              onChange={(event) =>
+                setInventoryQuantity(Math.max(0, Number(event.target.value) || 0))
               }
             />
             <p className="text-xs text-muted-foreground">
-              Used for simple products only. Variant stock is managed below.
+              For simple products this is the stock. For variants, each combination
+              starts with this value and updates when you change it — unless you
+              override a variant stock manually.
             </p>
           </div>
         </CardContent>
@@ -328,6 +345,7 @@ export function ProductForm({
           <ProductVariantsEditor
             baseSku={baseSku}
             basePrice={basePrice}
+            inventoryQuantity={inventoryQuantity}
             initialState={{
               hasVariants: defaults.hasVariants,
               options: defaults.options,

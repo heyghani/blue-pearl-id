@@ -58,6 +58,7 @@ export function generateVariantCombinations(
   options: ProductOptionInput[],
   baseSku: string,
   basePrice: number,
+  defaultQuantity = 0,
 ): ProductVariantInput[] {
   const normalized = options
     .map((option) => ({
@@ -74,6 +75,10 @@ export function generateVariantCombinations(
     ),
   );
 
+  const quantity = Number.isFinite(defaultQuantity)
+    ? Math.max(0, Math.floor(defaultQuantity))
+    : 0;
+
   return combinations.map((combo) => {
     const optionValues = Object.fromEntries(
       combo.map(({ optionName, value }) => [optionName, value]),
@@ -83,12 +88,43 @@ export function generateVariantCombinations(
       sku: buildVariantSku(baseSku, optionValues),
       price: basePrice,
       compareAtPrice: null,
-      quantity: 0,
+      quantity,
       imageUrl: null,
       isActive: true,
       optionValues,
     };
   });
+}
+
+/** Inventory field default when editing a variant product (not the summed total). */
+export function deriveVariantDefaultQuantity(
+  variants: { quantity: number }[],
+  fallback = 0,
+) {
+  if (variants.length === 0) return fallback;
+
+  const counts = new Map<number, number>();
+  for (const variant of variants) {
+    counts.set(variant.quantity, (counts.get(variant.quantity) ?? 0) + 1);
+  }
+
+  let bestQuantity = variants[0].quantity;
+  let bestCount = 0;
+  for (const [quantity, count] of counts) {
+    if (count > bestCount) {
+      bestQuantity = quantity;
+      bestCount = count;
+    }
+  }
+
+  return bestQuantity;
+}
+
+export function variantCombinationKey(optionValues: Record<string, string>) {
+  return Object.entries(optionValues)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}:${value}`)
+    .join("|");
 }
 
 export function parseVariantsPayload(raw: unknown): {

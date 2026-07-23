@@ -1,14 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  buildVariantSku,
   generateVariantCombinations,
+  variantCombinationKey,
   type ProductOptionInput,
   type ProductVariantInput,
 } from "@/lib/products/variants";
@@ -22,6 +22,8 @@ type VariantsFormState = {
 type Props = {
   baseSku: string;
   basePrice: number;
+  /** Inventory quantity — new/synced variants follow this unless edited manually. */
+  inventoryQuantity: number;
   initialState?: Partial<VariantsFormState>;
   fieldError?: string;
 };
@@ -33,6 +35,7 @@ function emptyOption(): ProductOptionInput {
 export function ProductVariantsEditor({
   baseSku,
   basePrice,
+  inventoryQuantity,
   initialState,
   fieldError,
 }: Props) {
@@ -46,11 +49,37 @@ export function ProductVariantsEditor({
   // Keep raw text while typing so trailing commas ("Red, ") are not wiped
   // by parse → join on every keystroke.
   const [valueDrafts, setValueDrafts] = useState<Record<number, string>>({});
+  // Combinations whose stock was edited manually (or differed from inventory on load).
+  const [manualQuantityKeys, setManualQuantityKeys] = useState(() => {
+    const keys = new Set<string>();
+    for (const variant of initialState?.variants ?? []) {
+      if (variant.quantity !== inventoryQuantity) {
+        keys.add(variantCombinationKey(variant.optionValues));
+      }
+    }
+    return keys;
+  });
+  const previousInventoryRef = useRef(inventoryQuantity);
+  const manualQuantityKeysRef = useRef(manualQuantityKeys);
+  manualQuantityKeysRef.current = manualQuantityKeys;
 
   const payload = useMemo(
     () => JSON.stringify({ hasVariants, options, variants }),
     [hasVariants, options, variants],
   );
+
+  useEffect(() => {
+    if (previousInventoryRef.current === inventoryQuantity) return;
+    previousInventoryRef.current = inventoryQuantity;
+
+    setVariants((current) =>
+      current.map((variant) => {
+        const key = variantCombinationKey(variant.optionValues);
+        if (manualQuantityKeysRef.current.has(key)) return variant;
+        return { ...variant, quantity: inventoryQuantity };
+      }),
+    );
+  }, [inventoryQuantity]);
 
   function parseOptionValues(raw: string) {
     return raw
@@ -100,23 +129,18 @@ export function ProductVariantsEditor({
       committedOptions,
       baseSku,
       basePrice,
+      inventoryQuantity,
     );
     setVariants((current) => {
       const existing = new Map(
         current.map((variant) => [
-          Object.entries(variant.optionValues)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([key, value]) => `${key}:${value}`)
-            .join("|"),
+          variantCombinationKey(variant.optionValues),
           variant,
         ]),
       );
 
       return generated.map((variant) => {
-        const key = Object.entries(variant.optionValues)
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([entryKey, value]) => `${entryKey}:${value}`)
-          .join("|");
+        const key = variantCombinationKey(variant.optionValues);
         const previous = existing.get(key);
         return previous
           ? {
@@ -127,9 +151,33 @@ export function ProductVariantsEditor({
           : variant;
       });
     });
+    setManualQuantityKeys((current) => {
+      const next = new Set<string>();
+      for (const variant of generated) {
+        const key = variantCombinationKey(variant.optionValues);
+        if (current.has(key)) next.add(key);
+      }
+      return next;
+    });
   }
 
   function updateVariant(index: number, patch: Partial<ProductVariantInput>) {
+    const existing = variants[index];
+    if (!existing) return;
+
+    if (patch.quantity !== undefined) {
+      const key = variantCombinationKey(existing.optionValues);
+      setManualQuantityKeys((manual) => {
+        const next = new Set(manual);
+        if (patch.quantity === inventoryQuantity) {
+          next.delete(key);
+        } else {
+          next.add(key);
+        }
+        return next;
+      });
+    }
+
     setVariants((current) =>
       current.map((variant, variantIndex) =>
         variantIndex === index ? { ...variant, ...patch } : variant,
@@ -158,7 +206,8 @@ export function ProductVariantsEditor({
           <p className="text-sm font-medium">This product has variants</p>
           <p className="text-xs text-muted-foreground">
             Use options like Color, Size, or Shoe size. Each combination becomes a
-            sellable variant with its own SKU, price, and stock.
+            sellable variant with its own SKU, price, and stock. Stock defaults to
+            Inventory quantity and stays in sync until you edit it manually.
           </p>
         </div>
       </label>
@@ -332,10 +381,8 @@ export function ProductVariantsEditor({
               </div>
 
               <p className="text-xs text-muted-foreground">
-                Base SKU preview:{" "}
-                <span className="font-mono">
-                  {buildVariantSku(baseSku || "SKU", { Color: "Red", Size: "40" })}
-                </span>
+                Stock follows Inventory quantity by default. Edit a row to set a
+                custom stock for that combination.
               </p>
             </div>
           ) : null}
