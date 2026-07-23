@@ -7,7 +7,9 @@ import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  buildVariantSku,
   generateVariantCombinations,
+  getDefaultProductVariantState,
   variantCombinationKey,
   type ProductOptionInput,
   type ProductVariantInput,
@@ -24,6 +26,8 @@ type Props = {
   basePrice: number;
   /** Inventory quantity — new/synced variants follow this unless edited manually. */
   inventoryQuantity: number;
+  /** When true and no saved options exist, pre-fill US size variants. */
+  useDefaultVariants?: boolean;
   initialState?: Partial<VariantsFormState>;
   fieldError?: string;
 };
@@ -32,27 +36,75 @@ function emptyOption(): ProductOptionInput {
   return { name: "", values: [] };
 }
 
+function resolveInitialState({
+  useDefaultVariants,
+  initialState,
+  baseSku,
+  basePrice,
+  inventoryQuantity,
+}: {
+  useDefaultVariants: boolean;
+  initialState?: Partial<VariantsFormState>;
+  baseSku: string;
+  basePrice: number;
+  inventoryQuantity: number;
+}): VariantsFormState {
+  if (initialState?.options?.length || initialState?.variants?.length) {
+    return {
+      hasVariants: initialState.hasVariants ?? true,
+      options: initialState.options?.length
+        ? initialState.options
+        : [emptyOption()],
+      variants: initialState.variants ?? [],
+    };
+  }
+
+  if (initialState?.hasVariants === false) {
+    return {
+      hasVariants: false,
+      options: [emptyOption()],
+      variants: [],
+    };
+  }
+
+  if (useDefaultVariants || initialState?.hasVariants === true) {
+    return getDefaultProductVariantState(baseSku, basePrice, inventoryQuantity);
+  }
+
+  return {
+    hasVariants: false,
+    options: [emptyOption()],
+    variants: [],
+  };
+}
+
 export function ProductVariantsEditor({
   baseSku,
   basePrice,
   inventoryQuantity,
+  useDefaultVariants = false,
   initialState,
   fieldError,
 }: Props) {
-  const [hasVariants, setHasVariants] = useState(initialState?.hasVariants ?? false);
-  const [options, setOptions] = useState<ProductOptionInput[]>(
-    initialState?.options?.length ? initialState.options : [emptyOption()],
+  const [boot] = useState(() =>
+    resolveInitialState({
+      useDefaultVariants,
+      initialState,
+      baseSku,
+      basePrice,
+      inventoryQuantity,
+    }),
   );
-  const [variants, setVariants] = useState<ProductVariantInput[]>(
-    initialState?.variants ?? [],
-  );
+  const [hasVariants, setHasVariants] = useState(boot.hasVariants);
+  const [options, setOptions] = useState<ProductOptionInput[]>(boot.options);
+  const [variants, setVariants] = useState<ProductVariantInput[]>(boot.variants);
   // Keep raw text while typing so trailing commas ("Red, ") are not wiped
   // by parse → join on every keystroke.
   const [valueDrafts, setValueDrafts] = useState<Record<number, string>>({});
   // Combinations whose stock was edited manually (or differed from inventory on load).
   const [manualQuantityKeys, setManualQuantityKeys] = useState(() => {
     const keys = new Set<string>();
-    for (const variant of initialState?.variants ?? []) {
+    for (const variant of boot.variants) {
       if (variant.quantity !== inventoryQuantity) {
         keys.add(variantCombinationKey(variant.optionValues));
       }
@@ -60,6 +112,7 @@ export function ProductVariantsEditor({
     return keys;
   });
   const previousInventoryRef = useRef(inventoryQuantity);
+  const previousBaseSkuRef = useRef(baseSku);
   const manualQuantityKeysRef = useRef(manualQuantityKeys);
   manualQuantityKeysRef.current = manualQuantityKeys;
 
@@ -81,6 +134,20 @@ export function ProductVariantsEditor({
     );
   }, [inventoryQuantity]);
 
+  // Keep generated variant SKUs aligned with Base SKU while creating a product.
+  useEffect(() => {
+    if (!useDefaultVariants) return;
+    if (previousBaseSkuRef.current === baseSku) return;
+    previousBaseSkuRef.current = baseSku;
+
+    setVariants((current) =>
+      current.map((variant) => ({
+        ...variant,
+        sku: buildVariantSku(baseSku || "SKU", variant.optionValues),
+      })),
+    );
+  }, [baseSku, useDefaultVariants]);
+
   function parseOptionValues(raw: string) {
     return raw
       .split(",")
@@ -98,6 +165,31 @@ export function ProductVariantsEditor({
 
   function addOption() {
     setOptions((current) => [...current, emptyOption()]);
+  }
+
+  function enableDefaultUsSizes() {
+    const defaults = getDefaultProductVariantState(
+      baseSku,
+      basePrice,
+      inventoryQuantity,
+    );
+    setHasVariants(true);
+    setOptions(defaults.options);
+    setVariants(defaults.variants);
+    setValueDrafts({});
+    setManualQuantityKeys(new Set());
+  }
+
+  function handleHasVariantsChange(enabled: boolean) {
+    setHasVariants(enabled);
+    if (!enabled) return;
+
+    const optionsEmpty = options.every(
+      (option) => !option.name.trim() && option.values.length === 0,
+    );
+    if (optionsEmpty && variants.length === 0) {
+      enableDefaultUsSizes();
+    }
   }
 
   function removeOption(index: number) {
@@ -199,15 +291,14 @@ export function ProductVariantsEditor({
         <input
           type="checkbox"
           checked={hasVariants}
-          onChange={(event) => setHasVariants(event.target.checked)}
+          onChange={(event) => handleHasVariantsChange(event.target.checked)}
           className="mt-1 rounded border-input"
         />
         <div className="space-y-1">
           <p className="text-sm font-medium">This product has variants</p>
           <p className="text-xs text-muted-foreground">
-            Use options like Color, Size, or Shoe size. Each combination becomes a
-            sellable variant with its own SKU, price, and stock. Stock defaults to
-            Inventory quantity and stays in sync until you edit it manually.
+            New products start with US sizes (US4–US12). Add more options (e.g. Color)
+            or edit values anytime, then regenerate combinations.
           </p>
         </div>
       </label>
@@ -217,17 +308,27 @@ export function ProductVariantsEditor({
       {hasVariants ? (
         <div className="space-y-6 rounded-lg border p-4">
           <div className="space-y-4">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold">Options</h3>
                 <p className="text-xs text-muted-foreground">
-                  Option name is the attribute (Color, Size). Values are the choices
-                  (Red, Blue, Black). Example: Color → Red, Blue · Size → 38, 39, 40
+                  Option name is the attribute (US, Color). Values are the choices
+                  (US4, US5 · Red, Blue). Edit or add values freely.
                 </p>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={addOption}>
-                Add option
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={enableDefaultUsSizes}
+                >
+                  Reset US sizes
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={addOption}>
+                  Add option
+                </Button>
+              </div>
             </div>
 
             {options.map((option, index) => (
@@ -239,7 +340,7 @@ export function ProductVariantsEditor({
                   <Label>Option name</Label>
                   <Input
                     value={option.name}
-                    placeholder="Color"
+                    placeholder="US"
                     onChange={(event) =>
                       updateOption(index, { name: event.target.value })
                     }
@@ -249,7 +350,7 @@ export function ProductVariantsEditor({
                   <Label>Values (comma separated)</Label>
                   <Input
                     value={valueDrafts[index] ?? option.values.join(", ")}
-                    placeholder="Red, Blue, Black"
+                    placeholder="US4, US4.5, US5, US5.5, …"
                     onChange={(event) => {
                       const raw = event.target.value;
                       setValueDrafts((current) => ({ ...current, [index]: raw }));

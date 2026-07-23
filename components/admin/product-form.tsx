@@ -338,7 +338,8 @@ export function ProductForm({
         <CardHeader>
           <CardTitle>Variants</CardTitle>
           <CardDescription>
-            Add options such as color, size, or shoe size for products with multiple sellable combinations.
+            New products include US sizes by default. Add color or other options anytime,
+            edit values, then generate combinations.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -346,6 +347,7 @@ export function ProductForm({
             baseSku={baseSku}
             basePrice={basePrice}
             inventoryQuantity={inventoryQuantity}
+            useDefaultVariants={isNewProduct}
             initialState={{
               hasVariants: defaults.hasVariants,
               options: defaults.options,

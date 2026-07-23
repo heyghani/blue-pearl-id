@@ -54,6 +54,58 @@ export function buildVariantSku(baseSku: string, optionValues: Record<string, st
   return suffix ? `${baseSku}-${suffix}` : baseSku;
 }
 
+/** Default US shoe sizes pre-filled on new products (admin can edit/add). */
+export const DEFAULT_US_SIZE_VALUES = [
+  "US4",
+  "US4.5",
+  "US5",
+  "US5.5",
+  "US6",
+  "US6.5",
+  "US7",
+  "US7.5",
+  "US8",
+  "US8.5",
+  "US9",
+  "US9.5",
+  "US10",
+  "US10.5",
+  "US11",
+  "US11.5",
+  "US12",
+] as const;
+
+export const DEFAULT_US_SIZE_OPTION_NAME = "US";
+
+export function getDefaultUsSizeOption(): ProductOptionInput {
+  return {
+    name: DEFAULT_US_SIZE_OPTION_NAME,
+    values: [...DEFAULT_US_SIZE_VALUES],
+  };
+}
+
+export function getDefaultProductVariantState(
+  baseSku: string,
+  basePrice: number,
+  defaultQuantity = 0,
+): {
+  hasVariants: true;
+  options: ProductOptionInput[];
+  variants: ProductVariantInput[];
+} {
+  const options = [getDefaultUsSizeOption()];
+  return {
+    hasVariants: true,
+    options,
+    variants: generateVariantCombinations(
+      options,
+      baseSku,
+      basePrice,
+      defaultQuantity,
+    ),
+  };
+}
+
 export function generateVariantCombinations(
   options: ProductOptionInput[],
   baseSku: string,
