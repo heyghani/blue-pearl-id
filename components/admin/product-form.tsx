@@ -57,7 +57,7 @@ const initialState: AdminActionState = {};
 const DEFAULT_PRODUCT_DESCRIPTION =
   "For more styles, please feel free to contact customer service";
 
-const DEFAULT_BASE_PRICE = 120;
+const DEFAULT_BASE_PRICE = 80;
 const DEFAULT_COMPARE_AT_PRICE = 888;
 const DEFAULT_INVENTORY_QUANTITY = 99;
 
@@ -266,8 +266,8 @@ export function ProductForm({
         <CardHeader>
           <CardTitle>Pricing & inventory</CardTitle>
           <CardDescription>
-            Set base price and stock here. For variant products, inventory quantity
-            is the default stock applied to each variant.
+            Set base price and stock here. For variant products, base price and
+            inventory quantity are the defaults applied to each variant.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -293,10 +293,14 @@ export function ProductForm({
               type="number"
               step="0.01"
               min="0"
-              defaultValue={defaults.price ?? (isNewProduct ? DEFAULT_BASE_PRICE : undefined)}
+              value={basePrice || ""}
               required
               onChange={(event) => setBasePrice(Number(event.target.value) || 0)}
             />
+            <p className="text-xs text-muted-foreground">
+              Variant prices follow this value by default until you edit a row
+              manually.
+            </p>
           </div>
 
           <div className="space-y-2">

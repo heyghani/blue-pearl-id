@@ -111,10 +111,24 @@ export function ProductVariantsEditor({
     }
     return keys;
   });
+  // Combinations whose price was edited manually (or differed from base price on load).
+  const [manualPriceKeys, setManualPriceKeys] = useState(() => {
+    const keys = new Set<string>();
+    for (const variant of boot.variants) {
+      const price = variant.price ?? basePrice;
+      if (price !== basePrice) {
+        keys.add(variantCombinationKey(variant.optionValues));
+      }
+    }
+    return keys;
+  });
   const previousInventoryRef = useRef(inventoryQuantity);
+  const previousBasePriceRef = useRef(basePrice);
   const previousBaseSkuRef = useRef(baseSku);
   const manualQuantityKeysRef = useRef(manualQuantityKeys);
+  const manualPriceKeysRef = useRef(manualPriceKeys);
   manualQuantityKeysRef.current = manualQuantityKeys;
+  manualPriceKeysRef.current = manualPriceKeys;
 
   const payload = useMemo(
     () => JSON.stringify({ hasVariants, options, variants }),
@@ -133,6 +147,19 @@ export function ProductVariantsEditor({
       }),
     );
   }, [inventoryQuantity]);
+
+  useEffect(() => {
+    if (previousBasePriceRef.current === basePrice) return;
+    previousBasePriceRef.current = basePrice;
+
+    setVariants((current) =>
+      current.map((variant) => {
+        const key = variantCombinationKey(variant.optionValues);
+        if (manualPriceKeysRef.current.has(key)) return variant;
+        return { ...variant, price: basePrice };
+      }),
+    );
+  }, [basePrice]);
 
   // Keep generated variant SKUs aligned with Base SKU while creating a product.
   useEffect(() => {
@@ -178,6 +205,7 @@ export function ProductVariantsEditor({
     setVariants(defaults.variants);
     setValueDrafts({});
     setManualQuantityKeys(new Set());
+    setManualPriceKeys(new Set());
   }
 
   function handleHasVariantsChange(enabled: boolean) {
@@ -251,6 +279,14 @@ export function ProductVariantsEditor({
       }
       return next;
     });
+    setManualPriceKeys((current) => {
+      const next = new Set<string>();
+      for (const variant of generated) {
+        const key = variantCombinationKey(variant.optionValues);
+        if (current.has(key)) next.add(key);
+      }
+      return next;
+    });
   }
 
   function updateVariant(index: number, patch: Partial<ProductVariantInput>) {
@@ -262,6 +298,20 @@ export function ProductVariantsEditor({
       setManualQuantityKeys((manual) => {
         const next = new Set(manual);
         if (patch.quantity === inventoryQuantity) {
+          next.delete(key);
+        } else {
+          next.add(key);
+        }
+        return next;
+      });
+    }
+
+    if (patch.price !== undefined) {
+      const key = variantCombinationKey(existing.optionValues);
+      const effectivePrice = patch.price ?? basePrice;
+      setManualPriceKeys((manual) => {
+        const next = new Set(manual);
+        if (effectivePrice === basePrice) {
           next.delete(key);
         } else {
           next.add(key);
@@ -482,8 +532,8 @@ export function ProductVariantsEditor({
               </div>
 
               <p className="text-xs text-muted-foreground">
-                Stock follows Inventory quantity by default. Edit a row to set a
-                custom stock for that combination.
+                Price follows Base price and stock follows Inventory quantity by
+                default. Edit a row to set a custom value for that combination.
               </p>
             </div>
           ) : null}
