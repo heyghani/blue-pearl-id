@@ -347,7 +347,7 @@ export function ProductVariantsEditor({
         <div className="space-y-1">
           <p className="text-sm font-medium">This product has variants</p>
           <p className="text-xs text-muted-foreground">
-            New products start with US sizes (US4–US12). Add more options (e.g. Color)
+            New products start with US sizes (US4–US13). Add more options (e.g. Color)
             or edit values anytime, then regenerate combinations.
           </p>
         </div>

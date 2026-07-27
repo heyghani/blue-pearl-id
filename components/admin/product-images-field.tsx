@@ -29,11 +29,13 @@ export function ProductImagesField({
   onUploadingChange,
 }: Props) {
   const imagesRef = useRef<string[]>(value.filter(Boolean));
+  const dragCounterRef = useRef(0);
   const [images, setImages] = useState<string[]>(value.filter(Boolean));
   const [urlInput, setUrlInput] = useState("");
   const [uploadConfig, setUploadConfig] = useState<UploadConfig | null>(null);
   const [configLoading, setConfigLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(
     null,
   );
@@ -148,12 +150,9 @@ export function ProductImagesField({
     setUrlInput("");
   }
 
-  async function handleBatchUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? []);
-    event.target.value = "";
-
+  async function uploadFiles(files: File[]) {
     if (files.length === 0) {
-      setError("Could not read the selected files. Please try again.");
+      setError("Drop or select image files only (JPG, PNG, WebP, or GIF).");
       return;
     }
 
@@ -221,6 +220,58 @@ export function ProductImagesField({
     }
   }
 
+  function extractImageFiles(dataTransfer: DataTransfer) {
+    return Array.from(dataTransfer.files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
+  }
+
+  function handleDragEnter(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    dragCounterRef.current += 1;
+    if (!uploadDisabled) {
+      setIsDragging(true);
+    }
+  }
+
+  function handleDragLeave(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current <= 0) {
+      dragCounterRef.current = 0;
+      setIsDragging(false);
+    }
+  }
+
+  function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    if (!uploadDisabled) {
+      event.dataTransfer.dropEffect = "copy";
+    }
+  }
+
+  function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    dragCounterRef.current = 0;
+    setIsDragging(false);
+
+    if (uploadDisabled) return;
+
+    void uploadFiles(extractImageFiles(event.dataTransfer));
+  }
+
+  async function handleBatchUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+
+    if (files.length === 0) {
+      setError("Could not read the selected files. Please try again.");
+      return;
+    }
+
+    await uploadFiles(files);
+  }
+
   const uploadDisabled =
     isUploading || configLoading || uploadConfig?.available === false;
 
@@ -236,6 +287,17 @@ export function ProductImagesField({
 
       <input type="hidden" name={name} value={JSON.stringify(images)} />
 
+      <div
+        className={cn(
+          "space-y-4 rounded-lg border border-dashed p-4 transition-colors",
+          isDragging && "border-primary bg-primary/5",
+          uploadDisabled && "opacity-60",
+        )}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
       {images.length > 0 ? (
         <div className="grid gap-3 sm:grid-cols-2">
           {images.map((url, index) => (
@@ -301,9 +363,15 @@ export function ProductImagesField({
           ))}
         </div>
       ) : (
-        <p className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
-          No images yet. Upload one or more product photos below.
-        </p>
+        <div className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center">
+          <ImagePlus className="h-8 w-8 text-muted-foreground" />
+          <p className="text-sm font-medium">
+            {isDragging ? "Drop images here" : "Drag and drop product images here"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Or use the upload button below. The first image becomes the primary photo.
+          </p>
+        </div>
       )}
 
       <div className={cn("space-y-3", images.length > 0 && "border-t pt-4")}>
@@ -366,7 +434,7 @@ export function ProductImagesField({
 
         <p className="text-xs text-muted-foreground">
           {uploadConfig?.available
-            ? `Select multiple files at once. JPG, PNG, WebP, or GIF up to ${formatMaxUploadSize(uploadConfig.maxBytes)} each.`
+            ? `Drag and drop or select multiple files. JPG, PNG, WebP, or GIF up to ${formatMaxUploadSize(uploadConfig.maxBytes)} each.`
             : "File upload is not configured on this server. Paste image URLs instead."}
         </p>
 
@@ -376,6 +444,7 @@ export function ProductImagesField({
 
         {notice ? <p className="text-xs text-emerald-700">{notice}</p> : null}
         {error ? <p className="text-xs text-destructive">{error}</p> : null}
+      </div>
       </div>
     </div>
   );

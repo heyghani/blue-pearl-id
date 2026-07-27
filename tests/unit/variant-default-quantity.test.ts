@@ -8,7 +8,7 @@ import {
 } from "@/lib/products/variants";
 
 describe("getDefaultProductVariantState", () => {
-  it("pre-fills US sizes from US4 to US12 including half sizes", () => {
+  it("pre-fills US sizes from US4 to US13 including half sizes", () => {
     const state = getDefaultProductVariantState("SHOE", 120, 99);
 
     expect(state.hasVariants).toBe(true);
@@ -33,18 +33,19 @@ describe("getDefaultProductVariantState", () => {
           "US11",
           "US11.5",
           "US12",
+          "US13",
         ],
       },
     ]);
-    expect(state.variants).toHaveLength(17);
+    expect(state.variants).toHaveLength(18);
     expect(state.variants[0]).toMatchObject({
       sku: "SHOE-us4",
       quantity: 99,
       optionValues: { US: "US4" },
     });
     expect(state.variants.at(-1)).toMatchObject({
-      sku: "SHOE-us12",
-      optionValues: { US: "US12" },
+      sku: "SHOE-us13",
+      optionValues: { US: "US13" },
     });
   });
 });

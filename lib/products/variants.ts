@@ -73,6 +73,7 @@ export const DEFAULT_US_SIZE_VALUES = [
   "US11",
   "US11.5",
   "US12",
+  "US13",
 ] as const;
 
 export const DEFAULT_US_SIZE_OPTION_NAME = "US";
