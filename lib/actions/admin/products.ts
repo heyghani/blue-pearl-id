@@ -39,12 +39,21 @@ function parseProductForm(formData: FormData) {
           .filter(Boolean)
       : [];
 
+  // Empty or 0 means no compare-at price (optional strikethrough).
+  const compareAtPrice =
+    compareAt === "" ||
+    compareAt === null ||
+    compareAt === "0" ||
+    compareAt === 0
+      ? undefined
+      : compareAt;
+
   return productFormSchema.safeParse({
     name: formData.get("name"),
     slug: formData.get("slug"),
     sku: formData.get("sku"),
     price: formData.get("price"),
-    compareAtPrice: compareAt === "" || compareAt === null ? undefined : compareAt,
+    compareAtPrice,
     categoryId: categoryId === "" || categoryId === null ? undefined : categoryId,
     brandId: brandId === "" || brandId === null ? undefined : brandId,
     tags: tags.length > 0 ? tags.join(", ") : undefined,

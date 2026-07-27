@@ -55,7 +55,13 @@ export const productFormSchema = z
       .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and hyphens."),
     sku: z.string().min(2, "SKU is required."),
     price: z.coerce.number().positive("Price must be greater than zero."),
-    compareAtPrice: z.coerce.number().positive().optional().or(z.literal("")),
+    compareAtPrice: z.preprocess(
+      (value) =>
+        value === "" || value === 0 || value === "0" || value == null
+          ? undefined
+          : value,
+      z.coerce.number().positive().optional(),
+    ),
     categoryId: z.string().optional(),
     brandId: z.string().optional(),
     tags: z.string().optional(),

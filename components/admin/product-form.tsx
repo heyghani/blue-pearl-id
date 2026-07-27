@@ -58,7 +58,6 @@ const DEFAULT_PRODUCT_DESCRIPTION =
   "For more styles, please feel free to contact customer service";
 
 const DEFAULT_BASE_PRICE = 80;
-const DEFAULT_COMPARE_AT_PRICE = 0;
 const DEFAULT_INVENTORY_QUANTITY = 99;
 
 export function ProductForm({
@@ -311,9 +310,8 @@ export function ProductForm({
               type="number"
               step="0.01"
               min="0"
-              defaultValue={
-                defaults.compareAtPrice ?? (isNewProduct ? DEFAULT_COMPARE_AT_PRICE : "")
-              }
+              defaultValue={defaults.compareAtPrice ?? ""}
+              placeholder="Optional"
             />
           </div>
 
