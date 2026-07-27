@@ -39,12 +39,9 @@ function parseProductForm(formData: FormData) {
           .filter(Boolean)
       : [];
 
-  // Empty or 0 means no compare-at price (optional strikethrough).
+  // Empty or "0" means no compare-at price (optional strikethrough).
   const compareAtPrice =
-    compareAt === "" ||
-    compareAt === null ||
-    compareAt === "0" ||
-    compareAt === 0
+    compareAt === "" || compareAt === null || compareAt === "0"
       ? undefined
       : compareAt;
 
