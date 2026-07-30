@@ -17,8 +17,7 @@ export default auth((req) => {
   }
 });
 
+/** Auth only where needed — public shop skips JWT work per request. */
 export const config = {
-  matcher: [
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|google-site-verification|.*\\..*).*)",
-  ],
+  matcher: ["/admin/:path*", "/account/:path*", "/login", "/register"],
 };

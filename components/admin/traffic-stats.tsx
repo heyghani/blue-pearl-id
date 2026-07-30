@@ -28,7 +28,7 @@ type TrafficStats = {
       };
 };
 
-const POLL_INTERVAL_MS = 10_000;
+const POLL_INTERVAL_MS = 30_000;
 
 export function TrafficStats() {
   const [stats, setStats] = useState<TrafficStats | null>(null);

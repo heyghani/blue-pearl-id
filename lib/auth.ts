@@ -2,6 +2,7 @@ import NextAuth, { CredentialsSignin } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { cache } from "react";
 import { z } from "zod";
 
 import { authConfig } from "@/lib/auth.config";
@@ -66,7 +67,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
 });
 
-/** Safe session read for Server Components (stale cookies cleared in middleware). */
-export async function getSession() {
-  return auth();
-}
+/** Safe session read for Server Components (stale cookies cleared in middleware). Deduped per request. */
+export const getSession = cache(async () => auth());

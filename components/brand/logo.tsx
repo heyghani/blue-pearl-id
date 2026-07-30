@@ -13,9 +13,16 @@ type LogoProps = {
   variant?: LogoVariant;
   className?: string;
   href?: string | null;
+  /** Only set on above-the-fold header logos — footer should not compete for LCP. */
+  priority?: boolean;
 };
 
-export function Logo({ variant = "lockup", className, href = "/" }: LogoProps) {
+export function Logo({
+  variant = "lockup",
+  className,
+  href = "/",
+  priority = false,
+}: LogoProps) {
   const content =
     variant === "full" ? (
       <Image
@@ -24,7 +31,7 @@ export function Logo({ variant = "lockup", className, href = "/" }: LogoProps) {
         width={200}
         height={200}
         className={cn("h-auto w-36 object-contain sm:w-40", className)}
-        priority
+        priority={priority}
       />
     ) : variant === "icon" ? (
       <Image
@@ -33,7 +40,7 @@ export function Logo({ variant = "lockup", className, href = "/" }: LogoProps) {
         width={40}
         height={40}
         className={cn("h-9 w-9 object-contain", className)}
-        priority
+        priority={priority}
       />
     ) : (
       <span className={cn("inline-flex items-center gap-2.5", className)}>
@@ -43,7 +50,7 @@ export function Logo({ variant = "lockup", className, href = "/" }: LogoProps) {
           width={36}
           height={36}
           className="h-8 w-8 shrink-0 object-contain sm:h-9 sm:w-9"
-          priority
+          priority={priority}
           aria-hidden
         />
         <span className="font-display text-base font-semibold tracking-tight sm:text-lg">

@@ -1,30 +1,23 @@
-"use client";
-
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
 import { ProductListRow } from "@/components/catalog/product-list-row";
 import type { ProductCardData } from "@/components/catalog/product-card";
 import { Button } from "@/components/ui/button";
-import { useTranslations } from "@/components/i18n/locale-provider";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 
-export function ProductList({
+export async function ProductList({
   products,
   className,
+  clearFiltersHref = "/products",
 }: {
   products: ProductCardData[];
   className?: string;
+  clearFiltersHref?: string;
 }) {
-  const t = useTranslations();
-  const searchParams = useSearchParams();
-  const clearFiltersHref = (() => {
-    const next = new URLSearchParams();
-    const sort = searchParams.get("sort");
-    if (sort) next.set("sort", sort);
-    const qs = next.toString();
-    return qs ? `/products?${qs}` : "/products";
-  })();
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   if (products.length === 0) {
     return (

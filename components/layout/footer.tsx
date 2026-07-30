@@ -1,14 +1,13 @@
-"use client";
-
 import Link from "next/link";
 
-import { Separator } from "@/components/ui/separator";
-import { useTranslations } from "@/components/i18n/locale-provider";
 import { Logo } from "@/components/brand/logo";
 import { APP_NAME, SUPPORT_EMAIL, WHATSAPP_PHONE, buildWhatsAppUrl } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
-export function Footer() {
-  const t = useTranslations();
+export async function Footer() {
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   const footerSections = [
     {
@@ -101,7 +100,7 @@ export function Footer() {
           ))}
         </div>
 
-        <Separator className="my-10 bg-white/10" />
+        <div className="my-10 h-px w-full bg-white/10" />
 
         <p className="text-center text-xs text-[#78716c] sm:text-left">
           © {new Date().getFullYear()} {APP_NAME}. {t.footer.copyright}

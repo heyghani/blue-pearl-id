@@ -19,9 +19,8 @@ export type CartActionState = {
 };
 
 function revalidateCartPaths() {
-  revalidatePath("/", "layout");
-  revalidatePath("/cart", "layout");
-  revalidatePath("/products", "layout");
+  // Badge updates via client cart events — avoid full layout cache thrash.
+  revalidatePath("/cart");
 }
 
 export async function addToCartAction(

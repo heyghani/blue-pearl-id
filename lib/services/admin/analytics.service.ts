@@ -20,10 +20,20 @@ export async function getAdminAnalytics(from?: Date, to?: Date) {
     OrderStatus.DELIVERED,
   ];
 
-  const [paidOrders, totalOrders, abandonedCount, topProducts] = await Promise.all([
-    prisma.order.findMany({
+  const [
+    paidAggregate,
+    totalOrders,
+    abandonedCount,
+    topProducts,
+    lowStockRows,
+    pendingFulfillment,
+    recentOrders,
+    capturedPayments,
+  ] = await Promise.all([
+    prisma.order.aggregate({
       where: { ...dateFilter, status: { in: paidStatuses } },
-      select: { total: true },
+      _sum: { total: true },
+      _count: true,
     }),
     prisma.order.count({ where: dateFilter }),
     prisma.abandonedCheckout.count({
@@ -44,53 +54,47 @@ export async function getAdminAnalytics(from?: Date, to?: Date) {
       orderBy: { _sum: { quantity: "desc" } },
       take: 5,
     }),
+    prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*)::bigint AS count
+      FROM inventory
+      WHERE "trackInventory" = true
+        AND quantity <= "lowStockThreshold"
+    `,
+    prisma.order.count({
+      where: { status: { in: [OrderStatus.PAID, OrderStatus.PROCESSING] } },
+    }),
+    prisma.order.findMany({
+      where: dateFilter,
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        total: true,
+        guestEmail: true,
+        createdAt: true,
+        user: { select: { email: true, name: true } },
+      },
+    }),
+    prisma.payment.count({
+      where: { status: PaymentStatus.CAPTURED, ...dateFilter },
+    }),
   ]);
 
-  const revenue = paidOrders.reduce(
-    (sum, order) => sum + Number(order.total),
-    0,
-  );
+  const revenue = Number(paidAggregate._sum.total ?? 0);
+  const paidOrders = paidAggregate._count;
+  const lowStock = Number(lowStockRows[0]?.count ?? 0);
 
   const conversionRate =
     totalOrders + abandonedCount > 0
       ? totalOrders / (totalOrders + abandonedCount)
       : 0;
 
-  const inventories = await prisma.inventory.findMany({
-    where: { trackInventory: true },
-    select: { quantity: true, lowStockThreshold: true },
-  });
-  const lowStock = inventories.filter(
-    (item) => item.quantity <= item.lowStockThreshold,
-  ).length;
-
-  const pendingFulfillment = await prisma.order.count({
-    where: { status: { in: [OrderStatus.PAID, OrderStatus.PROCESSING] } },
-  });
-
-  const recentOrders = await prisma.order.findMany({
-    where: dateFilter,
-    orderBy: { createdAt: "desc" },
-    take: 8,
-    select: {
-      id: true,
-      orderNumber: true,
-      status: true,
-      total: true,
-      guestEmail: true,
-      createdAt: true,
-      user: { select: { email: true, name: true } },
-    },
-  });
-
-  const capturedPayments = await prisma.payment.count({
-    where: { status: PaymentStatus.CAPTURED, ...dateFilter },
-  });
-
   return {
     revenue: revenue.toFixed(2),
     orders: totalOrders,
-    paidOrders: paidOrders.length,
+    paidOrders,
     capturedPayments,
     conversionRate,
     pendingFulfillment,

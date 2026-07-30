@@ -1,14 +1,14 @@
-"use client";
-
 import { ProductCard, type ProductCardData } from "@/components/catalog/product-card";
-import { useTranslations } from "@/components/i18n/locale-provider";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
-export function RelatedProductsSection({
+export async function RelatedProductsSection({
   products,
 }: {
   products: ProductCardData[];
 }) {
-  const t = useTranslations();
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   if (products.length === 0) return null;
 

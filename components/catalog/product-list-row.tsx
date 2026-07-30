@@ -1,22 +1,22 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight } from "lucide-react";
 
-import { useTranslations } from "@/components/i18n/locale-provider";
 import { Price } from "@/components/shared/price";
-import { cn } from "@/lib/utils";
 import type { ProductCardData } from "@/components/catalog/product-card";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
+import { cn } from "@/lib/utils";
 
-export function ProductListRow({
+export async function ProductListRow({
   product,
   className,
 }: {
   product: ProductCardData;
   className?: string;
 }) {
-  const t = useTranslations();
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   return (
     <article className={cn("group", className)}>

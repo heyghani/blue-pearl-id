@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 
 import { CART_UPDATED_EVENT } from "@/lib/cart/events";
 import type { CartView } from "@/lib/services/cart.service";
@@ -22,7 +21,6 @@ async function fetchCart(): Promise<CartView> {
 }
 
 export function useCart(initialItemCount = 0) {
-  const pathname = usePathname();
   const [cart, setCart] = useState<CartView>(() => ({
     ...emptyCart,
     itemCount: initialItemCount,
@@ -39,18 +37,12 @@ export function useCart(initialItemCount = 0) {
   }, []);
 
   useEffect(() => {
-    let active = true;
-
-    void fetchCart().then((data) => {
-      if (active) {
-        setCart(data);
-      }
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [pathname]);
+    setCart((prev) =>
+      prev.items.length === 0
+        ? { ...emptyCart, itemCount: initialItemCount }
+        : prev,
+    );
+  }, [initialItemCount]);
 
   useEffect(() => {
     const handleUpdate = () => {

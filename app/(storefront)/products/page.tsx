@@ -69,6 +69,14 @@ export default async function ProductsPage({
   const resultLabel =
     catalog.total === 1 ? t.catalog.product : t.catalog.products;
 
+  const clearFilterParams = new URLSearchParams();
+  if (params.sort && params.sort !== "newest") {
+    clearFilterParams.set("sort", params.sort);
+  }
+  const clearFiltersHref = clearFilterParams.toString()
+    ? `/products?${clearFilterParams.toString()}`
+    : "/products";
+
   return (
     <div className="mx-auto max-w-7xl px-2 pb-12 pt-3 sm:px-6 sm:py-8 lg:px-8">
       <CatalogShell
@@ -80,7 +88,7 @@ export default async function ProductsPage({
         activeCategoryName={activeCategory?.name}
         activeBrandName={activeBrand?.name}
       >
-        <ProductList products={products} />
+        <ProductList products={products} clearFiltersHref={clearFiltersHref} />
 
         <Suspense fallback={null}>
           <CatalogPagination

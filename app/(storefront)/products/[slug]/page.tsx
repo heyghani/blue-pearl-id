@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { ProductBackNav, ProductWhatsAppLink } from "@/components/product/product-actions";
@@ -56,6 +57,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+async function RelatedProducts({
+  categoryId,
+  excludeSlug,
+}: {
+  categoryId: string | null | undefined;
+  excludeSlug: string;
+}) {
+  const related = await getRelatedProducts(categoryId, excludeSlug);
+  return <RelatedProductsSection products={related.map(toProductCard)} />;
+}
+
 export default async function ProductDetailPage({ params }: Props) {
   const { slug } = await params;
   const [product, locale] = await Promise.all([getProductBySlug(slug), getLocale()]);
@@ -65,7 +77,6 @@ export default async function ProductDetailPage({ params }: Props) {
     notFound();
   }
 
-  const related = await getRelatedProducts(product.categoryId, product.slug);
   const inStock = isInStock(product);
   const specs = parseProductSpecs(product.metadata);
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -105,52 +116,49 @@ export default async function ProductDetailPage({ params }: Props) {
         hasVariants={product.hasVariants}
       >
         <div className="pb-28 lg:pb-12">
-          <div className="-mx-4 lg:hidden">
-            <ProductGallery
-              productName={product.name}
-              variant="mobile"
-              compact={product.hasVariants}
-            />
-          </div>
-
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="relative z-10 -mt-5 rounded-t-3xl bg-background px-1 pt-5 sm:mt-0 sm:rounded-none sm:px-0 sm:pt-10">
-              <ProductBackNav />
-
-              <nav className="mb-4 hidden text-sm text-muted-foreground lg:block">
-                <Link href="/products" className="hover:text-foreground">
-                  {t.nav.shop}
-                </Link>
-                {product.category && (
-                  <>
-                    <span className="mx-2">/</span>
-                    {product.category.parent ? (
-                      <>
-                        <Link
-                          href={`/products?category=${product.category.parent.slug}`}
-                          className="hover:text-foreground"
-                        >
-                          {product.category.parent.name}
-                        </Link>
-                        <span className="mx-2">/</span>
-                      </>
-                    ) : null}
-                    <Link
-                      href={`/products?category=${product.category.slug}`}
-                      className="hover:text-foreground"
-                    >
-                      {product.category.name}
-                    </Link>
-                  </>
-                )}
-                <span className="mx-2">/</span>
-                <span className="text-foreground">{product.name}</span>
-              </nav>
-
-              <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-                <div className="hidden lg:block">
-                  <ProductGallery productName={product.name} variant="desktop" />
+          <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+            <div className="grid lg:grid-cols-2 lg:gap-16 lg:pt-10">
+              <div className="min-w-0 lg:px-0">
+                <div className="lg:sticky lg:top-24">
+                  <ProductGallery
+                    productName={product.name}
+                    compact={product.hasVariants}
+                  />
                 </div>
+              </div>
+
+              <div className="relative z-10 -mt-5 rounded-t-3xl bg-background px-4 pt-5 sm:mt-0 sm:rounded-none sm:px-0 sm:pt-0 lg:mt-0">
+                <ProductBackNav />
+
+                <nav className="mb-4 hidden text-sm text-muted-foreground lg:block">
+                  <Link href="/products" className="hover:text-foreground">
+                    {t.nav.shop}
+                  </Link>
+                  {product.category && (
+                    <>
+                      <span className="mx-2">/</span>
+                      {product.category.parent ? (
+                        <>
+                          <Link
+                            href={`/products?category=${product.category.parent.slug}`}
+                            className="hover:text-foreground"
+                          >
+                            {product.category.parent.name}
+                          </Link>
+                          <span className="mx-2">/</span>
+                        </>
+                      ) : null}
+                      <Link
+                        href={`/products?category=${product.category.slug}`}
+                        className="hover:text-foreground"
+                      >
+                        {product.category.name}
+                      </Link>
+                    </>
+                  )}
+                  <span className="mx-2">/</span>
+                  <span className="text-foreground">{product.name}</span>
+                </nav>
 
                 <div className="space-y-5">
                   <div className="space-y-3">
@@ -208,14 +216,25 @@ export default async function ProductDetailPage({ params }: Props) {
 
                   <ProductWhatsAppLink productName={product.name} />
                 </div>
+
+                <div className="px-0 sm:px-0">
+                  <ProductDetailTabs
+                    description={product.description}
+                    specs={specs}
+                  />
+
+                  <Suspense
+                    fallback={
+                      <div className="mt-10 h-48 animate-pulse rounded-2xl bg-muted sm:mt-12" />
+                    }
+                  >
+                    <RelatedProducts
+                      categoryId={product.categoryId}
+                      excludeSlug={product.slug}
+                    />
+                  </Suspense>
+                </div>
               </div>
-
-              <ProductDetailTabs
-                description={product.description}
-                specs={specs}
-              />
-
-              <RelatedProductsSection products={related.map(toProductCard)} />
             </div>
           </div>
         </div>

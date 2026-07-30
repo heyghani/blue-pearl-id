@@ -555,7 +555,24 @@ export async function getCheckoutCart() {
   });
 }
 
+/** Badge count only — skips full cart include, stock validation, and merges. */
 export async function getCartItemCount(): Promise<number> {
-  const cart = await getCart();
-  return cart.itemCount;
+  const userId = await getAuthUserId();
+
+  if (userId) {
+    const result = await prisma.cartItem.aggregate({
+      where: { cart: { userId } },
+      _sum: { quantity: true },
+    });
+    return result._sum.quantity ?? 0;
+  }
+
+  const sessionId = await getCartSessionId();
+  if (!sessionId) return 0;
+
+  const result = await prisma.cartItem.aggregate({
+    where: { cart: { sessionId } },
+    _sum: { quantity: true },
+  });
+  return result._sum.quantity ?? 0;
 }

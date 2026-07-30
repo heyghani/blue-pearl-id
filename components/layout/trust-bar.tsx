@@ -1,11 +1,11 @@
-"use client";
-
 import { Lock, Plane, RotateCcw } from "lucide-react";
 
-import { useTranslations } from "@/components/i18n/locale-provider";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
-export function TrustBar() {
-  const t = useTranslations();
+export async function TrustBar() {
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   const items = [
     { icon: Lock, label: t.trust.secure },

@@ -1,20 +1,20 @@
-"use client";
-
 import Link from "next/link";
 
 import { ProductCard, type ProductCardData } from "@/components/catalog/product-card";
 import { Button } from "@/components/ui/button";
-import { useTranslations } from "@/components/i18n/locale-provider";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 
-export function ProductGrid({
+export async function ProductGrid({
   products,
   className,
 }: {
   products: ProductCardData[];
   className?: string;
 }) {
-  const t = useTranslations();
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   if (products.length === 0) {
     return (

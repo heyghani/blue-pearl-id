@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
@@ -14,6 +15,8 @@ import { getActiveCategoryTree, getHomepageCategoryItems } from "@/lib/categorie
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
 import { getFeaturedRecommendationsByCategory } from "@/lib/products";
+
+export const revalidate = 60;
 
 async function getFeaturedSection() {
   try {
@@ -54,11 +57,13 @@ export default async function HomePage() {
     <>
       <section className="relative -mx-4 overflow-hidden sm:mx-0 sm:rounded-3xl">
         <div className="relative aspect-[4/5] sm:aspect-[21/9] sm:min-h-[420px]">
-          <div
-            role="img"
-            aria-label={t.home.headline}
-            className="absolute inset-0 bg-cover bg-[center_35%] bg-no-repeat"
-            style={{ backgroundImage: "url('/images/hero-cover.jpg')" }}
+          <Image
+            src="/images/hero-cover.jpg"
+            alt={t.home.headline}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[center_35%]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/10 sm:bg-gradient-to-r sm:from-black/70 sm:via-black/35 sm:to-transparent" />
 

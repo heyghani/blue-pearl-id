@@ -115,11 +115,11 @@ export function useProductVariant() {
 
 export function ProductGallery({
   productName,
-  variant,
+  variant = "responsive",
   compact = false,
 }: {
   productName: string;
-  variant: "mobile" | "desktop";
+  variant?: "mobile" | "desktop" | "responsive";
   compact?: boolean;
 }) {
   const { galleryImages } = useProductVariant();

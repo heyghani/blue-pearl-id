@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
-import { Suspense } from "react";
 
-import { MetaPixel } from "@/components/analytics/meta-pixel";
 import { LocaleProvider } from "@/components/i18n/locale-provider";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n";
@@ -18,7 +16,7 @@ const inter = Inter({
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "600"],
 });
 
 const OG_IMAGE = {
@@ -72,9 +70,6 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={`${inter.variable} ${cormorant.variable} h-full`}>
       <body className="min-h-full flex flex-col font-sans">
-        <Suspense fallback={null}>
-          <MetaPixel />
-        </Suspense>
         <LocaleProvider locale={locale} dictionary={dictionary}>
           {children}
         </LocaleProvider>

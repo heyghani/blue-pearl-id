@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 
 import { ProductCard, type ProductCardData } from "@/components/catalog/product-card";

@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { cache } from "react";
 
 import { expandCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/db";
@@ -107,7 +108,7 @@ function buildWhere(params: CatalogParams, categorySlugs?: string[]): Prisma.Pro
 }
 
 export async function getCatalogProducts(params: CatalogParams = {}) {
-  const page = Math.max(1, params.page ?? 1);
+  const requestedPage = Math.max(1, params.page ?? 1);
   const limit = Math.min(48, Math.max(1, params.limit ?? 24));
 
   const rawCategories = params.category
@@ -122,21 +123,33 @@ export async function getCatalogProducts(params: CatalogParams = {}) {
 
   const where = buildWhere(params, categorySlugs);
 
-  const total = await prisma.product.count({ where });
-  const totalPages = Math.ceil(total / limit) || 1;
-  const effectivePage = Math.min(page, totalPages);
-  const skip = (effectivePage - 1) * limit;
+  const [total, products] = await Promise.all([
+    prisma.product.count({ where }),
+    prisma.product.findMany({
+      where,
+      include: productInclude,
+      orderBy: getOrderBy(params.sort),
+      skip: (requestedPage - 1) * limit,
+      take: limit,
+    }),
+  ]);
 
-  const products = await prisma.product.findMany({
-    where,
-    include: productInclude,
-    orderBy: getOrderBy(params.sort),
-    skip,
-    take: limit,
-  });
+  const totalPages = Math.ceil(total / limit) || 1;
+  const effectivePage = Math.min(requestedPage, totalPages);
+
+  const resolvedProducts =
+    effectivePage === requestedPage || total === 0
+      ? products
+      : await prisma.product.findMany({
+          where,
+          include: productInclude,
+          orderBy: getOrderBy(params.sort),
+          skip: (effectivePage - 1) * limit,
+          take: limit,
+        });
 
   return {
-    products,
+    products: resolvedProducts,
     total,
     page: effectivePage,
     limit,
@@ -144,12 +157,12 @@ export async function getCatalogProducts(params: CatalogParams = {}) {
   };
 }
 
-export async function getProductBySlug(slug: string) {
+export const getProductBySlug = cache(async (slug: string) => {
   return prisma.product.findFirst({
     where: { slug, isActive: true, deletedAt: null },
     include: productDetailInclude,
   });
-}
+});
 
 export async function getRelatedProducts(
   categoryId: string | null | undefined,
@@ -219,8 +232,8 @@ export type FeaturedCategoryRecommendation = {
 export async function getFeaturedRecommendationsByCategory() {
   const featured = await prisma.product.findMany({
     where: { isActive: true, isFeatured: true, deletedAt: null },
-    include: {
-      images: { orderBy: { sortOrder: "asc" }, take: 1 },
+    select: {
+      images: { orderBy: { sortOrder: "asc" }, take: 1, select: { url: true } },
       category: {
         select: {
           id: true,
@@ -233,6 +246,7 @@ export async function getFeaturedRecommendationsByCategory() {
       },
     },
     orderBy: [{ category: { sortOrder: "asc" } }, { createdAt: "desc" }],
+    take: 48,
   });
 
   const grouped = new Map<string, FeaturedCategoryRecommendation>();

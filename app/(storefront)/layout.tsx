@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
+import { MetaPixel } from "@/components/analytics/meta-pixel";
 import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
@@ -15,6 +16,9 @@ export default function StorefrontLayout({
     <>
       <Suspense fallback={null}>
         <GoogleAnalytics />
+      </Suspense>
+      <Suspense fallback={null}>
+        <MetaPixel />
       </Suspense>
       <PageViewTracker />
       <Header />

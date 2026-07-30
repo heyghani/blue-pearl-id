@@ -1,10 +1,9 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
 
-import { useTranslations } from "@/components/i18n/locale-provider";
 import { Price } from "@/components/shared/price";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 
 export interface ProductCardData {
@@ -18,7 +17,7 @@ export interface ProductCardData {
   tags?: string[];
 }
 
-export function ProductCard({
+export async function ProductCard({
   product,
   className,
   compact,
@@ -29,16 +28,12 @@ export function ProductCard({
   compact?: boolean;
   showPriceOnImage?: boolean;
 }) {
-  const t = useTranslations();
+  const locale = await getLocale();
+  const t = getDictionary(locale);
   const priceOnImage = showPriceOnImage ?? !compact;
 
   return (
-    <article
-      className={cn(
-        "group",
-        className,
-      )}
-    >
+    <article className={cn("group", className)}>
       <Link href={`/products/${product.slug}`} className="block">
         <div
           className={cn(

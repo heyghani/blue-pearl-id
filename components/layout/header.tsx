@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { Search, User, LayoutDashboard } from "lucide-react";
 import { UserRole } from "@prisma/client";
@@ -13,10 +14,13 @@ import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
 import { getCartItemCount } from "@/lib/services/cart.service";
 
-export async function Header() {
-  const session = await getSession();
+async function HeaderCartButton() {
   const itemCount = await getCartItemCount();
-  const locale = await getLocale();
+  return <CartButton itemCount={itemCount} />;
+}
+
+export async function Header() {
+  const [session, locale] = await Promise.all([getSession(), getLocale()]);
   const t = getDictionary(locale);
 
   const isAdmin = session?.user?.role === UserRole.ADMIN;
@@ -33,7 +37,7 @@ export async function Header() {
       <div className="relative mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:h-[4.25rem] sm:px-6 lg:px-8">
         <div className="flex items-center gap-2 sm:gap-3">
           <MobileNav isAdmin={isAdmin} />
-          <Logo variant="lockup" />
+          <Logo variant="lockup" priority />
         </div>
 
         <nav className="hidden items-center gap-8 md:flex">
@@ -90,7 +94,9 @@ export async function Header() {
             </Button>
           )}
 
-          <CartButton itemCount={itemCount} />
+          <Suspense fallback={<CartButton itemCount={0} />}>
+            <HeaderCartButton />
+          </Suspense>
         </div>
       </div>
     </header>
