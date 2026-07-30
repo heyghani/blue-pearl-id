@@ -31,8 +31,14 @@ type PaymentSession =
       orderNumber: string;
     }
   | {
+      status: "ready";
+      provider: "nowpayments";
+      invoiceUrl: string;
+      orderNumber: string;
+    }
+  | {
       status: "unconfigured";
-      provider: "midtrans" | "paypal";
+      provider: "midtrans" | "paypal" | "nowpayments";
       message: string;
     };
 
@@ -118,6 +124,11 @@ export function PaymentCheckout({ orderNumber }: { orderNumber: string }) {
 
     if (session.provider === "paypal") {
       window.location.href = session.approvalUrl;
+      return;
+    }
+
+    if (session.provider === "nowpayments") {
+      window.location.href = session.invoiceUrl;
       return;
     }
 

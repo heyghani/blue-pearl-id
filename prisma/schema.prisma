@@ -28,6 +28,7 @@ enum OrderStatus {
 enum PaymentProvider {
   MIDTRANS
   PAYPAL
+  NOWPAYMENTS
 }
 
 enum PaymentStatus {
@@ -44,6 +45,7 @@ enum PaymentStatus {
 enum PaymentMethod {
   CREDIT_CARD
   PAYPAL
+  USDT
 }
 
 enum AddressType {

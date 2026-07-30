@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 
-import { ENABLE_CREDIT_CARD_PAYMENT } from "@/lib/constants";
+import {
+  ENABLE_CREDIT_CARD_PAYMENT,
+  ENABLE_USDT_PAYMENT,
+} from "@/lib/constants";
 import { initiatePayment, retryPayment } from "@/lib/services/payment.service";
 
 export async function POST(request: Request) {
   const body = await request.json();
   const orderNumber = body.orderNumber as string | undefined;
-  const paymentMethod = body.paymentMethod as "CREDIT_CARD" | "PAYPAL" | undefined;
+  const paymentMethod = body.paymentMethod as
+    | "CREDIT_CARD"
+    | "PAYPAL"
+    | "USDT"
+    | undefined;
   const idempotencyKey = body.idempotencyKey as string | undefined;
 
   if (!orderNumber || !paymentMethod || !idempotencyKey) {
@@ -19,6 +26,13 @@ export async function POST(request: Request) {
   if (paymentMethod === "CREDIT_CARD" && !ENABLE_CREDIT_CARD_PAYMENT) {
     return NextResponse.json(
       { error: { message: "Credit card payments are not available right now." } },
+      { status: 400 },
+    );
+  }
+
+  if (paymentMethod === "USDT" && !ENABLE_USDT_PAYMENT) {
+    return NextResponse.json(
+      { error: { message: "USDT payments are not available right now." } },
       { status: 400 },
     );
   }

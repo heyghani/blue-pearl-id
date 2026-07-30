@@ -243,7 +243,9 @@ export async function createOrderFromCart(
   const provider =
     input.paymentMethod === PaymentMethod.CREDIT_CARD
       ? PaymentProvider.MIDTRANS
-      : PaymentProvider.PAYPAL;
+      : input.paymentMethod === PaymentMethod.USDT
+        ? PaymentProvider.NOWPAYMENTS
+        : PaymentProvider.PAYPAL;
 
   try {
     const order = await prisma.$transaction(async (tx) => {

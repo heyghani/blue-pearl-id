@@ -1,6 +1,6 @@
 # Payment setup guide
 
-Blue Pearl ID supports **credit/debit cards** via [Midtrans Snap](https://midtrans.com) and **PayPal**. All checkout amounts are in **USD**.
+Blue Pearl ID supports **credit/debit cards** via [Midtrans Snap](https://midtrans.com), **PayPal**, and **USDT (TRC20)** via [NOWPayments](https://nowpayments.io). All checkout amounts are in **USD**.
 
 Use this guide to configure sandbox testing locally and production later.
 
@@ -185,6 +185,60 @@ Use a **Personal Sandbox** buyer account from the PayPal developer dashboard to 
 
 ---
 
+## NOWPayments (USDT TRC20)
+
+Accept **USDT on Tron (TRC20)** via [NOWPayments](https://nowpayments.io). Storefront prices stay in **USD**; the customer pays the USDT amount plus gateway fees (`is_fee_paid_by_user`).
+
+Settlement to your wallet is configured in the NOWPayments dashboard (payout wallet). Converting USDT → IDR (e.g. Tokocrypto) and withdrawing to BCA is outside this app.
+
+### 1. Create an account
+
+1. Sign up at [nowpayments.io](https://nowpayments.io) (or sandbox account if testing)
+2. **Settings → Payments → Payout wallets** — add your **USDT TRC20** address
+3. **Settings → Payments → API keys** — create an API key
+4. **Settings → Payments → Instant payment notifications** — generate an **IPN secret**
+
+### 2. Configure `.env`
+
+```bash
+NEXT_PUBLIC_ENABLE_USDT_PAYMENT="true"
+NOWPAYMENTS_API_KEY="<api key>"
+NOWPAYMENTS_IPN_SECRET="<ipn secret>"
+NOWPAYMENTS_SANDBOX="false"   # "true" only with sandbox account keys
+```
+
+### 3. Webhook URL
+
+NOWPayments sends IPN callbacks to:
+
+```
+{NEXT_PUBLIC_APP_URL}/api/payments/nowpayments/webhook
+```
+
+The URL is also set automatically on each invoice (`ipn_callback_url`).
+
+**Local development:** NOWPayments cannot reach `localhost`. Use ngrok (same as Midtrans) and set `NEXT_PUBLIC_APP_URL` to the public HTTPS URL.
+
+### 4. Checkout flow
+
+1. Customer selects **USDT (TRC20)** and places the order
+2. App creates a NOWPayments invoice (fixed rate, fee paid by user)
+3. Customer is redirected to the NOWPayments invoice page
+4. After payment, success → `/checkout/confirmation/...` (may still show processing until IPN)
+5. IPN with status `finished` marks payment **CAPTURED** and order **PAID**
+
+Cancel URL: `/payment/failed?order=...`
+
+### 5. Production checklist
+
+- Confirm payout wallet is the correct USDT TRC20 address
+- Set production API key + IPN secret
+- Set `NEXT_PUBLIC_ENABLE_USDT_PAYMENT="true"`
+- Ensure `NEXT_PUBLIC_APP_URL` is your live HTTPS domain
+- Rotate any keys that were ever shared in chat or committed by mistake
+
+---
+
 ## Resend (order confirmation email)
 
 Sent when payment status becomes **CAPTURED**.
@@ -203,9 +257,9 @@ Without Resend, emails are printed to the server console in development.
 2. Migrate and seed: `npm run db:migrate && npm run db:seed`
 3. Configure payment keys in `.env`
 4. Start app: `npm run dev`
-5. Add a product to cart → checkout → choose **Card** or **PayPal**
+5. Add a product to cart → checkout → choose **Card**, **PayPal**, or **USDT**
 6. After placing the order you land on `/checkout/processing?order=BP-...`
-7. Complete payment in Snap or PayPal
+7. Complete payment in Snap, PayPal, or the NOWPayments invoice page
 8. Confirm redirect to `/checkout/confirmation/BP-...` and order status **PAID**
 
 If payment fails or is cancelled: `/payment/failed?order=BP-...` with retry options.
@@ -216,9 +270,10 @@ If payment fails or is cancelled: `/payment/failed?order=BP-...` with retry opti
 
 | Route | Purpose |
 |-------|---------|
-| `GET /api/payments/session?order=BP-...` | Start or resume payment (Snap token / PayPal URL) |
+| `GET /api/payments/session?order=BP-...` | Start or resume payment (Snap token / PayPal URL / USDT invoice) |
 | `POST /api/payments/midtrans/webhook` | Midtrans payment notifications |
 | `GET /api/payments/paypal/return` | PayPal return + capture |
+| `POST /api/payments/nowpayments/webhook` | NOWPayments IPN (USDT) |
 | `POST /api/payments/retry` | Retry failed payment |
 | `GET /api/orders/[orderNumber]` | Poll order status after card payment |
 
@@ -230,14 +285,16 @@ If payment fails or is cancelled: `/payment/failed?order=BP-...` with retry opti
 |---------|----------------|
 | "Payment gateway not configured" | Missing API keys or `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` |
 | Card payment succeeds but order stays pending | Webhook not reachable — check ngrok and Midtrans webhook URL |
+| USDT paid but order stays pending | IPN not reachable — check ngrok, `NEXT_PUBLIC_APP_URL`, and IPN secret |
 | PayPal redirect works but capture fails | Wrong `PAYPAL_CLIENT_SECRET` or sandbox/live mismatch |
 | Snap window does not open | Client key missing; check browser console and `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` |
+| USDT option missing at checkout | Set `NEXT_PUBLIC_ENABLE_USDT_PAYMENT="true"` and restart the app |
 | No confirmation email | `RESEND_API_KEY` not set (check server logs for `[email:dev]`) |
 
 ---
 
 ## Security notes
 
-- Never commit `.env` or expose `MIDTRANS_SERVER_KEY` / `PAYPAL_CLIENT_SECRET` to the client
+- Never commit `.env` or expose `MIDTRANS_SERVER_KEY` / `PAYPAL_CLIENT_SECRET` / `NOWPAYMENTS_API_KEY` / `NOWPAYMENTS_IPN_SECRET` to the client
 - Only `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` is safe in the browser (required for Snap.js)
-- Midtrans webhook signatures are verified server-side before updating orders
+- Midtrans and NOWPayments webhook signatures are verified server-side before updating orders

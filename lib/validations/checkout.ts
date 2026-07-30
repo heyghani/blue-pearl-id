@@ -33,7 +33,7 @@ export const shippingStepSchema = z.object({
 });
 
 export const paymentStepSchema = z.object({
-  paymentMethod: z.enum(["CREDIT_CARD", "PAYPAL"]),
+  paymentMethod: z.enum(["CREDIT_CARD", "PAYPAL", "USDT"]),
   couponCode: z.string().trim().max(50).optional().or(z.literal("")),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
   orderReferencePhotoUrl: z

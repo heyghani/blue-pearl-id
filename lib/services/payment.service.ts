@@ -18,6 +18,14 @@ import {
   createPayPalOrder,
   isPayPalConfigured,
 } from "@/lib/payments/paypal";
+import {
+  assertNowPaymentsSettlement,
+  createNowPaymentsInvoice,
+  isNowPaymentsConfigured,
+  mapNowPaymentsStatus,
+  verifyNowPaymentsSignature,
+  type NowPaymentsIpnPayload,
+} from "@/lib/payments/nowpayments";
 import { prisma } from "@/lib/db";
 import { sendOrderConfirmationEmail } from "@/lib/services/email.service";
 
@@ -188,6 +196,56 @@ export async function initiatePayment(paymentId: string) {
     };
   }
 
+  if (payment.provider === PaymentProvider.NOWPAYMENTS) {
+    if (!isNowPaymentsConfigured()) {
+      return {
+        status: "unconfigured" as const,
+        provider: "nowpayments" as const,
+        message: "NOWPayments API credentials are not set.",
+      };
+    }
+
+    if (payment.redirectUrl) {
+      return {
+        status: "ready" as const,
+        provider: "nowpayments" as const,
+        invoiceUrl: payment.redirectUrl,
+        orderNumber: payment.order.orderNumber,
+      };
+    }
+
+    const invoice = await createNowPaymentsInvoice({
+      priceAmountUsd: Number(payment.amount),
+      orderId: payment.id,
+      orderNumber: payment.order.orderNumber,
+      ipnCallbackUrl: `${appUrl()}/api/payments/nowpayments/webhook`,
+      successUrl: `${appUrl()}/checkout/confirmation/${payment.order.orderNumber}`,
+      cancelUrl: `${appUrl()}/payment/failed?order=${payment.order.orderNumber}`,
+    });
+
+    await prisma.$transaction([
+      prisma.payment.update({
+        where: { id: payment.id },
+        data: {
+          externalId: invoice.id,
+          redirectUrl: invoice.invoiceUrl,
+          rawResponse: invoice.raw as Prisma.InputJsonValue,
+        },
+      }),
+      prisma.order.update({
+        where: { id: payment.orderId },
+        data: { status: OrderStatus.PAYMENT_PROCESSING },
+      }),
+    ]);
+
+    return {
+      status: "ready" as const,
+      provider: "nowpayments" as const,
+      invoiceUrl: invoice.invoiceUrl,
+      orderNumber: payment.order.orderNumber,
+    };
+  }
+
   throw new Error("Unsupported payment provider.");
 }
 
@@ -217,6 +275,69 @@ export async function syncPaymentFromMidtrans(notification: MidtransNotification
     failureMessage: notification.status_message,
     payload: notification,
     signature: notification.signature_key,
+  });
+}
+
+export async function syncPaymentFromNowPayments(
+  payload: NowPaymentsIpnPayload,
+  signature: string | null,
+) {
+  if (!verifyNowPaymentsSignature(payload, signature)) {
+    throw new Error("Invalid NOWPayments signature.");
+  }
+
+  const paymentId =
+    payload.order_id != null && String(payload.order_id).length > 0
+      ? String(payload.order_id)
+      : null;
+  if (!paymentId) {
+    throw new Error("NOWPayments IPN missing order_id.");
+  }
+
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    select: {
+      id: true,
+      provider: true,
+      amount: true,
+      externalId: true,
+      status: true,
+    },
+  });
+
+  if (!payment) {
+    throw new Error("Payment not found.");
+  }
+
+  if (payment.provider !== PaymentProvider.NOWPAYMENTS) {
+    throw new Error("Payment provider mismatch.");
+  }
+
+  if (
+    payload.invoice_id != null &&
+    payment.externalId &&
+    String(payload.invoice_id) !== payment.externalId
+  ) {
+    throw new Error("NOWPayments invoice mismatch.");
+  }
+
+  const mapped = mapNowPaymentsStatus(payload.payment_status);
+
+  if (mapped === "CAPTURED" && payment.status !== PaymentStatus.CAPTURED) {
+    assertNowPaymentsSettlement(payload, Number(payment.amount));
+  }
+
+  const transactionId =
+    payload.payment_id != null ? String(payload.payment_id) : undefined;
+
+  return applyPaymentUpdate({
+    paymentId,
+    provider: PaymentProvider.NOWPAYMENTS,
+    eventType: `ipn.${payload.payment_status}`,
+    mappedStatus: mapped,
+    transactionId,
+    payload,
+    signature: signature ?? undefined,
   });
 }
 
@@ -278,6 +399,10 @@ async function applyPaymentUpdate({
 
     if (!payment) {
       throw new Error("Payment not found.");
+    }
+
+    if (payment.provider !== provider) {
+      throw new Error("Payment provider mismatch.");
     }
 
     await tx.paymentEvent.create({
@@ -433,7 +558,7 @@ export async function retryPayment({
   idempotencyKey,
 }: {
   orderNumber: string;
-  paymentMethod: "CREDIT_CARD" | "PAYPAL";
+  paymentMethod: "CREDIT_CARD" | "PAYPAL" | "USDT";
   idempotencyKey: string;
 }) {
   const order = await prisma.order.findUnique({
@@ -459,7 +584,9 @@ export async function retryPayment({
   const provider =
     paymentMethod === "CREDIT_CARD"
       ? PaymentProvider.MIDTRANS
-      : PaymentProvider.PAYPAL;
+      : paymentMethod === "USDT"
+        ? PaymentProvider.NOWPAYMENTS
+        : PaymentProvider.PAYPAL;
 
   const payment = await prisma.payment.create({
     data: {

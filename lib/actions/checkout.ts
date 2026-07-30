@@ -9,7 +9,7 @@ import {
   getCheckoutDraft,
   setCheckoutDraft,
 } from "@/lib/checkout/draft";
-import { ENABLE_CREDIT_CARD_PAYMENT } from "@/lib/constants";
+import { ENABLE_CREDIT_CARD_PAYMENT, ENABLE_USDT_PAYMENT } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import {
   calculateCheckoutTotals,
@@ -195,6 +195,10 @@ export async function placeOrderAction(
     return { error: "Credit card payments are not available right now." };
   }
 
+  if (parsed.data.paymentMethod === "USDT" && !ENABLE_USDT_PAYMENT) {
+    return { error: "USDT payments are not available right now." };
+  }
+
   const idempotencyKey = formData.get("idempotencyKey");
   if (typeof idempotencyKey !== "string" || !idempotencyKey) {
     return { error: "Missing idempotency key. Please refresh and try again." };
@@ -209,7 +213,9 @@ export async function placeOrderAction(
   const paymentMethod =
     parsed.data.paymentMethod === "CREDIT_CARD"
       ? PaymentMethod.CREDIT_CARD
-      : PaymentMethod.PAYPAL;
+      : parsed.data.paymentMethod === "USDT"
+        ? PaymentMethod.USDT
+        : PaymentMethod.PAYPAL;
 
   if (parsed.data.couponCode) {
     await setCheckoutDraft({ couponCode: parsed.data.couponCode });

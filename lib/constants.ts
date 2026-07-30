@@ -8,6 +8,8 @@ export const PAYMENT_MERCHANT_NAME =
 export const CURRENCY = "USD";
 export const ENABLE_CREDIT_CARD_PAYMENT =
   process.env.NEXT_PUBLIC_ENABLE_CREDIT_CARD_PAYMENT === "true";
+export const ENABLE_USDT_PAYMENT =
+  process.env.NEXT_PUBLIC_ENABLE_USDT_PAYMENT === "true";
 export const TAX_NOTICE =
   "Import duties and local taxes are not included. Your carrier may collect them on delivery.";
 const DEFAULT_SUPPORT_EMAIL = "support@primeluxr.com";

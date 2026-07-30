@@ -54,8 +54,10 @@ describe("checkout validations", () => {
   it("accepts supported payment methods", () => {
     const card = paymentStepSchema.safeParse({ paymentMethod: "CREDIT_CARD" });
     const paypal = paymentStepSchema.safeParse({ paymentMethod: "PAYPAL" });
+    const usdt = paymentStepSchema.safeParse({ paymentMethod: "USDT" });
 
     expect(card.success).toBe(true);
     expect(paypal.success).toBe(true);
+    expect(usdt.success).toBe(true);
   });
 });

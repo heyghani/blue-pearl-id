@@ -31,7 +31,11 @@ export default async function PaymentFailedPage({
 
   const payment = order.payments[0];
   const defaultMethod =
-    payment?.method === PaymentMethod.PAYPAL ? "PAYPAL" : "CREDIT_CARD";
+    payment?.method === PaymentMethod.PAYPAL
+      ? "PAYPAL"
+      : payment?.method === PaymentMethod.USDT
+        ? "USDT"
+        : "CREDIT_CARD";
 
   return (
     <div className="min-h-screen bg-muted/20 px-4 py-16">

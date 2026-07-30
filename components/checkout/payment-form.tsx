@@ -12,10 +12,19 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ENABLE_CREDIT_CARD_PAYMENT } from "@/lib/constants";
+import {
+  ENABLE_CREDIT_CARD_PAYMENT,
+  ENABLE_USDT_PAYMENT,
+} from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const initialState: CheckoutActionState = {};
+
+function defaultPaymentMethod(): "CREDIT_CARD" | "PAYPAL" | "USDT" {
+  if (ENABLE_CREDIT_CARD_PAYMENT) return "CREDIT_CARD";
+  if (ENABLE_USDT_PAYMENT) return "USDT";
+  return "PAYPAL";
+}
 
 export function PaymentForm({
   defaultCoupon = "",
@@ -34,6 +43,7 @@ export function PaymentForm({
     placeOrderAction,
     initialState,
   );
+  const selectedDefault = defaultPaymentMethod();
 
   return (
     <form action={formAction} className="space-y-8">
@@ -71,7 +81,7 @@ export function PaymentForm({
                 type="radio"
                 name="paymentMethod"
                 value="CREDIT_CARD"
-                defaultChecked
+                defaultChecked={selectedDefault === "CREDIT_CARD"}
                 required
               />
               <div>
@@ -92,7 +102,7 @@ export function PaymentForm({
               type="radio"
               name="paymentMethod"
               value="PAYPAL"
-              defaultChecked={!ENABLE_CREDIT_CARD_PAYMENT}
+              defaultChecked={selectedDefault === "PAYPAL"}
               required
             />
             <div>
@@ -102,6 +112,29 @@ export function PaymentForm({
               </p>
             </div>
           </label>
+          {ENABLE_USDT_PAYMENT ? (
+            <label
+              className={cn(
+                "flex cursor-pointer items-center gap-3 rounded-lg border p-4",
+                "has-[:checked]:border-primary has-[:checked]:bg-muted/30",
+              )}
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="USDT"
+                defaultChecked={selectedDefault === "USDT"}
+                required
+              />
+              <div>
+                <p className="font-medium">USDT (TRC20)</p>
+                <p className="text-sm text-muted-foreground">
+                  Pay with USDT on Tron. Network fees are paid by you at
+                  checkout.
+                </p>
+              </div>
+            </label>
+          ) : null}
         </div>
       </section>
 
