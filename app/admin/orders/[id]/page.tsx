@@ -2,10 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PaymentStatus } from "@prisma/client";
 
+import { CopyButton } from "@/components/admin/copy-button";
 import { AdminPaymentDetails } from "@/components/admin/payment-details";
 import { OrderStatusForm } from "@/components/admin/order-status-form";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { RefundForm } from "@/components/admin/refund-form";
+import { OrderLineItemRow } from "@/components/orders/order-line-item";
 import { DutiesNotice } from "@/components/shared/duties-notice";
 import { Price } from "@/components/shared/price";
 import {
@@ -73,14 +75,21 @@ export default async function AdminOrderDetailPage({ params }: Props) {
         <div className="space-y-6">
           <section className="rounded-lg border p-4">
             <h2 className="font-medium">Items</h2>
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-4 space-y-4">
               {order.items.map((item) => (
-                <li key={item.id} className="flex justify-between text-sm">
-                  <span>
-                    {item.productName} × {item.quantity}
-                  </span>
-                  <Price amount={item.totalPrice.toString()} />
-                </li>
+                <OrderLineItemRow
+                  key={item.id}
+                  item={{
+                    id: item.id,
+                    productName: item.productName,
+                    productSku: item.productSku,
+                    quantity: item.quantity,
+                    totalPrice: item.totalPrice.toString(),
+                    variantLabel: item.variantLabel,
+                    optionsJson: item.optionsJson,
+                    imageUrl: item.imageUrl,
+                  }}
+                />
               ))}
             </ul>
             <Separator className="my-4" />
@@ -125,10 +134,13 @@ export default async function AdminOrderDetailPage({ params }: Props) {
               ) : null}
             </address>
             {order.trackingNumber ? (
-              <p className="mt-4 text-sm">
-                <strong>Tracking:</strong> {order.trackingNumber}
-                {order.carrier ? ` (${order.carrier})` : ""}
-              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+                <p>
+                  <strong>Tracking:</strong> {order.trackingNumber}
+                  {order.carrier ? ` (${order.carrier})` : ""}
+                </p>
+                <CopyButton value={order.trackingNumber} label="Copy tracking" />
+              </div>
             ) : null}
           </section>
 
@@ -177,7 +189,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
           </section>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
           <OrderStatusForm
             orderId={order.id}
             currentStatus={order.status}

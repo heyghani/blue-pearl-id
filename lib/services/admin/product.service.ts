@@ -22,23 +22,57 @@ const variantInclude = {
   },
 } satisfies Prisma.ProductInclude;
 
+export type AdminProductListFilters = {
+  search?: string;
+  page?: number;
+  limit?: number;
+  /** `active` | `hidden` */
+  status?: "active" | "hidden";
+  featured?: boolean;
+  /** `low` = quantity at or below low-stock threshold */
+  stock?: "low";
+  categoryId?: string;
+  brandId?: string;
+};
+
 export async function listAdminProducts({
   search,
   page = 1,
   limit = 20,
-}: {
-  search?: string;
-  page?: number;
-  limit?: number;
-}) {
+  status,
+  featured,
+  stock,
+  categoryId,
+  brandId,
+}: AdminProductListFilters) {
   const where: Prisma.ProductWhereInput = { deletedAt: null };
 
   if (search?.trim()) {
+    const q = search.trim();
     where.OR = [
-      { name: { contains: search.trim(), mode: "insensitive" } },
-      { sku: { contains: search.trim(), mode: "insensitive" } },
-      { slug: { contains: search.trim(), mode: "insensitive" } },
+      { name: { contains: q, mode: "insensitive" } },
+      { sku: { contains: q, mode: "insensitive" } },
+      { slug: { contains: q, mode: "insensitive" } },
+      { brand: { name: { contains: q, mode: "insensitive" } } },
+      { category: { name: { contains: q, mode: "insensitive" } } },
     ];
+  }
+
+  if (status === "active") where.isActive = true;
+  if (status === "hidden") where.isActive = false;
+  if (featured) where.isFeatured = true;
+  if (categoryId) where.categoryId = categoryId;
+  if (brandId) where.brandId = brandId;
+
+  if (stock === "low") {
+    const lowStockRows = await prisma.$queryRaw<Array<{ productId: string }>>`
+      SELECT "productId"
+      FROM inventory
+      WHERE "trackInventory" = true
+        AND quantity <= "lowStockThreshold"
+    `;
+    const ids = lowStockRows.map((row) => row.productId);
+    where.id = { in: ids.length > 0 ? ids : ["__none__"] };
   }
 
   const skip = (Math.max(1, page) - 1) * limit;
@@ -47,8 +81,8 @@ export async function listAdminProducts({
     prisma.product.findMany({
       where,
       include: {
-        category: { select: { name: true } },
-        brand: { select: { name: true } },
+        category: { select: { id: true, name: true } },
+        brand: { select: { id: true, name: true } },
         images: { where: { isPrimary: true }, take: 1 },
         inventory: true,
         variants: { where: { isActive: true }, select: { quantity: true } },

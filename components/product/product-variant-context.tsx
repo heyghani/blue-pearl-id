@@ -10,6 +10,7 @@ import {
 
 import { ImageGallery } from "@/components/product/image-gallery";
 import {
+  buildOptionNamesByValueId,
   findPartialVariantPreview,
   findVariantBySelections,
   resolveVariantImageUrl,
@@ -70,6 +71,7 @@ export function ProductVariantProvider({
   const activeVariant = selectedVariant ?? previewVariant;
 
   const galleryImages = useMemo(() => {
+    const optionNamesByValueId = buildOptionNamesByValueId(options);
     const resolvedImageUrl = resolveVariantImageUrl(
       activeVariant
         ? {
@@ -79,12 +81,13 @@ export function ProductVariantProvider({
         : null,
       variants,
       baseImages[0]?.url ?? null,
+      optionNamesByValueId,
     );
 
     // Only promote a sibling/color image when a variant selection is active.
     const variantImageUrl = activeVariant ? resolvedImageUrl : null;
     return buildGalleryImages(baseImages, variantImageUrl);
-  }, [activeVariant, baseImages, variants]);
+  }, [activeVariant, baseImages, options, variants]);
 
   const value = useMemo(
     () => ({

@@ -35,6 +35,11 @@ export async function listCustomers({
         name: true,
         createdAt: true,
         _count: { select: { orders: true } },
+        orders: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { createdAt: true },
+        },
       },
       orderBy: { createdAt: "desc" },
       skip,
@@ -46,8 +51,13 @@ export async function listCustomers({
   return { customers, total, page, totalPages: Math.ceil(total / limit) || 1 };
 }
 
-export async function getCustomer(id: string) {
-  return prisma.user.findFirst({
+export async function getCustomer(
+  id: string,
+  { page = 1, limit = 20 }: { page?: number; limit?: number } = {},
+) {
+  const skip = (Math.max(1, page) - 1) * limit;
+
+  const customer = await prisma.user.findFirst({
     where: { id, role: UserRole.CUSTOMER, deletedAt: null },
     select: {
       id: true,
@@ -55,8 +65,11 @@ export async function getCustomer(id: string) {
       name: true,
       phone: true,
       createdAt: true,
+      _count: { select: { orders: true } },
       orders: {
         orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
         select: {
           id: true,
           orderNumber: true,
@@ -67,4 +80,15 @@ export async function getCustomer(id: string) {
       },
     },
   });
+
+  if (!customer) return null;
+
+  const totalOrders = customer._count.orders;
+
+  return {
+    ...customer,
+    totalOrders,
+    orderPage: page,
+    orderTotalPages: Math.ceil(totalOrders / limit) || 1,
+  };
 }

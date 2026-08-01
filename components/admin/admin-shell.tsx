@@ -51,12 +51,14 @@ function AdminNavLink({
   label,
   icon: Icon,
   exact,
+  badge,
   onNavigate,
 }: {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   exact?: boolean;
+  badge?: number;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -74,7 +76,17 @@ function AdminNavLink({
       )}
     >
       <Icon className="h-4 w-4 shrink-0" />
-      {label}
+      <span className="flex-1">{label}</span>
+      {badge && badge > 0 ? (
+        <span
+          className={cn(
+            "rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+            active ? "bg-background/20 text-primary-foreground" : "bg-muted text-foreground",
+          )}
+        >
+          {badge > 99 ? "99+" : badge}
+        </span>
+      ) : null}
     </Link>
   );
 }
@@ -82,14 +94,21 @@ function AdminNavLink({
 function AdminNav({
   onNavigate,
   className,
+  badges,
 }: {
   onNavigate?: () => void;
   className?: string;
+  badges?: Partial<Record<string, number>>;
 }) {
   return (
     <nav className={cn("space-y-1", className)}>
       {adminNavItems.map((item) => (
-        <AdminNavLink key={item.href} {...item} onNavigate={onNavigate} />
+        <AdminNavLink
+          key={item.href}
+          {...item}
+          badge={badges?.[item.href]}
+          onNavigate={onNavigate}
+        />
       ))}
     </nav>
   );
@@ -132,18 +151,21 @@ function AdminUserFooter({
 export function AdminShell({
   children,
   user,
+  pendingFulfillment = 0,
 }: {
   children: React.ReactNode;
   user: {
     name?: string | null;
     email?: string | null;
   };
+  pendingFulfillment?: number;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const badges = { "/admin/orders": pendingFulfillment };
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-64 shrink-0 flex-col border-r bg-card/80 p-5 md:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto border-r bg-card/80 p-5 md:flex">
         <div className="mb-8 px-1">
           <Link href="/admin" className="block">
             <Logo variant="lockup" />
@@ -151,7 +173,7 @@ export function AdminShell({
           </Link>
         </div>
 
-        <AdminNav className="flex-1" />
+        <AdminNav className="min-h-0 flex-1" badges={badges} />
         <AdminUserFooter name={user.name} email={user.email} />
       </aside>
 
@@ -169,8 +191,11 @@ export function AdminShell({
                 <Logo variant="lockup" href={null} />
                 <p className="mt-2 text-xs text-muted-foreground">Administration</p>
               </DrawerHeader>
-              <div className="flex flex-1 flex-col px-4 py-4">
-                <AdminNav onNavigate={() => setMobileOpen(false)} />
+              <div className="flex flex-1 flex-col overflow-y-auto px-4 py-4">
+                <AdminNav
+                  onNavigate={() => setMobileOpen(false)}
+                  badges={badges}
+                />
                 <div className="mt-auto">
                   <AdminUserFooter name={user.name} email={user.email} />
                 </div>

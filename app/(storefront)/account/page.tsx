@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { UserRole } from "@prisma/client";
 
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
@@ -13,6 +14,12 @@ export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   const session = await getSession();
+
+  // Admins should work from the store dashboard, not the customer overview.
+  if (session?.user?.role === UserRole.ADMIN) {
+    redirect("/admin");
+  }
+
   const user = session?.user?.id
     ? await prisma.user.findUnique({
         where: { id: session.user.id },
@@ -90,19 +97,6 @@ export default async function AccountPage() {
                 </div>
               </Link>
             ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {session?.user?.role === UserRole.ADMIN && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Admin</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button size="sm" asChild>
-              <Link href="/admin">Go to admin dashboard</Link>
-            </Button>
           </CardContent>
         </Card>
       )}

@@ -327,16 +327,35 @@ export function serializeProductVariants(
   };
 }
 
-export function getVariantLabel(
+const APPEARANCE_OPTION_RE = /^(color|colour|finish|material|metal)$/i;
+const APPEARANCE_SCORE_WEIGHT = 100;
+
+export function isAppearanceOptionName(name: string) {
+  return APPEARANCE_OPTION_RE.test(name.trim());
+}
+
+export function buildOptionNamesByValueId(
+  options: { name: string; values: { id: string }[] }[],
+): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const option of options) {
+    for (const value of option.values) {
+      map[value.id] = option.name;
+    }
+  }
+  return map;
+}
+
+function orderedVariantOptionValues(
   variant?: {
     optionValues: {
       optionValue: { value: string; option?: { name: string; position?: number } };
     }[];
   } | null,
 ) {
-  if (!variant?.optionValues.length) return null;
+  if (!variant?.optionValues.length) return [];
 
-  const ordered = [...variant.optionValues].sort((a, b) => {
+  return [...variant.optionValues].sort((a, b) => {
     const positionDiff =
       (a.optionValue.option?.position ?? 0) - (b.optionValue.option?.position ?? 0);
     if (positionDiff !== 0) return positionDiff;
@@ -344,11 +363,68 @@ export function getVariantLabel(
       b.optionValue.option?.name ?? "",
     );
   });
-
-  return ordered.map((entry) => entry.optionValue.value).join(" / ");
 }
 
-/** Prefer the exact SKU image; otherwise inherit from a sibling sharing options (e.g. same Color). */
+/** Human label with option names, e.g. "Color: Black / US: US10". */
+export function getVariantLabel(
+  variant?: {
+    optionValues: {
+      optionValue: { value: string; option?: { name: string; position?: number } };
+    }[];
+  } | null,
+) {
+  const ordered = orderedVariantOptionValues(variant);
+  if (ordered.length === 0) return null;
+
+  return ordered
+    .map((entry) => {
+      const name = entry.optionValue.option?.name?.trim();
+      return name
+        ? `${name}: ${entry.optionValue.value}`
+        : entry.optionValue.value;
+    })
+    .join(" / ");
+}
+
+/** Structured options for order snapshots / admin display. */
+export function getVariantOptions(
+  variant?: {
+    optionValues: {
+      optionValue: { value: string; option?: { name: string; position?: number } };
+    }[];
+  } | null,
+): { name: string; value: string }[] {
+  return orderedVariantOptionValues(variant).map((entry) => ({
+    name: entry.optionValue.option?.name?.trim() || "Option",
+    value: entry.optionValue.value,
+  }));
+}
+
+function scoreSiblingImageMatch(
+  variantOptionValueIds: string[],
+  siblingOptionValueIds: string[],
+  optionNamesByValueId: Record<string, string>,
+) {
+  let shared = 0;
+  let appearanceShared = 0;
+
+  for (const id of siblingOptionValueIds) {
+    if (!variantOptionValueIds.includes(id)) continue;
+    shared += 1;
+    if (isAppearanceOptionName(optionNamesByValueId[id] ?? "")) {
+      appearanceShared += 1;
+    }
+  }
+
+  if (shared === 0) return 0;
+  return appearanceShared * APPEARANCE_SCORE_WEIGHT + shared;
+}
+
+/**
+ * Prefer the exact SKU image; otherwise inherit from a sibling sharing options.
+ * Appearance options (Color, etc.) outrank size-only matches so Black|US10
+ * does not pick up a White|US10 image.
+ */
 export function resolveVariantImageUrl(
   variant:
     | {
@@ -363,22 +439,33 @@ export function resolveVariantImageUrl(
     isActive?: boolean;
   }[],
   fallbackUrl: string | null = null,
+  optionNamesByValueId: Record<string, string> = {},
 ): string | null {
   if (variant?.imageUrl) return variant.imageUrl;
   if (!variant) return fallbackUrl;
+
+  const variantHasAppearance = variant.optionValueIds.some((id) =>
+    isAppearanceOptionName(optionNamesByValueId[id] ?? ""),
+  );
 
   let best: { url: string; score: number } | null = null;
 
   for (const sibling of siblings) {
     if (!sibling.imageUrl || sibling.isActive === false) continue;
 
-    const shared = sibling.optionValueIds.filter((id) =>
-      variant.optionValueIds.includes(id),
-    ).length;
+    const score = scoreSiblingImageMatch(
+      variant.optionValueIds,
+      sibling.optionValueIds,
+      optionNamesByValueId,
+    );
+    if (score === 0) continue;
 
-    if (shared === 0) continue;
-    if (!best || shared > best.score) {
-      best = { url: sibling.imageUrl, score: shared };
+    const appearanceShared = Math.floor(score / APPEARANCE_SCORE_WEIGHT);
+    // When the selected SKU has a color/finish, never inherit from size-only siblings.
+    if (variantHasAppearance && appearanceShared === 0) continue;
+
+    if (!best || score > best.score) {
+      best = { url: sibling.imageUrl, score };
     }
   }
 

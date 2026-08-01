@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 
 import { MetaPixelPurchase } from "@/components/analytics/meta-pixel-purchase";
+import { OrderLineItemRow } from "@/components/orders/order-line-item";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { DutiesNotice } from "@/components/shared/duties-notice";
@@ -72,14 +73,21 @@ export default async function OrderConfirmationPage({ params }: Props) {
 
           <Separator className="my-4" />
 
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {order.items.map((item) => (
-              <li key={item.id} className="flex justify-between text-sm">
-                <span>
-                  {item.productName} × {item.quantity}
-                </span>
-                <Price amount={item.totalPrice.toString()} />
-              </li>
+              <OrderLineItemRow
+                key={item.id}
+                item={{
+                  id: item.id,
+                  productName: item.productName,
+                  productSku: item.productSku,
+                  quantity: item.quantity,
+                  totalPrice: item.totalPrice.toString(),
+                  variantLabel: item.variantLabel,
+                  optionsJson: item.optionsJson,
+                  imageUrl: item.imageUrl,
+                }}
+              />
             ))}
           </ul>
 

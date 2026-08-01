@@ -78,7 +78,7 @@ export function TrafficStats() {
         <div>
           <h2 className="font-medium">Storefront traffic</h2>
           <p className="text-sm text-muted-foreground">
-            Live page views refresh every 10 seconds.
+            Live page views refresh every 30 seconds.
           </p>
         </div>
         {stats ? (

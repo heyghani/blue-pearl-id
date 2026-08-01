@@ -1,11 +1,40 @@
 import Link from "next/link";
 import { OrderStatus } from "@prisma/client";
 
+import {
+  AdminDataTable,
+  AdminTableHead,
+} from "@/components/admin/admin-data-table";
+import { AdminEmptyState } from "@/components/admin/admin-empty-state";
+import {
+  AdminFilterChip,
+  AdminFilterChips,
+  AdminListToolbar,
+} from "@/components/admin/admin-list-toolbar";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
-import { listAdminOrders } from "@/lib/services/admin/order.service";
-import { Input } from "@/components/ui/input";
+import { PaymentStatusBadge } from "@/components/admin/payment-status-badge";
 import { Price } from "@/components/shared/price";
+import { adminListHref } from "@/lib/admin/list-query";
+import {
+  getAdminOrderStatusCounts,
+  listAdminOrders,
+} from "@/lib/services/admin/order.service";
+
+const PAGE_SIZE = 20;
+
+const STATUS_FILTERS: { value?: OrderStatus; label: string }[] = [
+  { value: undefined, label: "All" },
+  { value: OrderStatus.PENDING, label: "Pending" },
+  { value: OrderStatus.PAID, label: "Paid" },
+  { value: OrderStatus.PROCESSING, label: "Processing" },
+  { value: OrderStatus.SHIPPED, label: "Shipped" },
+  { value: OrderStatus.DELIVERED, label: "Delivered" },
+  { value: OrderStatus.CANCELLED, label: "Cancelled" },
+  { value: OrderStatus.REFUNDED, label: "Refunded" },
+  { value: OrderStatus.PAYMENT_FAILED, label: "Payment failed" },
+];
 
 export default async function AdminOrdersPage({
   searchParams,
@@ -18,108 +47,134 @@ export default async function AdminOrdersPage({
     ? (params.status as OrderStatus)
     : undefined;
 
-  const { orders, totalPages } = await listAdminOrders({
-    status,
-    search: params.search,
-    page,
-  });
+  const query = { status, search: params.search };
+  const hasFilters = Boolean(status || params.search);
+
+  const [{ orders, total, totalPages }, counts] = await Promise.all([
+    listAdminOrders({
+      status,
+      search: params.search,
+      page,
+      limit: PAGE_SIZE,
+    }),
+    getAdminOrderStatusCounts(params.search),
+  ]);
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
         title="Orders"
         description="View, fulfill, and manage customer orders."
+        meta={`${total} order${total === 1 ? "" : "s"}`}
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <form className="max-w-md flex-1" method="get">
-          <Input
-            name="search"
-            type="search"
-            defaultValue={params.search ?? ""}
-            placeholder="Search by order # or email…"
-          />
-        </form>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/admin/orders"
-            className={`rounded-full border px-3 py-1 text-sm ${!status ? "bg-primary text-primary-foreground" : ""}`}
-          >
-            All
-          </Link>
-          {[OrderStatus.PAID, OrderStatus.PROCESSING, OrderStatus.SHIPPED].map((s) => (
-            <Link
-              key={s}
-              href={`/admin/orders?status=${s}`}
-              className={`rounded-full border px-3 py-1 text-sm capitalize ${status === s ? "bg-primary text-primary-foreground" : ""}`}
-            >
-              {s.toLowerCase().replace(/_/g, " ")}
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
-        <table className="w-full min-w-[760px] text-left text-sm">
-          <thead className="border-b bg-muted/40 text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-medium">Order</th>
-              <th className="px-4 py-3 font-medium">Customer</th>
-              <th className="px-4 py-3 font-medium">Items</th>
-              <th className="px-4 py-3 font-medium">Total</th>
-              <th className="px-4 py-3 font-medium">Payment</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {orders.map((order) => {
-              const payment = order.payments[0];
+      <AdminListToolbar
+        searchDefault={params.search ?? ""}
+        searchPlaceholder="Search by order # or email…"
+        clearHref="/admin/orders"
+        hasFilters={hasFilters}
+        hiddenFields={{ status }}
+        filters={
+          <AdminFilterChips>
+            {STATUS_FILTERS.map((filter) => {
+              const count = filter.value
+                ? (counts.byStatus[filter.value] ?? 0)
+                : counts.all;
               return (
-                <tr key={order.id} className="hover:bg-muted/30">
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/admin/orders/${order.id}`}
-                      className="font-medium hover:underline"
-                    >
-                      {order.orderNumber}
-                    </Link>
-                    <p className="text-xs text-muted-foreground">
-                      {order.createdAt.toLocaleDateString()}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {order.user?.email ?? order.guestEmail ?? "—"}
-                  </td>
-                  <td className="px-4 py-3">{order._count.items}</td>
-                  <td className="px-4 py-3">
-                    <Price amount={order.total.toString()} />
-                  </td>
-                  <td className="px-4 py-3 capitalize text-muted-foreground">
-                    {payment?.status.toLowerCase() ?? "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <OrderStatusBadge status={order.status} />
-                  </td>
-                </tr>
+                <AdminFilterChip
+                  key={filter.label}
+                  href={adminListHref("/admin/orders", query, {
+                    status: filter.value,
+                    page: undefined,
+                  })}
+                  active={status === filter.value}
+                  count={count}
+                >
+                  {filter.label}
+                </AdminFilterChip>
               );
             })}
-          </tbody>
-        </table>
-      </div>
+          </AdminFilterChips>
+        }
+      />
 
-      {totalPages > 1 && (
-        <div className="flex gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <Link
-              key={p}
-              href={`/admin/orders?page=${p}${status ? `&status=${status}` : ""}${params.search ? `&search=${params.search}` : ""}`}
-              className={`rounded px-3 py-1 text-sm ${p === page ? "bg-primary text-primary-foreground" : "border"}`}
-            >
-              {p}
-            </Link>
-          ))}
-        </div>
-      )}
+      <AdminDataTable
+        minWidthClassName="min-w-[760px]"
+        empty={
+          orders.length === 0 ? (
+            hasFilters ? (
+              <AdminEmptyState
+                title="No orders match"
+                description="Try another status or clear your search."
+                actionLabel="Clear filters"
+                actionHref="/admin/orders"
+              />
+            ) : (
+              <AdminEmptyState
+                title="No orders yet"
+                description="Orders will appear here when customers check out."
+              />
+            )
+          ) : undefined
+        }
+      >
+        <AdminTableHead>
+          <tr>
+            <th className="px-4 py-3 font-medium">Order</th>
+            <th className="px-4 py-3 font-medium">Customer</th>
+            <th className="px-4 py-3 font-medium">Items</th>
+            <th className="px-4 py-3 font-medium">Total</th>
+            <th className="px-4 py-3 font-medium">Payment</th>
+            <th className="px-4 py-3 font-medium">Status</th>
+          </tr>
+        </AdminTableHead>
+        <tbody className="divide-y">
+          {orders.map((order) => {
+            const payment = order.payments[0];
+            return (
+              <tr key={order.id} className="hover:bg-muted/30">
+                <td className="px-4 py-3">
+                  <Link
+                    href={`/admin/orders/${order.id}`}
+                    className="font-medium hover:underline"
+                  >
+                    {order.orderNumber}
+                  </Link>
+                  <p className="text-xs text-muted-foreground">
+                    {order.createdAt.toLocaleDateString()}
+                  </p>
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {order.user?.email ?? order.guestEmail ?? "—"}
+                </td>
+                <td className="px-4 py-3">{order._count.items}</td>
+                <td className="px-4 py-3">
+                  <Price amount={order.total.toString()} />
+                </td>
+                <td className="px-4 py-3">
+                  {payment ? (
+                    <PaymentStatusBadge status={payment.status} />
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  <OrderStatusBadge status={order.status} />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </AdminDataTable>
+
+      <AdminPagination
+        pathname="/admin/orders"
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageSize={PAGE_SIZE}
+        query={query}
+      />
     </div>
   );
 }

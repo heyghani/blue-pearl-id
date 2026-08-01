@@ -53,6 +53,33 @@ export async function listAdminOrders({
   return { orders, total, page, totalPages: Math.ceil(total / limit) || 1 };
 }
 
+export async function getAdminOrderStatusCounts(search?: string) {
+  const where: Prisma.OrderWhereInput = {};
+
+  if (search?.trim()) {
+    where.OR = [
+      { orderNumber: { contains: search.trim(), mode: "insensitive" } },
+      { guestEmail: { contains: search.trim(), mode: "insensitive" } },
+      { user: { email: { contains: search.trim(), mode: "insensitive" } } },
+    ];
+  }
+
+  const [groups, all] = await Promise.all([
+    prisma.order.groupBy({
+      by: ["status"],
+      where,
+      _count: { _all: true },
+    }),
+    prisma.order.count({ where }),
+  ]);
+
+  const byStatus = Object.fromEntries(
+    groups.map((group) => [group.status, group._count._all]),
+  ) as Partial<Record<OrderStatus, number>>;
+
+  return { all, byStatus };
+}
+
 export async function getAdminOrder(id: string) {
   return prisma.order.findUnique({
     where: { id },

@@ -1,8 +1,16 @@
 import Link from "next/link";
 
+import {
+  AdminDataTable,
+  AdminTableHead,
+} from "@/components/admin/admin-data-table";
+import { AdminEmptyState } from "@/components/admin/admin-empty-state";
+import { AdminListToolbar } from "@/components/admin/admin-list-toolbar";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { listCustomers } from "@/lib/services/admin/customer.service";
-import { Input } from "@/components/ui/input";
+
+const PAGE_SIZE = 20;
 
 export default async function AdminCustomersPage({
   searchParams,
@@ -11,9 +19,11 @@ export default async function AdminCustomersPage({
 }) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
-  const { customers, totalPages } = await listCustomers({
+  const hasFilters = Boolean(params.search);
+  const { customers, total, totalPages } = await listCustomers({
     search: params.search,
     page,
+    limit: PAGE_SIZE,
   });
 
   return (
@@ -21,29 +31,49 @@ export default async function AdminCustomersPage({
       <AdminPageHeader
         title="Customers"
         description="Registered customer accounts and order history."
+        meta={`${total} customer${total === 1 ? "" : "s"}`}
       />
 
-      <form className="max-w-md" method="get">
-        <Input
-          name="search"
-          type="search"
-          defaultValue={params.search ?? ""}
-          placeholder="Search by name or email…"
-        />
-      </form>
+      <AdminListToolbar
+        searchDefault={params.search ?? ""}
+        searchPlaceholder="Search by name or email…"
+        clearHref="/admin/customers"
+        hasFilters={hasFilters}
+      />
 
-      <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
-        <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="border-b bg-muted/40 text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-medium">Customer</th>
-              <th className="px-4 py-3 font-medium">Email</th>
-              <th className="px-4 py-3 font-medium">Orders</th>
-              <th className="px-4 py-3 font-medium">Joined</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {customers.map((customer) => (
+      <AdminDataTable
+        minWidthClassName="min-w-[720px]"
+        empty={
+          customers.length === 0 ? (
+            hasFilters ? (
+              <AdminEmptyState
+                title="No customers match"
+                description="Try a different name or email."
+                actionLabel="Clear search"
+                actionHref="/admin/customers"
+              />
+            ) : (
+              <AdminEmptyState
+                title="No customers yet"
+                description="Registered shoppers will appear here."
+              />
+            )
+          ) : undefined
+        }
+      >
+        <AdminTableHead>
+          <tr>
+            <th className="px-4 py-3 font-medium">Customer</th>
+            <th className="px-4 py-3 font-medium">Email</th>
+            <th className="px-4 py-3 font-medium">Orders</th>
+            <th className="px-4 py-3 font-medium">Last order</th>
+            <th className="px-4 py-3 font-medium">Joined</th>
+          </tr>
+        </AdminTableHead>
+        <tbody className="divide-y">
+          {customers.map((customer) => {
+            const lastOrderAt = customer.orders[0]?.createdAt;
+            return (
               <tr key={customer.id} className="hover:bg-muted/30">
                 <td className="px-4 py-3">
                   <Link
@@ -53,30 +83,32 @@ export default async function AdminCustomersPage({
                     {customer.name ?? "—"}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-muted-foreground">{customer.email}</td>
-                <td className="px-4 py-3">{customer._count.orders}</td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {customer.email}
+                </td>
+                <td className="px-4 py-3 tabular-nums">
+                  {customer._count.orders}
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {lastOrderAt ? lastOrderAt.toLocaleDateString() : "—"}
+                </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {customer.createdAt.toLocaleDateString()}
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            );
+          })}
+        </tbody>
+      </AdminDataTable>
 
-      {totalPages > 1 && (
-        <div className="flex gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <Link
-              key={p}
-              href={`/admin/customers?page=${p}${params.search ? `&search=${params.search}` : ""}`}
-              className={`rounded px-3 py-1 text-sm ${p === page ? "bg-primary text-primary-foreground" : "border"}`}
-            >
-              {p}
-            </Link>
-          ))}
-        </div>
-      )}
+      <AdminPagination
+        pathname="/admin/customers"
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageSize={PAGE_SIZE}
+        query={{ search: params.search }}
+      />
     </div>
   );
 }

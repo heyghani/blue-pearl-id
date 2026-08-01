@@ -23,17 +23,35 @@ export default async function AdminSettingsPage() {
       />
 
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <div className="space-y-6">
-          <AdminUsersTable
-            admins={admins}
-            currentUserId={session.user.id}
-          />
-          <CreateAdminForm />
-        </div>
+        <section className="space-y-4">
+          <div className="border-b pb-2">
+            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+              Admin users
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              People who can sign in to this dashboard.
+            </p>
+          </div>
+          <div className="space-y-6">
+            <AdminUsersTable
+              admins={admins}
+              currentUserId={session.user.id}
+            />
+            <CreateAdminForm />
+          </div>
+        </section>
 
-        <div>
+        <section className="space-y-4">
+          <div className="border-b pb-2">
+            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+              Your password
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Change the password for the account you’re signed in with.
+            </p>
+          </div>
           <ChangePasswordForm />
-        </div>
+        </section>
       </div>
     </div>
   );

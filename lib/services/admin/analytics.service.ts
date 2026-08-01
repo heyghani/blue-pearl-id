@@ -43,7 +43,7 @@ export async function getAdminAnalytics(from?: Date, to?: Date) {
       },
     }),
     prisma.orderItem.groupBy({
-      by: ["productName"],
+      by: ["productId"],
       where: {
         order: {
           ...dateFilter,
@@ -91,6 +91,18 @@ export async function getAdminAnalytics(from?: Date, to?: Date) {
       ? totalOrders / (totalOrders + abandonedCount)
       : 0;
 
+  const topProductIds = topProducts.map((item) => item.productId);
+  const topProductRecords =
+    topProductIds.length > 0
+      ? await prisma.product.findMany({
+          where: { id: { in: topProductIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+  const topProductNameById = new Map(
+    topProductRecords.map((product) => [product.id, product.name]),
+  );
+
   return {
     revenue: revenue.toFixed(2),
     orders: totalOrders,
@@ -100,7 +112,8 @@ export async function getAdminAnalytics(from?: Date, to?: Date) {
     pendingFulfillment,
     lowStock,
     topProducts: topProducts.map((item) => ({
-      name: item.productName,
+      id: item.productId,
+      name: topProductNameById.get(item.productId) ?? "Product",
       units: item._sum.quantity ?? 0,
     })),
     recentOrders,

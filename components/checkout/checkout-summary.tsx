@@ -56,6 +56,21 @@ export async function CheckoutSummary({
         {cart.items.map((item) => {
           const unitPrice = Number(item.variant?.price ?? item.product.price);
           const variantLabel = getVariantLabel(item.variant);
+          const optionNamesByValueId: Record<string, string> = {};
+          for (const entry of item.variant?.optionValues ?? []) {
+            if (entry.optionValue.option?.name) {
+              optionNamesByValueId[entry.optionValueId] =
+                entry.optionValue.option.name;
+            }
+          }
+          for (const sibling of item.product.variants ?? []) {
+            for (const entry of sibling.optionValues) {
+              const name = entry.optionValue?.option?.name;
+              if (name) {
+                optionNamesByValueId[entry.optionValueId] = name;
+              }
+            }
+          }
           const imageUrl = resolveVariantImageUrl(
             item.variant
               ? {
@@ -73,6 +88,7 @@ export async function CheckoutSummary({
               ),
             })),
             item.product.images[0]?.url ?? null,
+            optionNamesByValueId,
           );
 
           return (

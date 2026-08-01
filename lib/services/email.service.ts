@@ -6,6 +6,11 @@ import {
   NOREPLY_EMAIL,
   SUPPORT_EMAIL,
 } from "@/lib/constants";
+import {
+  formatOrderItemOptionsLabel,
+  parseOrderItemOptions,
+  splitLegacyProductName,
+} from "@/lib/orders/line-item";
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
@@ -105,7 +110,25 @@ type OrderEmailItem = {
   productName: string;
   quantity: number;
   totalPrice: { toString(): string };
+  variantLabel?: string | null;
+  optionsJson?: unknown;
 };
+
+function formatEmailItemLabel(item: {
+  productName: string;
+  quantity: number;
+  variantLabel?: string | null;
+  optionsJson?: unknown;
+}) {
+  const { title, legacyLabel } = splitLegacyProductName(item.productName);
+  const optionsLabel = formatOrderItemOptionsLabel(
+    parseOrderItemOptions(item.optionsJson, item.variantLabel ?? legacyLabel),
+  );
+  const details = optionsLabel
+    ? `${title}<br /><span style="color:#71717a;font-size:12px;">${optionsLabel}</span>`
+    : title;
+  return `${details} × ${item.quantity}`;
+}
 
 export async function sendOrderConfirmationEmail({
   email,
@@ -124,8 +147,8 @@ export async function sendOrderConfirmationEmail({
     .map(
       (item) =>
         `<tr>
-          <td style="padding: 8px 0; font-size: 14px;">${item.productName} × ${item.quantity}</td>
-          <td style="padding: 8px 0; font-size: 14px; text-align: right;">${currency} ${item.totalPrice.toString()}</td>
+          <td style="padding: 8px 0; font-size: 14px;">${formatEmailItemLabel(item)}</td>
+          <td style="padding: 8px 0; font-size: 14px; text-align: right; vertical-align: top;">${currency} ${item.totalPrice.toString()}</td>
         </tr>`,
     )
     .join("");
@@ -157,6 +180,8 @@ export async function sendOrderConfirmationEmail({
 type ShippingEmailItem = {
   productName: string;
   quantity: number;
+  variantLabel?: string | null;
+  optionsJson?: unknown;
 };
 
 export async function sendShippingConfirmationEmail({
@@ -173,7 +198,7 @@ export async function sendShippingConfirmationEmail({
   items: ShippingEmailItem[];
 }) {
   const itemList = items
-    .map((item) => `<li style="margin: 4px 0;">${item.productName} × ${item.quantity}</li>`)
+    .map((item) => `<li style="margin: 4px 0;">${formatEmailItemLabel(item)}</li>`)
     .join("");
 
   const orderUrl = `${appUrl}/checkout/confirmation/${orderNumber}`;

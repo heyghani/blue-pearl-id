@@ -90,9 +90,9 @@ export function CartItemRow({
             ) : null}
           </div>
 
-          <p className="shrink-0 text-sm font-semibold">
+          <div className="shrink-0 text-sm font-semibold">
             <Price amount={lineTotal} />
-          </p>
+          </div>
         </div>
 
         <div className="mt-3 flex items-center justify-between">

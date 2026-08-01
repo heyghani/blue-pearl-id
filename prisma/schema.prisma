@@ -423,16 +423,21 @@ model Order {
 }
 
 model OrderItem {
-  id          String  @id @default(cuid())
-  orderId     String
-  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId   String
-  product     Product @relation(fields: [productId], references: [id])
-  productName String
-  productSku  String
-  unitPrice   Decimal @db.Decimal(12, 2)
-  quantity    Int
-  totalPrice  Decimal @db.Decimal(12, 2)
+  id           String  @id @default(cuid())
+  orderId      String
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product @relation(fields: [productId], references: [id])
+  productName  String
+  productSku   String
+  variantId    String?
+  variantLabel String?
+  /// Snapshot of selected options, e.g. [{ "name": "Color", "value": "Black" }]
+  optionsJson  Json?
+  imageUrl     String?
+  unitPrice    Decimal @db.Decimal(12, 2)
+  quantity     Int
+  totalPrice   Decimal @db.Decimal(12, 2)
 
   createdAt DateTime @default(now())
 

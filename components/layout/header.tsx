@@ -74,13 +74,16 @@ export async function Header() {
                 </Button>
               ) : null}
               <Button variant="ghost" size="sm" className="hidden sm:inline-flex" asChild>
-                <Link href="/account">
+                <Link href={isAdmin ? "/account/profile" : "/account"}>
                   <User className="mr-1.5 h-4 w-4" />
                   {t.nav.account}
                 </Link>
               </Button>
               <Button variant="ghost" size="icon" className="sm:hidden" asChild>
-                <Link href="/account" aria-label={t.nav.account}>
+                <Link
+                  href={isAdmin ? "/account/profile" : "/account"}
+                  aria-label={t.nav.account}
+                >
                   <User className="h-5 w-5" />
                 </Link>
               </Button>

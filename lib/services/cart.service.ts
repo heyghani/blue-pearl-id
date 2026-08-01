@@ -35,7 +35,17 @@ const cartInclude = {
             select: {
               imageUrl: true,
               isActive: true,
-              optionValues: { select: { optionValueId: true } },
+              optionValues: {
+                select: {
+                  optionValueId: true,
+                  optionValue: {
+                    select: {
+                      id: true,
+                      option: { select: { name: true } },
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -108,7 +118,10 @@ function toLineItem(item: {
     variants?: {
       imageUrl: string | null;
       isActive: boolean;
-      optionValues: { optionValueId: string }[];
+      optionValues: {
+        optionValueId: string;
+        optionValue?: { id?: string; option?: { name: string } | null } | null;
+      }[];
     }[];
   };
   variant?: {
@@ -127,6 +140,22 @@ function toLineItem(item: {
     item.variant?.optionValues.map(
       (entry) => entry.optionValueId ?? entry.optionValue.id ?? "",
     ).filter(Boolean) ?? [];
+
+  const optionNamesByValueId: Record<string, string> = {};
+  for (const entry of item.variant?.optionValues ?? []) {
+    const id = entry.optionValueId ?? entry.optionValue.id;
+    if (id && entry.optionValue.option?.name) {
+      optionNamesByValueId[id] = entry.optionValue.option.name;
+    }
+  }
+  for (const sibling of item.product.variants ?? []) {
+    for (const entry of sibling.optionValues) {
+      const id = entry.optionValueId || entry.optionValue?.id;
+      if (id && entry.optionValue?.option?.name) {
+        optionNamesByValueId[id] = entry.optionValue.option.name;
+      }
+    }
+  }
 
   const siblings = (item.product.variants ?? []).map((sibling) => ({
     imageUrl: sibling.imageUrl,
@@ -148,6 +177,7 @@ function toLineItem(item: {
           : null,
         siblings,
         item.product.images[0]?.url ?? null,
+        optionNamesByValueId,
       ),
       variantLabel: getVariantLabel(item.variant),
       inStock: availability.inStock,

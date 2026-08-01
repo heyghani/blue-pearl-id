@@ -347,8 +347,8 @@ export function ProductVariantsEditor({
         <div className="space-y-1">
           <p className="text-sm font-medium">This product has variants</p>
           <p className="text-xs text-muted-foreground">
-            New products start with US sizes (US4–US13). Add more options (e.g. Color)
-            or edit values anytime, then regenerate combinations.
+            New products start with US sizes (US4–US13). Add a Color option for
+            multi-color styles, edit values anytime, then regenerate combinations.
           </p>
         </div>
       </label>
@@ -449,6 +449,11 @@ export function ProductVariantsEditor({
                 </p>
               </div>
 
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Tip: upload at least one image per Color (any size). The storefront
+                  reuses that image for other sizes of the same color.
+                </p>
               <div className="overflow-x-auto rounded-md border">
                 <table className="w-full min-w-[920px] text-left text-sm">
                   <thead className="border-b bg-muted/40 text-muted-foreground">
@@ -529,6 +534,7 @@ export function ProductVariantsEditor({
                     ))}
                   </tbody>
                 </table>
+              </div>
               </div>
 
               <p className="text-xs text-muted-foreground">

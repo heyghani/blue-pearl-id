@@ -8,7 +8,11 @@ import {
 
 import { generateOrderNumber } from "@/lib/order-number";
 import { prisma } from "@/lib/db";
-import { getVariantLabel } from "@/lib/products/variants";
+import {
+  getVariantLabel,
+  getVariantOptions,
+  resolveVariantImageUrl,
+} from "@/lib/products/variants";
 import type { AddressInput } from "@/lib/validations/checkout";
 
 export type CheckoutTotals = {
@@ -202,7 +206,30 @@ export async function createOrderFromCart(
     include: {
       items: {
         include: {
-          product: { include: { inventory: true } },
+          product: {
+            include: {
+              inventory: true,
+              images: { where: { isPrimary: true }, take: 1 },
+              variants: {
+                where: { isActive: true, imageUrl: { not: null } },
+                select: {
+                  imageUrl: true,
+                  isActive: true,
+                  optionValues: {
+                    select: {
+                      optionValueId: true,
+                      optionValue: {
+                        select: {
+                          id: true,
+                          option: { select: { name: true } },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
           variant: {
             include: {
               optionValues: {
@@ -309,15 +336,55 @@ export async function createOrderFromCart(
             create: cart.items.map((item) => {
               const unitPrice = item.variant?.price ?? item.product.price;
               const variantLabel = getVariantLabel(item.variant);
-              const productName = variantLabel
-                ? `${item.product.name} — ${variantLabel}`
-                : item.product.name;
+              const options = getVariantOptions(item.variant);
               const productSku = item.variant?.sku ?? item.product.sku;
+
+              const optionValueIds =
+                item.variant?.optionValues.map(
+                  (entry) => entry.optionValueId ?? entry.optionValue.id ?? "",
+                ).filter(Boolean) ?? [];
+              const optionNamesByValueId: Record<string, string> = {};
+              for (const entry of item.variant?.optionValues ?? []) {
+                const id = entry.optionValueId ?? entry.optionValue.id;
+                if (id && entry.optionValue.option?.name) {
+                  optionNamesByValueId[id] = entry.optionValue.option.name;
+                }
+              }
+              for (const sibling of item.product.variants ?? []) {
+                for (const entry of sibling.optionValues) {
+                  const id = entry.optionValueId;
+                  const name = entry.optionValue?.option?.name;
+                  if (id && name) {
+                    optionNamesByValueId[id] = name;
+                  }
+                }
+              }
+              const imageUrl = resolveVariantImageUrl(
+                item.variant
+                  ? {
+                      imageUrl: item.variant.imageUrl,
+                      optionValueIds,
+                    }
+                  : null,
+                (item.product.variants ?? []).map((sibling) => ({
+                  imageUrl: sibling.imageUrl,
+                  isActive: sibling.isActive,
+                  optionValueIds: sibling.optionValues.map(
+                    (entry) => entry.optionValueId,
+                  ),
+                })),
+                item.product.images[0]?.url ?? null,
+                optionNamesByValueId,
+              );
 
               return {
                 productId: item.productId,
-                productName,
+                productName: item.product.name,
                 productSku,
+                variantId: item.variant?.id ?? null,
+                variantLabel,
+                optionsJson: options.length > 0 ? options : Prisma.JsonNull,
+                imageUrl,
                 unitPrice,
                 quantity: item.quantity,
                 totalPrice: (Number(unitPrice) * item.quantity).toFixed(2),

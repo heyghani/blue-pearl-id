@@ -8,6 +8,7 @@ import {
   type AdminActionState,
 } from "@/lib/actions/admin/shipping";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,8 +37,11 @@ export function ShippingRateForm({
 
   return (
     <form action={formAction} className="space-y-4 rounded-lg border p-4">
-      <div>
+      <div className="flex items-center justify-between gap-3">
         <h3 className="font-medium">{name}</h3>
+        <Badge variant={isActive ? "default" : "secondary"}>
+          {isActive ? "Active" : "Inactive"}
+        </Badge>
       </div>
 
       {state.error && (

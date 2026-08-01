@@ -1,18 +1,27 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { Price } from "@/components/shared/price";
 import { getCustomer } from "@/lib/services/admin/customer.service";
 import { Button } from "@/components/ui/button";
 
+const PAGE_SIZE = 20;
+
 type Props = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ page?: string }>;
 };
 
-export default async function AdminCustomerDetailPage({ params }: Props) {
+export default async function AdminCustomerDetailPage({
+  params,
+  searchParams,
+}: Props) {
   const { id } = await params;
-  const customer = await getCustomer(id);
+  const { page: pageParam } = await searchParams;
+  const page = Number(pageParam) || 1;
+  const customer = await getCustomer(id, { page, limit: PAGE_SIZE });
 
   if (!customer) {
     notFound();
@@ -32,7 +41,8 @@ export default async function AdminCustomerDetailPage({ params }: Props) {
           {customer.phone ? ` · ${customer.phone}` : ""}
         </p>
         <p className="text-sm text-muted-foreground">
-          Joined {customer.createdAt.toLocaleDateString()}
+          Joined {customer.createdAt.toLocaleDateString()} · {customer.totalOrders}{" "}
+          order{customer.totalOrders === 1 ? "" : "s"}
         </p>
       </div>
 
@@ -65,6 +75,16 @@ export default async function AdminCustomerDetailPage({ params }: Props) {
           )}
         </div>
       </section>
+
+      {customer.totalOrders > PAGE_SIZE ? (
+        <AdminPagination
+          pathname={`/admin/customers/${customer.id}`}
+          page={customer.orderPage}
+          totalPages={customer.orderTotalPages}
+          total={customer.totalOrders}
+          pageSize={PAGE_SIZE}
+        />
+      ) : null}
     </div>
   );
 }

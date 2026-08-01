@@ -19,8 +19,29 @@ const brandListInclude = {
   },
 } satisfies Prisma.BrandInclude;
 
-export async function listAdminBrands() {
+export async function listAdminBrands({
+  search,
+  active,
+}: {
+  search?: string;
+  active?: boolean;
+} = {}) {
+  const where: Prisma.BrandWhereInput = {};
+
+  if (search?.trim()) {
+    const q = search.trim();
+    where.OR = [
+      { name: { contains: q, mode: "insensitive" } },
+      { slug: { contains: q, mode: "insensitive" } },
+    ];
+  }
+
+  if (typeof active === "boolean") {
+    where.isActive = active;
+  }
+
   return prisma.brand.findMany({
+    where,
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     include: brandListInclude,
   });

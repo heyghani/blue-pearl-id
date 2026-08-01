@@ -22,8 +22,30 @@ const categoryListInclude = {
   },
 } satisfies Prisma.CategoryInclude;
 
-export async function listAdminCategories() {
+export async function listAdminCategories({
+  search,
+  active,
+}: {
+  search?: string;
+  /** When set, filter by isActive */
+  active?: boolean;
+} = {}) {
+  const where: Prisma.CategoryWhereInput = {};
+
+  if (search?.trim()) {
+    const q = search.trim();
+    where.OR = [
+      { name: { contains: q, mode: "insensitive" } },
+      { slug: { contains: q, mode: "insensitive" } },
+    ];
+  }
+
+  if (typeof active === "boolean") {
+    where.isActive = active;
+  }
+
   return prisma.category.findMany({
+    where,
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     include: categoryListInclude,
   });

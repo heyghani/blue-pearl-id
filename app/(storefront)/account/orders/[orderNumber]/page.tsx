@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
+import { OrderLineItemRow } from "@/components/orders/order-line-item";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { DutiesNotice } from "@/components/shared/duties-notice";
@@ -67,14 +68,21 @@ export default async function AccountOrderDetailPage({ params }: Props) {
 
       <div className="rounded-lg border bg-card p-5">
         <h3 className="font-medium">Items</h3>
-        <ul className="mt-4 space-y-3">
+        <ul className="mt-4 space-y-4">
           {order.items.map((item) => (
-            <li key={item.id} className="flex justify-between text-sm">
-              <span>
-                {item.productName} × {item.quantity}
-              </span>
-              <Price amount={item.totalPrice.toString()} />
-            </li>
+            <OrderLineItemRow
+              key={item.id}
+              item={{
+                id: item.id,
+                productName: item.productName,
+                productSku: item.productSku,
+                quantity: item.quantity,
+                totalPrice: item.totalPrice.toString(),
+                variantLabel: item.variantLabel,
+                optionsJson: item.optionsJson,
+                imageUrl: item.imageUrl,
+              }}
+            />
           ))}
         </ul>
 

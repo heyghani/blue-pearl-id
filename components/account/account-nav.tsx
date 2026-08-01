@@ -15,10 +15,22 @@ const links = [
 
 export function AccountNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
+  const navLinks = isAdmin
+    ? links.filter((link) => link.href !== "/account")
+    : links;
 
   return (
     <nav className="space-y-1">
-      {links.map((link) => {
+      {isAdmin ? (
+        <Link
+          href="/admin"
+          className="mb-2 block rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+        >
+          Admin dashboard
+        </Link>
+      ) : null}
+
+      {navLinks.map((link) => {
         const isActive = link.exact
           ? pathname === link.href
           : pathname.startsWith(link.href);
@@ -38,20 +50,6 @@ export function AccountNav({ isAdmin = false }: { isAdmin?: boolean }) {
           </Link>
         );
       })}
-
-      {isAdmin ? (
-        <Link
-          href="/admin"
-          className={cn(
-            "block rounded-md px-3 py-2 text-sm transition-colors",
-            pathname.startsWith("/admin")
-              ? "bg-muted font-medium text-foreground"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground",
-          )}
-        >
-          Admin dashboard
-        </Link>
-      ) : null}
 
       <div className="pt-4">
         <SignOutButton />

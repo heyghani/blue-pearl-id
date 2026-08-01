@@ -2,6 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
+import { UserRole } from "@prisma/client";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 
@@ -120,7 +121,22 @@ export async function loginAction(
     };
   }
 
-  const callbackUrl = (formData.get("callbackUrl") as string) || "/account";
+  const requested = String(formData.get("callbackUrl") ?? "").trim();
+  const safeCallback =
+    requested.startsWith("/") &&
+    !requested.startsWith("//") &&
+    !requested.includes("://")
+      ? requested
+      : "";
+  const defaultPath =
+    user?.role === UserRole.ADMIN ? "/admin" : "/account";
+  // Admins land on the dashboard unless deep-linked elsewhere (not bare /account).
+  const callbackUrl =
+    !safeCallback ||
+    (user?.role === UserRole.ADMIN &&
+      (safeCallback === "/account" || safeCallback === "/"))
+      ? defaultPath
+      : safeCallback;
 
   try {
     await signIn("credentials", {

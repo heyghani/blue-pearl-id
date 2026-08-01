@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 
 import {
@@ -108,7 +109,7 @@ export function ProductForm({
   }
 
   return (
-    <form action={formAction} className="max-w-4xl space-y-6">
+    <form action={formAction} className="relative max-w-4xl space-y-6 pb-24">
       {state.error && (
         <Alert variant="destructive">
           <AlertDescription>{state.error}</AlertDescription>
@@ -390,9 +391,22 @@ export function ProductForm({
         </CardContent>
       </Card>
 
-      <Button type="submit" disabled={pending || imagesUploading}>
-        {pending ? "Saving…" : imagesUploading ? "Uploading images…" : productId ? "Save changes" : "Create product"}
-      </Button>
+      <div className="sticky bottom-0 z-20 -mx-1 border-t bg-background/95 px-1 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="submit" disabled={pending || imagesUploading}>
+            {pending
+              ? "Saving…"
+              : imagesUploading
+                ? "Uploading images…"
+                : productId
+                  ? "Save changes"
+                  : "Create product"}
+          </Button>
+          <Button type="button" variant="outline" asChild>
+            <Link href="/admin/products">Cancel</Link>
+          </Button>
+        </div>
+      </div>
     </form>
   );
 }

@@ -1,31 +1,88 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import {
+  AdminDataTable,
+  AdminTableHead,
+} from "@/components/admin/admin-data-table";
+import { AdminEmptyState } from "@/components/admin/admin-empty-state";
+import {
+  AdminFilterChip,
+  AdminFilterChips,
+  AdminListToolbar,
+} from "@/components/admin/admin-list-toolbar";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { ProductStatusToggle } from "@/components/admin/product-status-toggle";
-import { listAdminProducts } from "@/lib/services/admin/product.service";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Price } from "@/components/shared/price";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { adminListHref } from "@/lib/admin/list-query";
+import { listAdminBrands } from "@/lib/services/admin/brand.service";
+import { listAdminCategories } from "@/lib/services/admin/category.service";
+import { listAdminProducts } from "@/lib/services/admin/product.service";
+
+const PAGE_SIZE = 20;
 
 export default async function AdminProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; page?: string }>;
+  searchParams: Promise<{
+    search?: string;
+    page?: string;
+    status?: string;
+    featured?: string;
+    stock?: string;
+    category?: string;
+    brand?: string;
+  }>;
 }) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
-  const { products, totalPages } = await listAdminProducts({
+  const status =
+    params.status === "active" || params.status === "hidden"
+      ? params.status
+      : undefined;
+  const featured = params.featured === "1" || params.featured === "true";
+  const stock = params.stock === "low" ? "low" : undefined;
+  const categoryId = params.category || undefined;
+  const brandId = params.brand || undefined;
+
+  const query = {
     search: params.search,
-    page,
-  });
+    status,
+    featured: featured ? "1" : undefined,
+    stock,
+    category: categoryId,
+    brand: brandId,
+  };
+
+  const hasFilters = Boolean(
+    params.search || status || featured || stock || categoryId || brandId,
+  );
+
+  const [{ products, total, totalPages }, categories, brands] =
+    await Promise.all([
+      listAdminProducts({
+        search: params.search,
+        page,
+        limit: PAGE_SIZE,
+        status,
+        featured: featured || undefined,
+        stock,
+        categoryId,
+        brandId,
+      }),
+      listAdminCategories(),
+      listAdminBrands(),
+    ]);
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
         title="Products"
         description="Manage catalog, pricing, and inventory."
+        meta={`${total} product${total === 1 ? "" : "s"}`}
         action={
           <Button asChild>
             <Link href="/admin/products/new">Add product</Link>
@@ -33,43 +90,159 @@ export default async function AdminProductsPage({
         }
       />
 
-      <form className="max-w-md" method="get">
-        <Input
-          name="search"
-          type="search"
-          defaultValue={params.search ?? ""}
-          placeholder="Search products…"
-        />
-      </form>
+      <AdminListToolbar
+        searchDefault={params.search ?? ""}
+        searchPlaceholder="Search by name, SKU, brand, category…"
+        clearHref="/admin/products"
+        hasFilters={hasFilters}
+        hiddenFields={{
+          status,
+          featured: featured ? "1" : undefined,
+          stock,
+          category: categoryId,
+          brand: brandId,
+        }}
+        filters={
+          <div className="space-y-2">
+            <AdminFilterChips>
+              <AdminFilterChip
+                href={adminListHref("/admin/products", query, {
+                  status: undefined,
+                  featured: undefined,
+                  stock: undefined,
+                  page: undefined,
+                })}
+                active={!status && !featured && !stock}
+              >
+                All
+              </AdminFilterChip>
+              <AdminFilterChip
+                href={adminListHref("/admin/products", query, {
+                  status: "active",
+                  page: undefined,
+                })}
+                active={status === "active"}
+              >
+                Active
+              </AdminFilterChip>
+              <AdminFilterChip
+                href={adminListHref("/admin/products", query, {
+                  status: "hidden",
+                  page: undefined,
+                })}
+                active={status === "hidden"}
+              >
+                Hidden
+              </AdminFilterChip>
+              <AdminFilterChip
+                href={adminListHref("/admin/products", query, {
+                  featured: featured ? undefined : "1",
+                  page: undefined,
+                })}
+                active={featured}
+              >
+                Featured
+              </AdminFilterChip>
+              <AdminFilterChip
+                href={adminListHref("/admin/products", query, {
+                  stock: stock === "low" ? undefined : "low",
+                  page: undefined,
+                })}
+                active={stock === "low"}
+              >
+                Low stock
+              </AdminFilterChip>
+            </AdminFilterChips>
+            <div className="flex flex-wrap gap-2">
+              <select
+                className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+                defaultValue={categoryId ?? ""}
+                aria-label="Filter by category"
+                name="category"
+                form="products-taxonomy-filter"
+              >
+                <option value="">All categories</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.parent
+                      ? `${category.parent.name} / ${category.name}`
+                      : category.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+                defaultValue={brandId ?? ""}
+                aria-label="Filter by brand"
+                name="brand"
+                form="products-taxonomy-filter"
+              >
+                <option value="">All brands</option>
+                {brands.map((brand) => (
+                  <option key={brand.id} value={brand.id}>
+                    {brand.name}
+                  </option>
+                ))}
+              </select>
+              <form
+                id="products-taxonomy-filter"
+                method="get"
+                className="contents"
+              >
+                {params.search ? (
+                  <input type="hidden" name="search" value={params.search} />
+                ) : null}
+                {status ? <input type="hidden" name="status" value={status} /> : null}
+                {featured ? <input type="hidden" name="featured" value="1" /> : null}
+                {stock ? <input type="hidden" name="stock" value={stock} /> : null}
+                <Button type="submit" size="sm" variant="secondary" className="h-8">
+                  Apply
+                </Button>
+              </form>
+            </div>
+          </div>
+        }
+      />
 
-      <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
-        <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="border-b bg-muted/40 text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-medium">Product</th>
-              <th className="px-4 py-3 font-medium">Category</th>
-              <th className="px-4 py-3 font-medium">Brand</th>
-              <th className="px-4 py-3 font-medium">SKU</th>
-              <th className="px-4 py-3 font-medium">Price</th>
-              <th className="px-4 py-3 font-medium">Stock</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {products.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-12 text-center">
-                  <p className="font-medium">No products yet</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Add your first product to start selling.
-                  </p>
-                  <Button className="mt-4" size="sm" asChild>
-                    <Link href="/admin/products/new">Add product</Link>
-                  </Button>
-                </td>
-              </tr>
+      <AdminDataTable
+        empty={
+          products.length === 0 ? (
+            hasFilters ? (
+              <AdminEmptyState
+                title="No products match"
+                description="Try clearing filters or adjusting your search."
+                actionLabel="Clear filters"
+                actionHref="/admin/products"
+              />
             ) : (
-              products.map((product) => (
+              <AdminEmptyState
+                title="No products yet"
+                description="Add your first product to start selling."
+                actionLabel="Add product"
+                actionHref="/admin/products/new"
+              />
+            )
+          ) : undefined
+        }
+      >
+        <AdminTableHead>
+          <tr>
+            <th className="px-4 py-3 font-medium">Product</th>
+            <th className="px-4 py-3 font-medium">Category</th>
+            <th className="px-4 py-3 font-medium">Brand</th>
+            <th className="px-4 py-3 font-medium">SKU</th>
+            <th className="px-4 py-3 font-medium">Price</th>
+            <th className="px-4 py-3 font-medium">Stock</th>
+            <th className="px-4 py-3 font-medium">Status</th>
+          </tr>
+        </AdminTableHead>
+        <tbody className="divide-y">
+          {products.map((product) => {
+            const isLowStock =
+              product.inventory?.trackInventory &&
+              product.inventory.quantity <= product.inventory.lowStockThreshold;
+
+            return (
               <tr key={product.id} className="hover:bg-muted/30">
                 <td className="px-4 py-3">
                   <Link
@@ -82,12 +255,12 @@ export default async function AdminProductsPage({
                         alt={product.name}
                         width={40}
                         height={40}
-                        className="rounded object-cover"
+                        className="h-10 w-10 shrink-0 rounded object-cover"
                       />
                     ) : (
-                      <div className="h-10 w-10 rounded bg-muted" />
+                      <div className="h-10 w-10 shrink-0 rounded bg-muted" />
                     )}
-                    <span>{product.name}</span>
+                    <span className="line-clamp-2">{product.name}</span>
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
@@ -96,25 +269,27 @@ export default async function AdminProductsPage({
                 <td className="px-4 py-3 text-muted-foreground">
                   {product.brand?.name ?? "—"}
                 </td>
-                <td className="px-4 py-3 text-muted-foreground">{product.sku}</td>
+                <td className="max-w-[10rem] truncate px-4 py-3 font-mono text-xs text-muted-foreground">
+                  {product.sku}
+                </td>
                 <td className="px-4 py-3">
                   <Price amount={product.price.toString()} />
                 </td>
-                <td className="px-4 py-3">
-                  {product.hasVariants ? (
-                    <div className="space-y-1">
-                      <span>{product.inventory?.quantity ?? 0}</span>
+                <td className="px-4 py-3 tabular-nums">
+                  <div className="space-y-0.5">
+                    <span className={isLowStock ? "text-amber-700" : undefined}>
+                      {product.inventory?.quantity ?? 0}
+                    </span>
+                    {product.hasVariants ? (
                       <p className="text-xs text-muted-foreground">
                         {product.variants.length} variant
                         {product.variants.length === 1 ? "" : "s"}
                       </p>
-                    </div>
-                  ) : (
-                    product.inventory?.quantity ?? 0
-                  )}
+                    ) : null}
+                  </div>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <Badge variant={product.isActive ? "default" : "secondary"}>
                       {product.isActive ? "Active" : "Hidden"}
                     </Badge>
@@ -122,32 +297,25 @@ export default async function AdminProductsPage({
                       productId={product.id}
                       isActive={product.isActive}
                     />
-                    {product.hasVariants ? (
-                      <Badge variant="outline">Variants</Badge>
+                    {product.isFeatured ? (
+                      <Badge variant="outline">Featured</Badge>
                     ) : null}
-                    {product.isFeatured && <Badge variant="outline">Featured</Badge>}
                   </div>
                 </td>
               </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+            );
+          })}
+        </tbody>
+      </AdminDataTable>
 
-      {totalPages > 1 && (
-        <div className="flex gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <Link
-              key={p}
-              href={`/admin/products?page=${p}${params.search ? `&search=${params.search}` : ""}`}
-              className={`rounded px-3 py-1 text-sm ${p === page ? "bg-primary text-primary-foreground" : "border"}`}
-            >
-              {p}
-            </Link>
-          ))}
-        </div>
-      )}
+      <AdminPagination
+        pathname="/admin/products"
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageSize={PAGE_SIZE}
+        query={query}
+      />
     </div>
   );
 }
