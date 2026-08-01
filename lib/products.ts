@@ -246,7 +246,6 @@ export async function getFeaturedRecommendationsByCategory() {
       },
     },
     orderBy: [{ category: { sortOrder: "asc" } }, { createdAt: "desc" }],
-    take: 48,
   });
 
   const grouped = new Map<string, FeaturedCategoryRecommendation>();
