@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { DutiesNotice } from "@/components/shared/duties-notice";
 import { Price } from "@/components/shared/price";
+import { resolveOrderLineImageUrl } from "@/lib/orders/line-item";
 import { getOrderByNumber } from "@/lib/services/order.service";
 import { getSession } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n";
@@ -85,7 +86,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
                   totalPrice: item.totalPrice.toString(),
                   variantLabel: item.variantLabel,
                   optionsJson: item.optionsJson,
-                  imageUrl: item.imageUrl,
+                  imageUrl: resolveOrderLineImageUrl(item),
                 }}
               />
             ))}

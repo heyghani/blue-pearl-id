@@ -8,6 +8,7 @@ import {
 
 import { generateOrderNumber } from "@/lib/order-number";
 import { prisma } from "@/lib/db";
+import { orderItemImageInclude } from "@/lib/orders/line-item";
 import {
   getVariantLabel,
   getVariantOptions,
@@ -446,7 +447,9 @@ export async function getOrderByNumber(orderNumber: string) {
   return prisma.order.findUnique({
     where: { orderNumber },
     include: {
-      items: true,
+      items: {
+        include: orderItemImageInclude,
+      },
       payments: { orderBy: { createdAt: "desc" }, take: 1 },
     },
   });

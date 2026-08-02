@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { orderItemImageInclude } from "@/lib/orders/line-item";
 
 export async function getUserOrders(userId: string) {
   return prisma.order.findMany({
@@ -15,7 +16,9 @@ export async function getUserOrder(userId: string, orderNumber: string) {
   return prisma.order.findFirst({
     where: { userId, orderNumber },
     include: {
-      items: true,
+      items: {
+        include: orderItemImageInclude,
+      },
       payments: { orderBy: { createdAt: "desc" } },
     },
   });

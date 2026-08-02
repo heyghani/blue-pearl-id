@@ -1,6 +1,7 @@
 import { OrderStatus, Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
+import { orderItemImageInclude } from "@/lib/orders/line-item";
 import { sendShippingConfirmationEmail } from "@/lib/services/email.service";
 
 const shippableStatuses: OrderStatus[] = [
@@ -84,7 +85,9 @@ export async function getAdminOrder(id: string) {
   return prisma.order.findUnique({
     where: { id },
     include: {
-      items: true,
+      items: {
+        include: orderItemImageInclude,
+      },
       user: { select: { id: true, email: true, name: true, phone: true } },
       payments: {
         orderBy: { createdAt: "desc" },

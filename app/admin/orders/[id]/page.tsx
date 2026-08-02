@@ -17,6 +17,7 @@ import {
   getAddressLine2,
   type StoredShippingAddress,
 } from "@/lib/addresses";
+import { resolveOrderLineImageUrl } from "@/lib/orders/line-item";
 import { formatPhoneDisplay, getCountryName } from "@/lib/phone";
 import { getAdminOrder } from "@/lib/services/admin/order.service";
 import { Separator } from "@/components/ui/separator";
@@ -87,7 +88,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                     totalPrice: item.totalPrice.toString(),
                     variantLabel: item.variantLabel,
                     optionsJson: item.optionsJson,
-                    imageUrl: item.imageUrl,
+                    imageUrl: resolveOrderLineImageUrl(item),
                   }}
                 />
               ))}

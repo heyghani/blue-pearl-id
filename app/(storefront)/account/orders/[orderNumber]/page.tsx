@@ -16,6 +16,7 @@ import {
 } from "@/lib/addresses";
 import { formatPhoneDisplay, getCountryName } from "@/lib/phone";
 import { getSession } from "@/lib/auth";
+import { resolveOrderLineImageUrl } from "@/lib/orders/line-item";
 import { getUserOrder } from "@/lib/services/account.service";
 
 type Props = {
@@ -80,7 +81,7 @@ export default async function AccountOrderDetailPage({ params }: Props) {
                 totalPrice: item.totalPrice.toString(),
                 variantLabel: item.variantLabel,
                 optionsJson: item.optionsJson,
-                imageUrl: item.imageUrl,
+                imageUrl: resolveOrderLineImageUrl(item),
               }}
             />
           ))}
