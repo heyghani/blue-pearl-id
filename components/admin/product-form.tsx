@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 
 import {
   createProductAction,
   updateProductAction,
   type AdminActionState,
 } from "@/lib/actions/admin/products";
+import { updateDefaultBasePriceAction } from "@/lib/actions/admin/store-settings";
 import { generateBaseSkuFromName } from "@/lib/slug";
 import { useAdminActionRedirect } from "@/components/admin/use-admin-action-redirect";
 import { useAutoSlug } from "@/components/admin/use-auto-slug";
@@ -29,6 +30,7 @@ import {
   type ProductOptionInput,
   type ProductVariantInput,
 } from "@/lib/products/variants";
+import { FALLBACK_DEFAULT_BASE_PRICE } from "@/lib/store-defaults";
 
 type Category = { id: string; name: string };
 type Brand = { id: string; name: string };
@@ -58,7 +60,6 @@ const initialState: AdminActionState = {};
 const DEFAULT_PRODUCT_DESCRIPTION =
   "For more styles, please feel free to contact customer service";
 
-const DEFAULT_BASE_PRICE = 80;
 const DEFAULT_INVENTORY_QUANTITY = 99;
 
 export function ProductForm({
@@ -86,8 +87,21 @@ export function ProductForm({
   const [baseSku, setBaseSku] = useState(defaults.sku ?? "");
   const [skuManual, setSkuManual] = useState(Boolean(defaults.sku));
   const [basePrice, setBasePrice] = useState(
-    Number(defaults.price ?? (isNewProduct ? DEFAULT_BASE_PRICE : 0)) || 0,
+    Number(
+      defaults.price ?? (isNewProduct ? FALLBACK_DEFAULT_BASE_PRICE : 0),
+    ) || 0,
   );
+  const [savedDefaultPrice, setSavedDefaultPrice] = useState(
+    Number(defaults.price ?? FALLBACK_DEFAULT_BASE_PRICE) ||
+      FALLBACK_DEFAULT_BASE_PRICE,
+  );
+  const [defaultPriceMessage, setDefaultPriceMessage] = useState<string | null>(
+    null,
+  );
+  const [defaultPriceError, setDefaultPriceError] = useState<string | null>(
+    null,
+  );
+  const [savingDefaultPrice, startSavingDefaultPrice] = useTransition();
   const [inventoryQuantity, setInventoryQuantity] = useState(() => {
     if (defaults.hasVariants && defaults.variants?.length) {
       return deriveVariantDefaultQuantity(
@@ -101,11 +115,52 @@ export function ProductForm({
   const [isFeatured, setIsFeatured] = useState(defaults.isFeatured ?? false);
   const [imagesUploading, setImagesUploading] = useState(false);
 
+  useEffect(() => {
+    if (!defaultPriceMessage && !defaultPriceError) return;
+    const timer = window.setTimeout(() => {
+      setDefaultPriceMessage(null);
+      setDefaultPriceError(null);
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, [defaultPriceMessage, defaultPriceError]);
+
   function handleNameChange(name: string) {
     handleSlugFromName(name);
 
     if (!isNewProduct || skuManual) return;
     setBaseSku(generateBaseSkuFromName(name));
+  }
+
+  function handleSaveAsDefault() {
+    if (!basePrice || basePrice <= 0) {
+      setDefaultPriceError("Enter a valid base price first.");
+      setDefaultPriceMessage(null);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set("defaultBasePrice", String(basePrice));
+
+    startSavingDefaultPrice(async () => {
+      const result = await updateDefaultBasePriceAction({}, formData);
+      if (result.error) {
+        setDefaultPriceError(result.error);
+        setDefaultPriceMessage(null);
+        return;
+      }
+      if (result.fieldErrors?.defaultBasePrice?.[0]) {
+        setDefaultPriceError(result.fieldErrors.defaultBasePrice[0]);
+        setDefaultPriceMessage(null);
+        return;
+      }
+      const nextDefault =
+        result.defaultBasePrice ?? basePrice;
+      setSavedDefaultPrice(nextDefault);
+      setDefaultPriceMessage(
+        `Default base price set to $${nextDefault.toFixed(2)}.`,
+      );
+      setDefaultPriceError(null);
+    });
   }
 
   return (
@@ -287,20 +342,48 @@ export function ProductForm({
 
           <div className="space-y-2">
             <Label htmlFor="price">Base price (USD)</Label>
-            <Input
-              id="price"
-              name="price"
-              type="number"
-              step="0.01"
-              min="0"
-              value={basePrice || ""}
-              required
-              onChange={(event) => setBasePrice(Number(event.target.value) || 0)}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="price"
+                name="price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={basePrice || ""}
+                required
+                onChange={(event) =>
+                  setBasePrice(Number(event.target.value) || 0)
+                }
+              />
+              {isNewProduct ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="shrink-0"
+                  disabled={
+                    savingDefaultPrice ||
+                    !basePrice ||
+                    basePrice === savedDefaultPrice
+                  }
+                  onClick={handleSaveAsDefault}
+                >
+                  {savingDefaultPrice ? "Saving…" : "Set as default"}
+                </Button>
+              ) : null}
+            </div>
             <p className="text-xs text-muted-foreground">
               Variant prices follow this value by default until you edit a row
               manually.
+              {isNewProduct
+                ? ` Current listing default: $${savedDefaultPrice.toFixed(2)}.`
+                : null}
             </p>
+            {defaultPriceMessage ? (
+              <p className="text-xs text-emerald-700">{defaultPriceMessage}</p>
+            ) : null}
+            {defaultPriceError ? (
+              <p className="text-xs text-destructive">{defaultPriceError}</p>
+            ) : null}
           </div>
 
           <div className="space-y-2">

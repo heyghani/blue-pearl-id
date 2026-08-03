@@ -4,11 +4,13 @@ import { ProductForm } from "@/components/admin/product-form";
 import { Button } from "@/components/ui/button";
 import { listCategoriesForProductForm } from "@/lib/services/admin/category.service";
 import { listBrandsForProductForm } from "@/lib/services/admin/brand.service";
+import { getDefaultBasePrice } from "@/lib/services/admin/store-settings.service";
 
 export default async function NewProductPage() {
-  const [categories, brands] = await Promise.all([
+  const [categories, brands, defaultBasePrice] = await Promise.all([
     listCategoriesForProductForm(),
     listBrandsForProductForm(),
+    getDefaultBasePrice(),
   ]);
 
   return (
@@ -23,7 +25,11 @@ export default async function NewProductPage() {
         </Button>
       </div>
 
-      <ProductForm categories={categories} brands={brands} />
+      <ProductForm
+        categories={categories}
+        brands={brands}
+        defaults={{ price: String(defaultBasePrice) }}
+      />
     </div>
   );
 }

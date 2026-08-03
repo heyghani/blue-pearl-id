@@ -155,6 +155,12 @@ export const shippingRateSchema = z.object({
   isActive: z.coerce.boolean(),
 });
 
+export const defaultBasePriceSchema = z.object({
+  defaultBasePrice: z.coerce
+    .number()
+    .positive("Default base price must be greater than zero."),
+});
+
 export const refundSchema = z.object({
   paymentId: z.string().min(1),
   amount: z.coerce.number().positive("Refund amount must be greater than zero."),

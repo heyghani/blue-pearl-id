@@ -412,6 +412,15 @@ async function main() {
     });
   }
 
+  await prisma.storeSetting.upsert({
+    where: { id: "default" },
+    update: {},
+    create: {
+      id: "default",
+      defaultBasePrice: 80,
+    },
+  });
+
   for (const [index, brand] of brands.entries()) {
     await prisma.brand.upsert({
       where: { slug: brand.slug },
