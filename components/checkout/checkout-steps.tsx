@@ -32,9 +32,9 @@ export function CheckoutSteps({
               <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
                 <span
                   className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold transition-colors",
-                    isComplete && "bg-[var(--pearl)] text-white",
-                    isCurrent && "border-2 border-[var(--pearl)] bg-background text-[var(--pearl)]",
+                    "flex h-9 w-9 items-center justify-center rounded-md text-xs font-semibold transition-colors",
+                    isComplete && "bg-verified-green text-white",
+                    isCurrent && "border-2 border-verified-green bg-background text-verified-green",
                     !isComplete && !isCurrent && "bg-muted text-muted-foreground",
                   )}
                 >
@@ -42,7 +42,7 @@ export function CheckoutSteps({
                 </span>
                 <span
                   className={cn(
-                    "text-xs",
+                    "font-display text-xs uppercase tracking-wide",
                     isCurrent ? "font-semibold text-foreground" : "text-muted-foreground",
                   )}
                 >
@@ -53,7 +53,7 @@ export function CheckoutSteps({
                 <div
                   className={cn(
                     "mx-2 mb-6 h-0.5 flex-1 rounded-full",
-                    isComplete ? "bg-[var(--pearl)]" : "bg-border",
+                    isComplete ? "bg-verified-green" : "bg-border",
                   )}
                 />
               )}

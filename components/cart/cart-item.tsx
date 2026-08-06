@@ -96,12 +96,12 @@ export function CartItemRow({
         </div>
 
         <div className="mt-3 flex items-center justify-between">
-          <div className="flex items-center rounded-full border bg-background">
+          <div className="flex items-center rounded-md border bg-background">
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-full"
+              className="h-8 w-8 rounded-md"
               disabled={isPending || item.quantity <= 1}
               onClick={() =>
                 mutate(() => updateCartItemAction(item.id, item.quantity - 1))
@@ -117,7 +117,7 @@ export function CartItemRow({
               type="button"
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-full"
+              className="h-8 w-8 rounded-md"
               disabled={
                 isPending ||
                 !item.product.inStock ||
@@ -136,7 +136,7 @@ export function CartItemRow({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-full text-muted-foreground hover:text-destructive"
+            className="h-8 w-8 rounded-md text-muted-foreground hover:text-destructive"
             disabled={isPending}
             onClick={() => mutate(() => removeCartItemAction(item.id))}
             aria-label={t.cart.removeItem}

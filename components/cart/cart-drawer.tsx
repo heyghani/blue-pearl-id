@@ -91,7 +91,7 @@ export function CartDrawer({
           ) : (
             <div className="flex flex-col items-center justify-center px-4 py-14 text-center">
               <p className="text-sm text-muted-foreground">{t.cart.emptyDrawer}</p>
-              <Button className="mt-5 rounded-full" variant="outline" asChild>
+              <Button className="mt-5 rounded-md" variant="outline" asChild>
                 <Link href="/products">{t.cart.continueShopping}</Link>
               </Button>
             </div>

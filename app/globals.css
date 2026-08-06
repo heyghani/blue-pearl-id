@@ -1,30 +1,41 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf9f7;
-  --foreground: #0f1419;
+  /* Brand palette — sneaker/streetwear resale */
+  --ink: #14120f;
+  --bone: #edeeeb;
+  --concrete: #9c9a93;
+  --verified-green: #1f7a4d;
+  --tag-orange: #ff5a1f;
+
+  /* Semantic tokens (mapped from brand) */
+  --background: var(--bone);
+  --foreground: var(--ink);
   --card: #ffffff;
-  --card-foreground: #0f1419;
+  --card-foreground: var(--ink);
   --popover: #ffffff;
-  --popover-foreground: #0f1419;
-  --primary: #0f1419;
-  --primary-foreground: #faf9f7;
-  --secondary: #f0ede8;
-  --secondary-foreground: #0f1419;
-  --muted: #f3f1ed;
-  --muted-foreground: #6b7280;
-  --accent: #e8e2d9;
-  --accent-foreground: #0f1419;
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--bone);
+  --secondary: #e4e5e2;
+  --secondary-foreground: var(--ink);
+  --muted: #e8e9e6;
+  --muted-foreground: var(--concrete);
+  --accent: #dcded9;
+  --accent-foreground: var(--ink);
   --destructive: #dc2626;
   --destructive-foreground: #fafafa;
-  --border: #e8e4dd;
-  --input: #e8e4dd;
-  --ring: #2c4a6e;
-  --pearl: #2c4a6e;
-  --pearl-muted: #5a7a9a;
-  --pearl-light: #f0ebe3;
-  --pearl-glow: rgba(44, 74, 110, 0.12);
-  --radius: 1rem;
+  --border: #d5d6d2;
+  --input: #d5d6d2;
+  --ring: var(--verified-green);
+
+  /* Accent aliases — keeps existing `text-[var(--pearl)]` usages on-brand */
+  --pearl: var(--verified-green);
+  --pearl-muted: #3d9a6e;
+  --pearl-light: #e8f3ed;
+  --pearl-glow: rgba(31, 122, 77, 0.08);
+
+  --radius: 0.875rem;
 }
 
 @theme inline {
@@ -47,6 +58,11 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-ink: var(--ink);
+  --color-bone: var(--bone);
+  --color-concrete: var(--concrete);
+  --color-verified-green: var(--verified-green);
+  --color-tag-orange: var(--tag-orange);
   --color-pearl: var(--pearl);
   --color-pearl-muted: var(--pearl-muted);
   --color-pearl-light: var(--pearl-light);
@@ -55,7 +71,8 @@
   --radius-lg: calc(var(--radius) + 4px);
   --radius-xl: calc(var(--radius) + 8px);
   --font-sans: var(--font-inter);
-  --font-display: var(--font-cormorant);
+  --font-display: var(--font-space-grotesk);
+  --font-mono: var(--font-ibm-plex-mono);
 }
 
 @layer base {
@@ -66,8 +83,8 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% -20%, var(--pearl-glow), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(232, 226, 217, 0.4), transparent);
+      radial-gradient(ellipse 90% 60% at 50% -30%, var(--pearl-glow), transparent),
+      linear-gradient(180deg, var(--background) 0%, #e9eae7 100%);
     background-attachment: fixed;
   }
 
@@ -79,7 +96,11 @@
 
 @layer utilities {
   .font-display {
-    font-family: var(--font-display), ui-serif, Georgia, serif;
+    font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono), ui-monospace, monospace;
   }
 
   .text-balance {
@@ -92,8 +113,8 @@
 
   .surface-elevated {
     box-shadow:
-      0 1px 2px rgba(15, 20, 25, 0.04),
-      0 8px 24px rgba(15, 20, 25, 0.06);
+      0 1px 2px rgba(20, 18, 15, 0.04),
+      0 8px 24px rgba(20, 18, 15, 0.06);
   }
 }
 

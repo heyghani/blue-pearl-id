@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { IBM_Plex_Mono, Inter, Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -15,17 +15,23 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
-  weight: ["400", "600"],
+  weight: ["500", "600", "700"],
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  variable: "--font-ibm-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 const OG_IMAGE = {
   url: "/images/og-image.png",
   width: 787,
   height: 1024,
-  alt: "PrimeLuxr — Luxury OEM handbags and accessories",
+  alt: "PrimeLuxr — Sneakers and streetwear resale",
 };
 
 export const metadata: Metadata = {
@@ -70,7 +76,10 @@ export default async function RootLayout({
   const dictionary = getDictionary(locale);
 
   return (
-    <html lang={locale} className={`${inter.variable} ${cormorant.variable} h-full`}>
+    <html
+      lang={locale}
+      className={`${inter.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable} h-full`}
+    >
       <body className="min-h-full flex flex-col font-sans">
         <LocaleProvider locale={locale} dictionary={dictionary}>
           {children}

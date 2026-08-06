@@ -7,7 +7,12 @@ export interface CatalogSearchParams {
   brand?: string | string[];
   sort?: string;
   featured?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  view?: string;
 }
+
+export type CatalogViewMode = "grid" | "list";
 
 export function parseCatalogParams(
   searchParams: CatalogSearchParams,
@@ -18,6 +23,9 @@ export function parseCatalogParams(
   brand?: string[];
   sort: ProductSort;
   featured: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+  view: CatalogViewMode;
 } {
   const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
   const sort = isValidSort(searchParams.sort) ? searchParams.sort : "newest";
@@ -34,6 +42,13 @@ export function parseCatalogParams(
       : brandRaw.split(",").filter(Boolean)
     : undefined;
 
+  const minPrice = parsePriceParam(searchParams.minPrice);
+  const maxPrice = parsePriceParam(searchParams.maxPrice);
+  const normalizedMin =
+    minPrice != null && maxPrice != null && minPrice > maxPrice ? maxPrice : minPrice;
+  const normalizedMax =
+    minPrice != null && maxPrice != null && minPrice > maxPrice ? minPrice : maxPrice;
+
   return {
     page,
     search: searchParams.q?.trim() || undefined,
@@ -41,7 +56,17 @@ export function parseCatalogParams(
     brand,
     sort,
     featured: searchParams.featured === "true",
+    minPrice: normalizedMin,
+    maxPrice: normalizedMax,
+    view: searchParams.view === "list" ? "list" : "grid",
   };
+}
+
+function parsePriceParam(value?: string): number | undefined {
+  if (!value?.trim()) return undefined;
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return undefined;
+  return parsed;
 }
 
 function isValidSort(value?: string): value is ProductSort {

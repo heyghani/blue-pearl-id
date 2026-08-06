@@ -1,7 +1,7 @@
 export const APP_NAME = "PrimeLuxr";
-export const APP_TAGLINE = "Luxury OEM · Shipped Worldwide";
+export const APP_TAGLINE = "Sneakers & Streetwear · Shipped Worldwide";
 export const APP_DESCRIPTION =
-  "Luxury OEM handbags and accessories — crafted with timeless design, shipped worldwide.";
+  "Sneakers and streetwear resale — Jordan, New Balance, designer collabs, and heat from the vault, shipped worldwide.";
 /** Customer-facing name on PayPal checkout and Midtrans Snap (max ~22 chars for card statements). */
 export const PAYMENT_MERCHANT_NAME =
   process.env.PAYMENT_MERCHANT_NAME ?? APP_NAME;

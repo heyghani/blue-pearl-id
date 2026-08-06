@@ -102,6 +102,15 @@ export interface Dictionary {
     footwear: string;
     moreCategories: string;
     subcategoryAll: string;
+    filters: string;
+    priceRange: string;
+    minPrice: string;
+    maxPrice: string;
+    applyPrice: string;
+    clearPrice: string;
+    viewGrid: string;
+    viewList: string;
+    viewModeLabel: string;
   };
   product: {
     description: string;
@@ -123,6 +132,8 @@ export interface Dictionary {
     noSpecs: string;
     selectOptions: string;
     variantPreview: string;
+    trustReturns: string;
+    trustShipping: string;
   };
   cart: {
     title: string;
@@ -176,6 +187,26 @@ export interface Dictionary {
     total: string;
     backToBag: string;
     secureBadge: string;
+    secureCheckout: string;
+    paymentMethodTitle: string;
+    contactSectionTitle: string;
+    creditCardTitle: string;
+    creditCardDesc: string;
+    paypalTitle: string;
+    paypalDesc: string;
+    usdtTitle: string;
+    usdtDesc: string;
+    couponLabel: string;
+    notesLabel: string;
+    notesPlaceholder: string;
+    couponPlaceholder: string;
+    back: string;
+    continueShipping: string;
+    continueToPayment: string;
+    placeOrderPay: string;
+    placingOrder: string;
+    uploadingPhoto: string;
+    continuing: string;
     processingTitle: string;
     processingCardNote: string;
     processingPayPalNote: string;

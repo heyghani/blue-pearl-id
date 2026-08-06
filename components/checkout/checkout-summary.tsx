@@ -49,8 +49,8 @@ export async function CheckoutSummary({
   }, 0);
 
   return (
-    <div className={cn("rounded-lg border bg-card p-6", className)}>
-      <h2 className="text-lg font-semibold">{t.checkout.orderSummary}</h2>
+    <div className={cn("rounded-xl border border-border/70 bg-card p-6 shadow-sm", className)}>
+      <h2 className="font-display text-lg font-semibold tracking-tight">{t.checkout.orderSummary}</h2>
 
       <ul className="mt-4 space-y-4">
         {cart.items.map((item) => {

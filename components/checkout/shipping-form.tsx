@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { ShippingMethodType } from "@prisma/client";
 
 import { AddressFields } from "@/components/checkout/address-fields";
+import { useTranslations } from "@/components/i18n/locale-provider";
 import {
   saveShippingAction,
   type CheckoutActionState,
@@ -34,6 +35,7 @@ export function ShippingForm({
   defaultMethod?: ShippingMethodType;
   rates: ShippingRate[];
 }) {
+  const t = useTranslations();
   const [state, formAction, pending] = useActionState(
     saveShippingAction,
     initialState,
@@ -62,8 +64,8 @@ export function ShippingForm({
             <label
               key={rate.method}
               className={cn(
-                "flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors",
-                "has-[:checked]:border-primary has-[:checked]:bg-muted/30",
+                "flex cursor-pointer items-start gap-3 rounded-xl border border-border/70 p-4 transition-colors",
+                "has-[:checked]:border-verified-green has-[:checked]:bg-verified-green/5",
               )}
             >
               <input
@@ -91,11 +93,11 @@ export function ShippingForm({
       </section>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
-        <Button variant="outline" asChild>
-          <Link href="/checkout/information">Back</Link>
+        <Button variant="outline" className="rounded-md" asChild>
+          <Link href="/checkout/information">{t.checkout.back}</Link>
         </Button>
-        <Button type="submit" disabled={pending}>
-          {pending ? "Continuing…" : "Continue to payment"}
+        <Button type="submit" className="rounded-md font-display uppercase tracking-wide" disabled={pending}>
+          {pending ? t.checkout.continuing : t.checkout.continueToPayment}
         </Button>
       </div>
     </form>

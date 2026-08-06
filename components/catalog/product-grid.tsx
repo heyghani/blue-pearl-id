@@ -9,9 +9,11 @@ import { cn } from "@/lib/utils";
 export async function ProductGrid({
   products,
   className,
+  clearFiltersHref = "/products",
 }: {
   products: ProductCardData[];
   className?: string;
+  clearFiltersHref?: string;
 }) {
   const locale = await getLocale();
   const t = getDictionary(locale);
@@ -21,7 +23,7 @@ export async function ProductGrid({
       <div className="rounded-2xl border border-dashed px-6 py-14 text-center">
         <p className="text-sm text-muted-foreground">{t.catalog.emptyResults}</p>
         <Button variant="outline" className="mt-4 rounded-full" asChild>
-          <Link href="/products">{t.catalog.clearFilters}</Link>
+          <Link href={clearFiltersHref}>{t.catalog.clearFilters}</Link>
         </Button>
       </div>
     );

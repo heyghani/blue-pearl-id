@@ -16,6 +16,8 @@ interface ProductActionsProps {
   productId: string;
   variantId?: string;
   inStock: boolean;
+  /** True only when the resolved display stock is sold out (not while waiting for a size). */
+  soldOut?: boolean;
   requiresSelection?: boolean;
   layout?: "inline" | "sticky";
 }
@@ -24,6 +26,7 @@ export function ProductActions({
   productId,
   variantId,
   inStock,
+  soldOut = false,
   requiresSelection = false,
   layout = "inline",
 }: ProductActionsProps) {
@@ -62,6 +65,10 @@ export function ProductActions({
       <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/90">
         {error ? (
           <p className="mb-2 text-center text-xs text-destructive">{error}</p>
+        ) : soldOut ? (
+          <p className="mb-2 text-center text-xs font-medium text-destructive">
+            {t.product.outOfStock}
+          </p>
         ) : added ? (
           <p className="mb-2 text-center text-xs text-[var(--pearl)]">
             {t.product.addedToCart}{" "}
@@ -126,7 +133,7 @@ export function ProductActions({
         </Button>
       </div>
 
-      {!inStock ? (
+      {!inStock && soldOut ? (
         <p className="text-sm font-medium text-destructive">{t.product.outOfStock}</p>
       ) : null}
     </div>

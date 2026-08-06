@@ -174,15 +174,6 @@ export default async function ProductDetailPage({ params }: Props) {
                       {product.isFeatured ? (
                         <Badge className="rounded-full px-2.5">{t.catalog.featured}</Badge>
                       ) : null}
-                      {!inStock ? (
-                        <Badge variant="destructive" className="rounded-full px-2.5">
-                          {t.product.outOfStock}
-                        </Badge>
-                      ) : (
-                        <span className="text-xs font-medium text-[var(--pearl)]">
-                          {t.product.inStock}
-                        </span>
-                      )}
                     </div>
 
                     <h1 className="font-display text-xl font-semibold leading-snug tracking-tight sm:text-2xl lg:text-3xl">

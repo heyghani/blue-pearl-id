@@ -16,6 +16,8 @@ export interface CatalogParams {
   brand?: string | string[];
   sort?: ProductSort;
   featured?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
 }
 
 const CATALOG_REVALIDATE_SECONDS = 60;
@@ -108,6 +110,13 @@ function buildWhere(params: CatalogParams, categorySlugs?: string[]): Prisma.Pro
     ];
   }
 
+  if (params.minPrice != null || params.maxPrice != null) {
+    where.price = {
+      ...(params.minPrice != null ? { gte: params.minPrice } : {}),
+      ...(params.maxPrice != null ? { lte: params.maxPrice } : {}),
+    };
+  }
+
   return where;
 }
 
@@ -120,6 +129,8 @@ function catalogCacheKey(params: CatalogParams): string {
     brand: params.brand ?? null,
     sort: params.sort ?? "newest",
     featured: Boolean(params.featured),
+    minPrice: params.minPrice ?? null,
+    maxPrice: params.maxPrice ?? null,
   });
 }
 

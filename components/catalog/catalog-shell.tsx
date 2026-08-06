@@ -7,6 +7,8 @@ import { X } from "lucide-react";
 
 import { CatalogSearch } from "@/components/catalog/catalog-search";
 import { CatalogSort } from "@/components/catalog/catalog-sort";
+import { CatalogViewToggle } from "@/components/catalog/catalog-view-toggle";
+import { PriceFilter } from "@/components/catalog/price-filter";
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
 
@@ -29,40 +31,10 @@ type Brand = {
   _count: { products: number };
 };
 
-type CategoryGroups = {
-  jewelry: RootCategory[];
-  footwear: RootCategory[];
-  other: RootCategory[];
-};
-
-const JEWELRY_SLUGS = new Set([
-  "necklaces",
-  "earrings",
-  "bracelets",
-  "rings",
-  "sets",
-  "accessories",
-]);
-
-const FOOTWEAR_SLUGS = new Set(["footwear", "casual-shoes", "sandals", "canvas-shoes"]);
-
 function isNavCategoryVisible(category: RootCategory) {
   if (category._count.products > 0) return true;
   if (category.children.length > 0) return true;
   return category.children.some((child) => child._count.products > 0);
-}
-
-function groupCategories(categories: RootCategory[]): CategoryGroups {
-  const visible = categories.filter(isNavCategoryVisible);
-
-  return {
-    jewelry: visible.filter((category) => JEWELRY_SLUGS.has(category.slug)),
-    footwear: visible.filter((category) => FOOTWEAR_SLUGS.has(category.slug)),
-    other: visible.filter(
-      (category) =>
-        !JEWELRY_SLUGS.has(category.slug) && !FOOTWEAR_SLUGS.has(category.slug),
-    ),
-  };
 }
 
 function useCatalogFilters() {
@@ -70,6 +42,8 @@ function useCatalogFilters() {
   const activeCategory = searchParams.get("category") ?? "";
   const activeBrand = searchParams.get("brand") ?? "";
   const activeSearch = searchParams.get("q") ?? "";
+  const activeMinPrice = searchParams.get("minPrice") ?? "";
+  const activeMaxPrice = searchParams.get("maxPrice") ?? "";
   const isFeatured = searchParams.get("featured") === "true";
 
   function buildHref(updates: {
@@ -77,6 +51,8 @@ function useCatalogFilters() {
     brand?: string | null;
     q?: string | null;
     featured?: boolean | null;
+    minPrice?: string | null;
+    maxPrice?: string | null;
   }) {
     const next = new URLSearchParams(searchParams.toString());
     next.delete("page");
@@ -93,6 +69,12 @@ function useCatalogFilters() {
     if (updates.featured === null) next.delete("featured");
     else if (updates.featured) next.set("featured", "true");
 
+    if (updates.minPrice === null) next.delete("minPrice");
+    else if (updates.minPrice) next.set("minPrice", updates.minPrice);
+
+    if (updates.maxPrice === null) next.delete("maxPrice");
+    else if (updates.maxPrice) next.set("maxPrice", updates.maxPrice);
+
     const qs = next.toString();
     return qs ? `/products?${qs}` : "/products";
   }
@@ -100,12 +82,23 @@ function useCatalogFilters() {
   function clearFiltersHref() {
     const next = new URLSearchParams();
     const sort = searchParams.get("sort");
+    const view = searchParams.get("view");
     if (sort) next.set("sort", sort);
+    if (view) next.set("view", view);
     const qs = next.toString();
     return qs ? `/products?${qs}` : "/products";
   }
 
-  return { activeCategory, activeBrand, activeSearch, isFeatured, buildHref, clearFiltersHref };
+  return {
+    activeCategory,
+    activeBrand,
+    activeSearch,
+    activeMinPrice,
+    activeMaxPrice,
+    isFeatured,
+    buildHref,
+    clearFiltersHref,
+  };
 }
 
 function FilterChip({ label, href }: { label: string; href: string }) {
@@ -207,7 +200,7 @@ function SidebarSection({
 }
 
 function CatalogSidebarNav({
-  groups,
+  categories,
   brands,
   activeCategory,
   activeBrand,
@@ -215,12 +208,10 @@ function CatalogSidebarNav({
   allProductsLabel,
   allBrandsLabel,
   brandsLabel,
-  jewelryLabel,
-  footwearLabel,
-  moreLabel,
+  categoriesLabel,
   className,
 }: {
-  groups: CategoryGroups;
+  categories: RootCategory[];
   brands: Brand[];
   activeCategory: string;
   activeBrand: string;
@@ -228,11 +219,11 @@ function CatalogSidebarNav({
   allProductsLabel: string;
   allBrandsLabel: string;
   brandsLabel: string;
-  jewelryLabel: string;
-  footwearLabel: string;
-  moreLabel: string;
+  categoriesLabel: string;
   className?: string;
 }) {
+  const visibleCategories = categories.filter(isNavCategoryVisible);
+
   return (
     <nav className={cn("space-y-3 sm:space-y-4", className)} aria-label="Catalog filters">
       <SidebarLink
@@ -242,25 +233,11 @@ function CatalogSidebarNav({
       />
 
       <SidebarSection
-        title={jewelryLabel}
-        categories={groups.jewelry}
+        title={categoriesLabel}
+        categories={visibleCategories}
         activeCategory={activeCategory}
         buildHref={buildHref}
       />
-      <SidebarSection
-        title={footwearLabel}
-        categories={groups.footwear}
-        activeCategory={activeCategory}
-        buildHref={buildHref}
-      />
-      {groups.other.length > 0 ? (
-        <SidebarSection
-          title={moreLabel}
-          categories={groups.other}
-          activeCategory={activeCategory}
-          buildHref={buildHref}
-        />
-      ) : null}
 
       {brands.length > 0 ? (
         <div className="space-y-0.5 border-t border-border/60 pt-2 sm:pt-3">
@@ -287,6 +264,13 @@ function CatalogSidebarNav({
   );
 }
 
+function formatPriceFilterLabel(min: string, max: string, priceLabel: string) {
+  if (min && max) return `${priceLabel}: ${min}–${max}`;
+  if (min) return `${priceLabel}: ${min}+`;
+  if (max) return `${priceLabel}: ≤${max}`;
+  return priceLabel;
+}
+
 function CatalogShellInner({
   categories,
   brands,
@@ -307,23 +291,31 @@ function CatalogShellInner({
   children: React.ReactNode;
 }) {
   const t = useTranslations();
-  const { activeCategory, activeBrand, activeSearch, isFeatured, buildHref, clearFiltersHref } =
-    useCatalogFilters();
-
-  const groups = groupCategories(categories);
+  const {
+    activeCategory,
+    activeBrand,
+    activeSearch,
+    activeMinPrice,
+    activeMaxPrice,
+    isFeatured,
+    buildHref,
+    clearFiltersHref,
+  } = useCatalogFilters();
 
   const hasActiveFilters = Boolean(
-    activeCategory || activeBrand || activeSearch || isFeatured,
+    activeCategory ||
+      activeBrand ||
+      activeSearch ||
+      isFeatured ||
+      activeMinPrice ||
+      activeMaxPrice,
   );
 
-  const sidebarLabels = {
-    allProductsLabel: t.catalog.allProducts,
-    allBrandsLabel: t.catalog.allBrands,
-    brandsLabel: t.catalog.brands,
-    jewelryLabel: t.catalog.jewelry,
-    footwearLabel: t.catalog.footwear,
-    moreLabel: t.catalog.moreCategories,
-  };
+  const priceFilterLabel = formatPriceFilterLabel(
+    activeMinPrice,
+    activeMaxPrice,
+    t.catalog.priceRange,
+  );
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -349,6 +341,12 @@ function CatalogShellInner({
           {activeBrandName ? (
             <FilterChip label={activeBrandName} href={buildHref({ brand: null })} />
           ) : null}
+          {activeMinPrice || activeMaxPrice ? (
+            <FilterChip
+              label={priceFilterLabel}
+              href={buildHref({ minPrice: null, maxPrice: null })}
+            />
+          ) : null}
           {activeSearch ? (
             <FilterChip label={`“${activeSearch}”`} href={buildHref({ q: null })} />
           ) : null}
@@ -372,17 +370,26 @@ function CatalogShellInner({
           )}
         >
           <p className="mb-2 hidden px-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:block">
-            {t.catalog.categories}
+            {t.catalog.filters}
           </p>
 
           <CatalogSidebarNav
-            groups={groups}
+            categories={categories}
             brands={brands}
             activeCategory={activeCategory}
             activeBrand={activeBrand}
             buildHref={buildHref}
-            {...sidebarLabels}
+            allProductsLabel={t.catalog.allProducts}
+            allBrandsLabel={t.catalog.allBrands}
+            brandsLabel={t.catalog.brands}
+            categoriesLabel={t.catalog.categories}
           />
+
+          <div className="mt-3 hidden border-t border-border/60 pt-3 lg:block">
+            <Suspense fallback={<div className="h-20 animate-pulse rounded-md bg-muted" />}>
+              <PriceFilter />
+            </Suspense>
+          </div>
         </aside>
 
         <div className="min-w-0 flex-1 space-y-3 sm:space-y-4">
@@ -391,8 +398,18 @@ function CatalogShellInner({
               <Suspense fallback={<div className="h-10 w-full rounded-full bg-muted sm:max-w-sm" />}>
                 <CatalogSearch className="w-full sm:max-w-sm" />
               </Suspense>
-              <Suspense fallback={<div className="h-10 w-full rounded-full bg-muted sm:w-44" />}>
-                <CatalogSort className="w-full sm:w-auto" />
+              <div className="flex items-center gap-2 sm:shrink-0">
+                <Suspense fallback={<div className="h-10 w-[4.75rem] rounded-md bg-muted" />}>
+                  <CatalogViewToggle />
+                </Suspense>
+                <Suspense fallback={<div className="h-10 w-full rounded-full bg-muted sm:w-44" />}>
+                  <CatalogSort className="w-full sm:w-auto" />
+                </Suspense>
+              </div>
+            </div>
+            <div className="mt-3 border-t border-border/60 pt-3 lg:hidden">
+              <Suspense fallback={<div className="h-20 animate-pulse rounded-md bg-muted" />}>
+                <PriceFilter />
               </Suspense>
             </div>
           </div>

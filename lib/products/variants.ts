@@ -537,6 +537,33 @@ export function variantInStock(variant: SerializedProductVariant | null) {
   return Boolean(variant?.isActive && variant.quantity > 0);
 }
 
+/**
+ * Single source of truth for PDP stock messaging / purchase availability display.
+ * - With a selected variant: use that variant's stock only.
+ * - Before a variant is selected (or for simple products): use product-level stock.
+ */
+export function resolveDisplayStockStatus({
+  hasVariants,
+  productInStock,
+  selectedVariant,
+}: {
+  hasVariants: boolean;
+  productInStock: boolean;
+  selectedVariant: SerializedProductVariant | null;
+}): { inStock: boolean; source: "variant" | "product" } {
+  if (hasVariants && selectedVariant) {
+    return {
+      inStock: variantInStock(selectedVariant),
+      source: "variant",
+    };
+  }
+
+  return {
+    inStock: productInStock,
+    source: "product",
+  };
+}
+
 export function getProductStockSummary(product: {
   hasVariants?: boolean;
   inventory?: { quantity: number } | null;

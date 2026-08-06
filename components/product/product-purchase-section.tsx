@@ -4,13 +4,14 @@ import Image from "next/image";
 
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { ProductActions } from "@/components/product/product-actions";
+import { ProductTrustModule } from "@/components/product/product-trust-module";
 import { useProductVariant } from "@/components/product/product-variant-context";
 import { Price } from "@/components/shared/price";
 import {
   getVariantCompareAtPrice,
   getVariantDisplayPrice,
+  resolveDisplayStockStatus,
   type SerializedProductOption,
-  variantInStock,
 } from "@/lib/products/variants";
 import { cn } from "@/lib/utils";
 
@@ -82,10 +83,13 @@ export function ProductPurchaseSection({
   const pricingVariant = selectedVariant ?? previewVariant;
   const displayPrice = getVariantDisplayPrice(pricingVariant, basePrice);
   const displayCompareAt = getVariantCompareAtPrice(pricingVariant, compareAtPrice);
-  const canPurchase = hasVariants
-    ? Boolean(selectedVariant && variantInStock(selectedVariant))
-    : inStock;
+  const stockStatus = resolveDisplayStockStatus({
+    hasVariants,
+    productInStock: inStock,
+    selectedVariant,
+  });
   const requiresSelection = hasVariants && !selectedVariant;
+  const canPurchase = !requiresSelection && stockStatus.inStock;
 
   function handleSelect(optionId: string, value: string) {
     setSelection(optionId, value);
@@ -93,11 +97,22 @@ export function ProductPurchaseSection({
 
   const purchaseDetails = (
     <>
-      <Price
-        amount={displayPrice}
-        compareAt={displayCompareAt}
-        className="[&_span:first-child]:text-2xl [&_span:first-child]:font-bold sm:[&_span:first-child]:text-3xl"
-      />
+      <div className="space-y-3">
+        <span
+          className={cn(
+            "inline-block text-xs font-medium",
+            stockStatus.inStock ? "text-verified-green" : "text-destructive",
+          )}
+        >
+          {stockStatus.inStock ? t.product.inStock : t.product.outOfStock}
+        </span>
+
+        <Price
+          amount={displayPrice}
+          compareAt={displayCompareAt}
+          className="[&_span:first-child]:text-2xl [&_span:first-child]:font-bold sm:[&_span:first-child]:text-3xl"
+        />
+      </div>
 
       {hasVariants ? (
         <div className="space-y-4">
@@ -115,7 +130,7 @@ export function ProductPurchaseSection({
                       type="button"
                       onClick={() => handleSelect(option.id, value.value)}
                       className={cn(
-                        "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                        "rounded-md border px-3 py-1.5 font-mono text-sm transition-colors",
                         isSelected
                           ? "border-foreground bg-foreground text-background"
                           : "border-input bg-background hover:border-foreground/40",
@@ -130,10 +145,8 @@ export function ProductPurchaseSection({
           ))}
 
           {selectedVariant ? (
-            <p className="text-xs text-muted-foreground">
-              SKU: <span className="font-mono">{selectedVariant.sku}</span>
-              {" · "}
-              {variantInStock(selectedVariant) ? t.product.inStock : t.product.outOfStock}
+            <p className="font-mono text-xs text-muted-foreground">
+              SKU: {selectedVariant.sku}
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">{t.product.selectOptions}</p>
@@ -144,13 +157,17 @@ export function ProductPurchaseSection({
   );
 
   const actions = (
-    <ProductActions
-      productId={productId}
-      variantId={selectedVariant?.id}
-      inStock={canPurchase}
-      requiresSelection={requiresSelection}
-      layout={layout === "mobile-split" ? "sticky" : "inline"}
-    />
+    <>
+      <ProductActions
+        productId={productId}
+        variantId={selectedVariant?.id}
+        inStock={canPurchase}
+        soldOut={!stockStatus.inStock && !requiresSelection}
+        requiresSelection={requiresSelection}
+        layout={layout === "mobile-split" ? "sticky" : "inline"}
+      />
+      {layout === "inline" ? <ProductTrustModule /> : null}
+    </>
   );
 
   if (layout === "mobile-split") {
@@ -158,6 +175,7 @@ export function ProductPurchaseSection({
       <>
         <div className="space-y-5">{purchaseDetails}</div>
         {actions}
+        <ProductTrustModule className="mt-5" />
       </>
     );
   }

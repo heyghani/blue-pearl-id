@@ -32,7 +32,7 @@ function RecommendationCard({
         <div
           className={cn(
             "relative aspect-[5/4] overflow-hidden bg-muted",
-            !card.imageUrl && "bg-gradient-to-br from-stone-200/90 via-stone-100 to-amber-50",
+            !card.imageUrl && "bg-gradient-to-br from-stone-300/80 via-stone-100 to-emerald-50/60",
           )}
         >
           {card.imageUrl ? (
@@ -48,7 +48,7 @@ function RecommendationCard({
               <Sparkles className="h-8 w-8 text-foreground/15" strokeWidth={1.25} />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-3.5 sm:p-4">
             <h3 className="line-clamp-1 font-display text-base font-semibold tracking-tight text-white sm:text-[17px]">
               {card.title}

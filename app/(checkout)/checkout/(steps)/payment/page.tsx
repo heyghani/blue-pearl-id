@@ -28,7 +28,7 @@ export default async function CheckoutPaymentPage() {
   return (
     <div>
       <CheckoutSteps current="payment" />
-      <h1 className="text-2xl font-semibold tracking-tight">{t.checkout.paymentTitle}</h1>
+      <h1 className="font-display text-2xl font-semibold tracking-tight">{t.checkout.paymentTitle}</h1>
       <p className="mt-1 text-sm text-muted-foreground">{t.checkout.paymentLead}</p>
       <div className="mt-8">
         <PaymentForm

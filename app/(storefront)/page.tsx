@@ -80,7 +80,7 @@ export default async function HomePage() {
               <div className="mt-7 flex flex-wrap gap-3">
                 <Button
                   size="lg"
-                  className="h-12 rounded-full bg-white px-8 text-foreground shadow-lg hover:bg-white/90"
+                  className="h-12 rounded-md bg-white px-8 font-display text-sm font-semibold uppercase tracking-wide text-foreground shadow-lg hover:bg-white/90"
                   asChild
                 >
                   <Link href="/products">
@@ -91,7 +91,7 @@ export default async function HomePage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-12 rounded-full border-white/40 bg-white/10 px-8 text-white backdrop-blur hover:bg-white/20 hover:text-white"
+                  className="h-12 rounded-md border-white/40 bg-white/10 px-8 font-display text-sm font-semibold uppercase tracking-wide text-white backdrop-blur hover:bg-white/20 hover:text-white"
                   asChild
                 >
                   <Link href="/#recommendations">{t.home.viewFeatured}</Link>
@@ -125,7 +125,7 @@ export default async function HomePage() {
             <div className="relative flex flex-col gap-4 p-8 sm:flex-row sm:items-center sm:justify-between sm:p-10">
               <div className="max-w-xl">
                 <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
-                  Editorial
+                  {t.lookbook.eyebrow}
                 </p>
                 <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">
                   {t.home.lookbookTitle}

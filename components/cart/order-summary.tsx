@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { useTranslations } from "@/components/i18n/locale-provider";
+import { CheckoutSecureNotice } from "@/components/checkout/checkout-secure-notice";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { DutiesNotice } from "@/components/shared/duties-notice";
@@ -33,12 +34,12 @@ export function OrderSummary({
   return (
     <div
       className={cn(
-        isDrawer ? "space-y-3" : "space-y-4 rounded-lg border bg-card p-6",
+        isDrawer ? "space-y-3" : "space-y-4 rounded-xl border border-border/70 bg-card p-6 shadow-sm",
         className,
       )}
     >
       {!isDrawer ? (
-        <h2 className="text-lg font-semibold">{t.cart.orderSummary}</h2>
+        <h2 className="font-display text-lg font-semibold tracking-tight">{t.cart.orderSummary}</h2>
       ) : null}
 
       <div className={cn("space-y-2", isDrawer ? "text-sm" : "text-sm")}>
@@ -66,15 +67,21 @@ export function OrderSummary({
       ) : null}
 
       {showCheckout && cart.itemCount > 0 ? (
-        <Button
-          className={cn("w-full", isDrawer && "h-12 rounded-full text-sm font-semibold")}
-          size={isDrawer ? "default" : "lg"}
-          asChild
-        >
-          <Link href="/checkout" onClick={onCheckoutClick}>
-            {t.cart.proceedToCheckout}
-          </Link>
-        </Button>
+        <div className="space-y-2">
+          <Button
+            className={cn(
+              "w-full rounded-md font-display text-sm font-semibold uppercase tracking-wide",
+              isDrawer && "h-12",
+            )}
+            size={isDrawer ? "default" : "lg"}
+            asChild
+          >
+            <Link href="/checkout" onClick={onCheckoutClick}>
+              {t.cart.proceedToCheckout}
+            </Link>
+          </Button>
+          {!isDrawer ? <CheckoutSecureNotice /> : null}
+        </div>
       ) : null}
     </div>
   );

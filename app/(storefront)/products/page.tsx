@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { CatalogPagination } from "@/components/catalog/catalog-pagination";
 import { CatalogShell } from "@/components/catalog/catalog-shell";
+import { ProductGrid } from "@/components/catalog/product-grid";
 import { ProductList } from "@/components/catalog/product-list";
 import { parseCatalogParams, resolveCatalogTitle } from "@/lib/catalog";
 import {
@@ -17,7 +18,7 @@ import { getCatalogProducts, toProductCard } from "@/lib/products";
 
 export const metadata: Metadata = {
   title: "Shop",
-  description: "Browse luxury OEM handbags, footwear, and accessories.",
+  description: "Browse sneakers and streetwear — Jordan, New Balance, designer collabs, and more.",
 };
 
 export const revalidate = 60;
@@ -37,6 +38,9 @@ export default async function ProductsPage({
     brand: rawParams.brand,
     sort: rawParams.sort as string | undefined,
     featured: rawParams.featured as string | undefined,
+    minPrice: rawParams.minPrice as string | undefined,
+    maxPrice: rawParams.maxPrice as string | undefined,
+    view: rawParams.view as string | undefined,
   });
 
   const categorySlug = params.category?.[0];
@@ -51,6 +55,8 @@ export default async function ProductsPage({
         brand: params.brand,
         sort: params.sort,
         featured: params.featured,
+        minPrice: params.minPrice,
+        maxPrice: params.maxPrice,
       }),
       getActiveCategoryTree(),
       getActiveBrands(),
@@ -73,9 +79,15 @@ export default async function ProductsPage({
   if (params.sort && params.sort !== "newest") {
     clearFilterParams.set("sort", params.sort);
   }
+  if (params.view === "list") {
+    clearFilterParams.set("view", "list");
+  }
   const clearFiltersHref = clearFilterParams.toString()
     ? `/products?${clearFilterParams.toString()}`
     : "/products";
+
+  const ProductListing =
+    params.view === "list" ? ProductList : ProductGrid;
 
   return (
     <div className="mx-auto max-w-7xl px-2 pb-12 pt-3 sm:px-6 sm:py-8 lg:px-8">
@@ -88,7 +100,7 @@ export default async function ProductsPage({
         activeCategoryName={activeCategory?.name}
         activeBrandName={activeBrand?.name}
       >
-        <ProductList products={products} clearFiltersHref={clearFiltersHref} />
+        <ProductListing products={products} clearFiltersHref={clearFiltersHref} />
 
         <Suspense fallback={null}>
           <CatalogPagination
