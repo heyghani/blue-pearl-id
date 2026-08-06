@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 
 import { expandCategorySlugs } from "@/lib/categories";
@@ -16,6 +17,9 @@ export interface CatalogParams {
   sort?: ProductSort;
   featured?: boolean;
 }
+
+const CATALOG_REVALIDATE_SECONDS = 60;
+const PRODUCT_REVALIDATE_SECONDS = 30;
 
 const productInclude = {
   images: { orderBy: { sortOrder: "asc" as const }, take: 1 },
@@ -107,7 +111,19 @@ function buildWhere(params: CatalogParams, categorySlugs?: string[]): Prisma.Pro
   return where;
 }
 
-export async function getCatalogProducts(params: CatalogParams = {}) {
+function catalogCacheKey(params: CatalogParams): string {
+  return JSON.stringify({
+    page: params.page ?? 1,
+    limit: params.limit ?? 24,
+    search: params.search?.trim() || "",
+    category: params.category ?? null,
+    brand: params.brand ?? null,
+    sort: params.sort ?? "newest",
+    featured: Boolean(params.featured),
+  });
+}
+
+async function fetchCatalogProducts(params: CatalogParams) {
   const requestedPage = Math.max(1, params.page ?? 1);
   const limit = Math.min(48, Math.max(1, params.limit ?? 24));
 
@@ -157,12 +173,54 @@ export async function getCatalogProducts(params: CatalogParams = {}) {
   };
 }
 
+export async function getCatalogProducts(params: CatalogParams = {}) {
+  const key = catalogCacheKey(params);
+  return unstable_cache(
+    async () => fetchCatalogProducts(JSON.parse(key) as CatalogParams),
+    ["catalog-products", key],
+    { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["catalog-products"] },
+  )();
+}
+
+const fetchProductBySlug = unstable_cache(
+  async (slug: string) => {
+    return prisma.product.findFirst({
+      where: { slug, isActive: true, deletedAt: null },
+      include: productDetailInclude,
+    });
+  },
+  ["product-by-slug"],
+  { revalidate: PRODUCT_REVALIDATE_SECONDS, tags: ["products"] },
+);
+
 export const getProductBySlug = cache(async (slug: string) => {
-  return prisma.product.findFirst({
-    where: { slug, isActive: true, deletedAt: null },
-    include: productDetailInclude,
-  });
+  return fetchProductBySlug(slug);
 });
+
+const fetchRelatedProducts = unstable_cache(
+  async (categoryId: string, excludeSlug: string, limit: number) => {
+    return prisma.product.findMany({
+      where: {
+        categoryId,
+        isActive: true,
+        deletedAt: null,
+        slug: { not: excludeSlug },
+      },
+      include: {
+        images: { where: { isPrimary: true }, take: 1 },
+        inventory: true,
+        variants: {
+          where: { isActive: true },
+          select: { quantity: true, isActive: true },
+        },
+      },
+      take: limit,
+      orderBy: { isFeatured: "desc" },
+    });
+  },
+  ["related-products"],
+  { revalidate: PRODUCT_REVALIDATE_SECONDS, tags: ["products"] },
+);
 
 export async function getRelatedProducts(
   categoryId: string | null | undefined,
@@ -170,25 +228,7 @@ export async function getRelatedProducts(
   limit = 4,
 ) {
   if (!categoryId) return [];
-
-  return prisma.product.findMany({
-    where: {
-      categoryId,
-      isActive: true,
-      deletedAt: null,
-      slug: { not: excludeSlug },
-    },
-    include: {
-      images: { where: { isPrimary: true }, take: 1 },
-      inventory: true,
-      variants: {
-        where: { isActive: true },
-        select: { quantity: true, isActive: true },
-      },
-    },
-    take: limit,
-    orderBy: { isFeatured: "desc" },
-  });
+  return fetchRelatedProducts(categoryId, excludeSlug, limit);
 }
 
 export async function getAllProductSlugs() {
@@ -230,49 +270,57 @@ export type FeaturedCategoryRecommendation = {
 };
 
 export async function getFeaturedRecommendationsByCategory() {
-  const featured = await prisma.product.findMany({
-    where: { isActive: true, isFeatured: true, deletedAt: null },
-    select: {
-      images: { orderBy: { sortOrder: "asc" }, take: 1, select: { url: true } },
-      category: {
+  return unstable_cache(
+    async () => {
+      const featured = await prisma.product.findMany({
+        where: { isActive: true, isFeatured: true, deletedAt: null },
         select: {
-          id: true,
-          name: true,
-          slug: true,
-          description: true,
-          imageUrl: true,
-          sortOrder: true,
+          images: { orderBy: { sortOrder: "asc" }, take: 1, select: { url: true } },
+          category: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              description: true,
+              imageUrl: true,
+              sortOrder: true,
+            },
+          },
         },
-      },
-    },
-    orderBy: [{ category: { sortOrder: "asc" } }, { createdAt: "desc" }],
-  });
+        orderBy: [{ category: { sortOrder: "asc" } }, { createdAt: "desc" }],
+      });
 
-  const grouped = new Map<string, FeaturedCategoryRecommendation>();
+      const grouped = new Map<string, FeaturedCategoryRecommendation>();
 
-  for (const product of featured) {
-    if (!product.category) continue;
+      for (const product of featured) {
+        if (!product.category) continue;
 
-    const existing = grouped.get(product.category.id);
-    if (existing) {
-      existing.productCount += 1;
-      if (!existing.imageUrl && product.images[0]?.url) {
-        existing.imageUrl = product.images[0].url;
+        const existing = grouped.get(product.category.id);
+        if (existing) {
+          existing.productCount += 1;
+          if (!existing.imageUrl && product.images[0]?.url) {
+            existing.imageUrl = product.images[0].url;
+          }
+          continue;
+        }
+
+        grouped.set(product.category.id, {
+          slug: product.category.slug,
+          name: product.category.name,
+          description: product.category.description,
+          imageUrl: product.category.imageUrl ?? product.images[0]?.url ?? null,
+          productCount: 1,
+          sortOrder: product.category.sortOrder,
+        });
       }
-      continue;
-    }
 
-    grouped.set(product.category.id, {
-      slug: product.category.slug,
-      name: product.category.name,
-      description: product.category.description,
-      imageUrl: product.category.imageUrl ?? product.images[0]?.url ?? null,
-      productCount: 1,
-      sortOrder: product.category.sortOrder,
-    });
-  }
-
-  return [...grouped.values()].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+      return [...grouped.values()].sort(
+        (a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name),
+      );
+    },
+    ["featured-recommendations-by-category"],
+    { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["featured-recommendations"] },
+  )();
 }
 
 export async function getBestSellerProducts(limit = 8) {

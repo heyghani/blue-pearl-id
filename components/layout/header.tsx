@@ -6,7 +6,7 @@ import { UserRole } from "@prisma/client";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { CartButton } from "@/components/cart/cart-button";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
-import { MobileNav } from "@/components/layout/mobile-nav";
+import { MobileNavLazy } from "@/components/layout/mobile-nav-lazy";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
 import { Logo } from "@/components/brand/logo";
@@ -36,7 +36,7 @@ export async function Header() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
       <div className="relative mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:h-[4.25rem] sm:px-6 lg:px-8">
         <div className="flex items-center gap-2 sm:gap-3">
-          <MobileNav isAdmin={isAdmin} />
+          <MobileNavLazy isAdmin={isAdmin} />
           <Logo variant="lockup" priority />
         </div>
 

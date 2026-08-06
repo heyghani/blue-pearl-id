@@ -32,6 +32,8 @@ const nextConfig: NextConfig = {
   },
   images: {
     // Pro plan: Image Optimization is pay-as-you-go (no hard Hobby quota cutoff).
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 2678400,
     remotePatterns: [
       {
         protocol: "https",

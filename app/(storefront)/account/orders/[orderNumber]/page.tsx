@@ -16,6 +16,8 @@ import {
 } from "@/lib/addresses";
 import { formatPhoneDisplay, getCountryName } from "@/lib/phone";
 import { getSession } from "@/lib/auth";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 import { resolveOrderLineImageUrl } from "@/lib/orders/line-item";
 import { getUserOrder } from "@/lib/services/account.service";
 
@@ -24,7 +26,8 @@ type Props = {
 };
 
 export default async function AccountOrderDetailPage({ params }: Props) {
-  const session = await getSession();
+  const [session, locale] = await Promise.all([getSession(), getLocale()]);
+  const t = getDictionary(locale);
   const { orderNumber } = await params;
 
   if (!session?.user?.id) {
@@ -107,7 +110,7 @@ export default async function AccountOrderDetailPage({ params }: Props) {
           <Price amount={order.total.toString()} />
         </div>
 
-        <DutiesNotice className="mt-4" />
+        <DutiesNotice message={t.common.taxNotice} className="mt-4" />
       </div>
 
       <div className="rounded-lg border bg-card p-5">

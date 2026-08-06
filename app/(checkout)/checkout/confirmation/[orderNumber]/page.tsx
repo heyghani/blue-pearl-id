@@ -118,7 +118,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
             <Price amount={order.total.toString()} />
           </div>
 
-          <DutiesNotice className="mt-4" />
+          <DutiesNotice message={t.common.taxNotice} className="mt-4" />
         </div>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">

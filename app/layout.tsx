@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { LocaleProvider } from "@/components/i18n/locale-provider";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants";
@@ -73,6 +75,8 @@ export default async function RootLayout({
         <LocaleProvider locale={locale} dictionary={dictionary}>
           {children}
         </LocaleProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

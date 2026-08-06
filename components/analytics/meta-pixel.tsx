@@ -6,13 +6,38 @@ import { useEffect } from "react";
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim();
 
+function whenFbqReady(callback: () => void, timeoutMs = 10_000) {
+  if (typeof window === "undefined") return () => {};
+
+  if (typeof window.fbq === "function") {
+    callback();
+    return () => {};
+  }
+
+  const started = Date.now();
+  const id = window.setInterval(() => {
+    if (typeof window.fbq === "function") {
+      window.clearInterval(id);
+      callback();
+      return;
+    }
+    if (Date.now() - started >= timeoutMs) {
+      window.clearInterval(id);
+    }
+  }, 200);
+
+  return () => window.clearInterval(id);
+}
+
 function MetaPixelTracker() {
   const pathname = usePathname();
 
   useEffect(() => {
     if (!PIXEL_ID || !pathname) return;
 
-    window.fbq?.("track", "PageView");
+    return whenFbqReady(() => {
+      window.fbq?.("track", "PageView");
+    });
   }, [pathname]);
 
   return null;
@@ -25,7 +50,7 @@ export function MetaPixel() {
 
   return (
     <>
-      <Script id="meta-pixel" strategy="afterInteractive">
+      <Script id="meta-pixel" strategy="lazyOnload">
         {`
           !function(f,b,e,v,n,t,s)
           {if(f.fbq)return;n=f.fbq=function(){n.callMethod?

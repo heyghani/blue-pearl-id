@@ -1,14 +1,19 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 
-import { CartDrawer } from "@/components/cart/cart-drawer";
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/hooks/use-cart";
 import { cn } from "@/lib/utils";
+
+const CartDrawer = dynamic(
+  () => import("@/components/cart/cart-drawer").then((mod) => mod.CartDrawer),
+  { ssr: false },
+);
 
 export function CartButton({
   itemCount: initialCount,
@@ -19,6 +24,7 @@ export function CartButton({
 }) {
   const t = useTranslations();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerReady, setDrawerReady] = useState(false);
   const { cart, itemCount, isLoading, refresh } = useCart(initialCount);
   const cartAria = t.cart.cartAria.replace("{count}", String(itemCount));
 
@@ -29,6 +35,7 @@ export function CartButton({
         size="icon"
         className={cn("relative", className)}
         onClick={() => {
+          setDrawerReady(true);
           setDrawerOpen(true);
           void refresh();
         }}
@@ -42,13 +49,15 @@ export function CartButton({
         )}
       </Button>
 
-      <CartDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        cart={cart}
-        isLoading={isLoading}
-        onRefresh={refresh}
-      />
+      {drawerReady ? (
+        <CartDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          cart={cart}
+          isLoading={isLoading}
+          onRefresh={refresh}
+        />
+      ) : null}
     </>
   );
 }

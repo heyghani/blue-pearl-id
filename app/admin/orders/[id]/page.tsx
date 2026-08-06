@@ -19,6 +19,8 @@ import {
 } from "@/lib/addresses";
 import { resolveOrderLineImageUrl } from "@/lib/orders/line-item";
 import { formatPhoneDisplay, getCountryName } from "@/lib/phone";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 import { getAdminOrder } from "@/lib/services/admin/order.service";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -29,7 +31,8 @@ type Props = {
 
 export default async function AdminOrderDetailPage({ params }: Props) {
   const { id } = await params;
-  const order = await getAdminOrder(id);
+  const [order, locale] = await Promise.all([getAdminOrder(id), getLocale()]);
+  const t = getDictionary(locale);
 
   if (!order) {
     notFound();
@@ -108,7 +111,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                 <Price amount={order.total.toString()} />
               </div>
             </div>
-            <DutiesNotice className="mt-4" />
+            <DutiesNotice message={t.common.taxNotice} className="mt-4" />
           </section>
 
           <section className="rounded-lg border p-4">

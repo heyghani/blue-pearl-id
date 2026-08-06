@@ -1,13 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowRight } from "lucide-react";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { HomeCategorySection } from "@/components/home/home-category-section";
 import { HomeRecommendationsSection } from "@/components/home/home-recommendation-card";
@@ -15,6 +10,10 @@ import { getActiveCategoryTree, getHomepageCategoryItems } from "@/lib/categorie
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
 import { getFeaturedRecommendationsByCategory } from "@/lib/products";
+
+const HomeFaq = dynamic(
+  () => import("@/components/home/home-faq").then((mod) => mod.HomeFaq),
+);
 
 export const revalidate = 60;
 
@@ -162,28 +161,7 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      <section id="faq" className="border-t border-border/60 py-14 sm:py-20">
-        <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-8 text-center sm:mb-10">
-            <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-              {t.home.faqTitle}
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">{t.home.faqSubtitle}</p>
-          </div>
-          <Accordion type="single" collapsible className="surface-card divide-y px-1">
-            {t.faqs.map((faq, index) => (
-              <AccordionItem key={faq.question} value={`item-${index}`} className="border-0 px-4">
-                <AccordionTrigger className="text-left text-sm font-medium hover:no-underline">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
-      </section>
+      <HomeFaq title={t.home.faqTitle} subtitle={t.home.faqSubtitle} faqs={t.faqs} />
     </>
   );
 }

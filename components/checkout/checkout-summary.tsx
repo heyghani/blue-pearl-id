@@ -161,7 +161,7 @@ export async function CheckoutSummary({
         </>
       )}
 
-      <DutiesNotice className="mt-4" />
+      <DutiesNotice message={t.common.taxNotice} className="mt-4" />
     </div>
   );
 }

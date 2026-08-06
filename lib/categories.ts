@@ -1,4 +1,8 @@
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@/lib/db";
+
+const CATEGORY_REVALIDATE_SECONDS = 60;
 
 export async function getActiveCategories() {
   return prisma.category.findMany({
@@ -17,14 +21,25 @@ export async function getActiveCategories() {
 }
 
 export async function getActiveCategoryTree() {
-  const categories = await prisma.category.findMany({
-    where: { isActive: true },
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    include: {
-      children: {
+  return unstable_cache(
+    async () => {
+      const categories = await prisma.category.findMany({
         where: { isActive: true },
         orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
         include: {
+          children: {
+            where: { isActive: true },
+            orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+            include: {
+              _count: {
+                select: {
+                  products: {
+                    where: { isActive: true, deletedAt: null },
+                  },
+                },
+              },
+            },
+          },
           _count: {
             select: {
               products: {
@@ -33,18 +48,13 @@ export async function getActiveCategoryTree() {
             },
           },
         },
-      },
-      _count: {
-        select: {
-          products: {
-            where: { isActive: true, deletedAt: null },
-          },
-        },
-      },
-    },
-  });
+      });
 
-  return categories.filter((category) => !category.parentId);
+      return categories.filter((category) => !category.parentId);
+    },
+    ["active-category-tree"],
+    { revalidate: CATEGORY_REVALIDATE_SECONDS, tags: ["categories"] },
+  )();
 }
 
 export type HomepageCategoryItem = {
@@ -135,19 +145,25 @@ export async function expandCategorySlugs(slugs: string[]): Promise<string[] | n
 }
 
 export async function getActiveBrands() {
-  return prisma.brand.findMany({
-    where: { isActive: true },
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    include: {
-      _count: {
-        select: {
-          products: {
-            where: { isActive: true, deletedAt: null },
+  return unstable_cache(
+    async () => {
+      return prisma.brand.findMany({
+        where: { isActive: true },
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        include: {
+          _count: {
+            select: {
+              products: {
+                where: { isActive: true, deletedAt: null },
+              },
+            },
           },
         },
-      },
+      });
     },
-  });
+    ["active-brands"],
+    { revalidate: CATEGORY_REVALIDATE_SECONDS, tags: ["brands"] },
+  )();
 }
 
 export async function getBrandBySlug(slug: string) {

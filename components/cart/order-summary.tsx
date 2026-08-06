@@ -61,7 +61,7 @@ export function OrderSummary({
             <span>{t.cart.estimatedTotal}</span>
             <Price amount={cart.subtotal} />
           </div>
-          <DutiesNotice />
+          <DutiesNotice message={t.common.taxNotice} />
         </>
       ) : null}
 
