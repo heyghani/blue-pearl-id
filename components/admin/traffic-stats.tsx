@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 
 import { StatCard } from "@/components/admin/stat-card";
+import { cn } from "@/lib/utils";
 
 type TrafficStats = {
   updatedAt: string;
@@ -33,11 +34,11 @@ type TrafficStats = {
 const POLL_INTERVAL_MS = 30_000;
 
 function formatCount(value: number) {
-  return new Intl.NumberFormat("id-ID").format(value);
+  return new Intl.NumberFormat("en-US").format(value);
 }
 
-function formatTimeLabel(iso: string, timeZone: string) {
-  return new Date(iso).toLocaleTimeString("id-ID", {
+function formatClock(iso: string, timeZone: string) {
+  return new Date(iso).toLocaleTimeString("en-GB", {
     timeZone,
     hour: "2-digit",
     minute: "2-digit",
@@ -69,7 +70,7 @@ export function TrafficStats() {
         }
       } catch {
         if (active) {
-          setError("Unable to load live traffic.");
+          setError("Unable to load traffic.");
         }
       }
     }
@@ -86,36 +87,18 @@ export function TrafficStats() {
   }, []);
 
   const timezone = stats?.timezone ?? "Asia/Jakarta";
-  const maxBucketViews = Math.max(
-    ...(stats?.minuteBuckets.map((bucket) => bucket.views) ?? [1]),
+  const maxTopViews = Math.max(
+    ...(stats?.topPagesToday.map((page) => page.views) ?? [1]),
     1,
   );
-  const firstBucket = stats?.minuteBuckets[0];
-  const lastBucket = stats?.minuteBuckets.at(-1);
-  const hasAnyHourlyViews =
-    stats?.minuteBuckets.some((bucket) => bucket.views > 0) ?? false;
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h2 className="font-medium">Storefront traffic</h2>
-          <p className="text-sm text-muted-foreground">
-            First-party page views (exact counts, {timezone}). Refreshes every
-            30 seconds.
-          </p>
-        </div>
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 className="font-medium">Storefront traffic</h2>
         {stats ? (
           <p className="text-xs text-muted-foreground">
-            Updated{" "}
-            {new Date(stats.updatedAt).toLocaleTimeString("id-ID", {
-              timeZone: timezone,
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-              hour12: false,
-            })}{" "}
-            WIB
+            Updated {formatClock(stats.updatedAt, timezone)}
           </p>
         ) : null}
       </div>
@@ -124,90 +107,75 @@ export function TrafficStats() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
-          label="Live (5 menit)"
+          label="Live · 5 min"
           value={stats ? formatCount(stats.recentViews) : "—"}
-          hint="Aktivitas storefront terkini"
         />
         <StatCard
-          label="Hari ini (WIB)"
+          label="Today"
           value={stats ? formatCount(stats.todayViews) : "—"}
-          hint="00:00–sekarang WIB"
         />
         <StatCard
-          label="30 hari terakhir"
+          label="Last 30 days"
           value={stats ? formatCount(stats.viewsLast30Days) : "—"}
-          hint="Rolling 30 days"
         />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
-          <div className="border-b px-4 py-3">
-            <h3 className="text-sm font-medium">60 menit terakhir</h3>
-            <p className="text-xs text-muted-foreground">
-              Page views per menit ({timezone})
-            </p>
-          </div>
-          <div className="p-4">
+          <div className="flex items-center justify-between border-b px-4 py-3">
+            <h3 className="text-sm font-medium">Last 60 minutes</h3>
             {stats ? (
-              hasAnyHourlyViews ? (
-                <div className="space-y-2">
-                  <div className="flex h-28 items-end gap-1">
-                    {stats.minuteBuckets.map((bucket) => (
-                      <div
-                        key={bucket.minute}
-                        className="flex-1 rounded-sm bg-primary/80"
-                        style={{
-                          height: `${Math.max(
-                            8,
-                            (bucket.views / maxBucketViews) * 100,
-                          )}%`,
-                          opacity: bucket.views > 0 ? 1 : 0.2,
-                        }}
-                        title={`${formatTimeLabel(bucket.minute, timezone)}: ${formatCount(bucket.views)} views`}
-                      />
-                    ))}
-                  </div>
-                  {firstBucket && lastBucket ? (
-                    <div className="flex justify-between text-[11px] text-muted-foreground">
-                      <span>{formatTimeLabel(firstBucket.minute, timezone)}</span>
-                      <span>{formatTimeLabel(lastBucket.minute, timezone)}</span>
-                    </div>
-                  ) : null}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Belum ada page view dalam 60 menit terakhir.
-                </p>
-              )
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {formatCount(
+                  stats.minuteBuckets.reduce((sum, b) => sum + b.views, 0),
+                )}{" "}
+                views
+              </span>
+            ) : null}
+          </div>
+          <div className="p-4 pt-3">
+            {!stats ? (
+              <div className="flex h-40 items-center justify-center">
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Loading chart…</p>
+              <MinuteViewsChart
+                buckets={stats.minuteBuckets}
+                timeZone={timezone}
+              />
             )}
           </div>
         </section>
 
         <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
           <div className="border-b px-4 py-3">
-            <h3 className="text-sm font-medium">Halaman teratas hari ini</h3>
-            <p className="text-xs text-muted-foreground">Sejak 00:00 WIB</p>
+            <h3 className="text-sm font-medium">Top pages today</h3>
           </div>
           <div className="divide-y">
             {!stats ? (
-              <p className="p-4 text-sm text-muted-foreground">Loading pages…</p>
+              <p className="p-4 text-sm text-muted-foreground">Loading…</p>
             ) : stats.topPagesToday.length === 0 ? (
-              <p className="p-4 text-sm text-muted-foreground">
-                Belum ada page view hari ini.
-              </p>
+              <p className="p-4 text-sm text-muted-foreground">No views yet.</p>
             ) : (
               stats.topPagesToday.map((page) => (
                 <div
                   key={page.path}
-                  className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
+                  className="relative flex items-center justify-between gap-4 px-4 py-2.5 text-sm"
                 >
-                  <span className="truncate font-mono text-xs" title={page.path}>
-                    {page.path === "/" ? "/ (home)" : page.path}
+                  <div
+                    className="absolute inset-y-0 left-0 bg-muted/60"
+                    style={{
+                      width: `${(page.views / maxTopViews) * 100}%`,
+                    }}
+                    aria-hidden
+                  />
+                  <span
+                    className="relative truncate font-mono text-xs"
+                    title={page.path}
+                  >
+                    {page.path === "/" ? "/" : page.path}
                   </span>
-                  <span className="shrink-0 tabular-nums text-muted-foreground">
+                  <span className="relative shrink-0 tabular-nums text-muted-foreground">
                     {formatCount(page.views)}
                   </span>
                 </div>
@@ -219,6 +187,212 @@ export function TrafficStats() {
 
       <Ga4TrafficPanel ga4={stats?.ga4} />
     </section>
+  );
+}
+
+function MinuteViewsChart({
+  buckets,
+  timeZone,
+}: {
+  buckets: { minute: string; views: number }[];
+  timeZone: string;
+}) {
+  const gradientId = useId();
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  const maxViews = Math.max(...buckets.map((b) => b.views), 0);
+  const hasViews = maxViews > 0;
+
+  const width = 600;
+  const height = 160;
+  const padL = 28;
+  const padR = 8;
+  const padT = 12;
+  const padB = 24;
+  const plotW = width - padL - padR;
+  const plotH = height - padT - padB;
+
+  const points = useMemo(() => {
+    if (buckets.length === 0) return [];
+    return buckets.map((bucket, index) => {
+      const x =
+        padL +
+        (buckets.length === 1 ? plotW / 2 : (index / (buckets.length - 1)) * plotW);
+      const y =
+        padT +
+        (maxViews === 0 ? plotH : plotH - (bucket.views / maxViews) * plotH);
+      return { x, y, ...bucket };
+    });
+  }, [buckets, maxViews, padL, padT, plotH, plotW]);
+
+  const areaPath = useMemo(() => {
+    if (points.length === 0) return "";
+    const line = points
+      .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
+      .join(" ");
+    const last = points[points.length - 1];
+    const first = points[0];
+    return `${line} L ${last.x.toFixed(2)} ${(padT + plotH).toFixed(2)} L ${first.x.toFixed(2)} ${(padT + plotH).toFixed(2)} Z`;
+  }, [points, padT, plotH]);
+
+  const linePath = useMemo(() => {
+    if (points.length === 0) return "";
+    return points
+      .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
+      .join(" ");
+  }, [points]);
+
+  const yTicks = useMemo(() => {
+    if (maxViews <= 0) return [0];
+    if (maxViews === 1) return [0, 1];
+    const mid = Math.round(maxViews / 2);
+    return [0, mid, maxViews].filter(
+      (v, i, arr) => arr.indexOf(v) === i,
+    );
+  }, [maxViews]);
+
+  const first = buckets[0];
+  const last = buckets.at(-1);
+  const active = hovered !== null ? points[hovered] : null;
+
+  return (
+    <div className="relative">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="h-40 w-full"
+        role="img"
+        aria-label="Page views over the last 60 minutes"
+        onMouseLeave={() => setHovered(null)}
+      >
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="currentColor" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+
+        {/* Grid */}
+        {yTicks.map((tick) => {
+          const y =
+            padT + (maxViews === 0 ? plotH : plotH - (tick / maxViews) * plotH);
+          return (
+            <g key={tick}>
+              <line
+                x1={padL}
+                x2={width - padR}
+                y1={y}
+                y2={y}
+                className="stroke-border"
+                strokeWidth={1}
+                strokeDasharray={tick === 0 ? undefined : "3 4"}
+              />
+              <text
+                x={padL - 6}
+                y={y + 3}
+                textAnchor="end"
+                className="fill-muted-foreground"
+                fontSize={10}
+              >
+                {tick}
+              </text>
+            </g>
+          );
+        })}
+
+        {hasViews ? (
+          <>
+            <path d={areaPath} fill={`url(#${gradientId})`} className="text-foreground" />
+            <path
+              d={linePath}
+              fill="none"
+              className="stroke-foreground"
+              strokeWidth={2}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </>
+        ) : null}
+
+        {/* Hover hit targets */}
+        {points.map((point, index) => (
+          <rect
+            key={point.minute}
+            x={point.x - plotW / buckets.length / 2}
+            y={padT}
+            width={Math.max(plotW / buckets.length, 4)}
+            height={plotH}
+            fill="transparent"
+            onMouseEnter={() => setHovered(index)}
+          />
+        ))}
+
+        {active && active.views > 0 ? (
+          <>
+            <line
+              x1={active.x}
+              x2={active.x}
+              y1={padT}
+              y2={padT + plotH}
+              className="stroke-foreground/25"
+              strokeWidth={1}
+            />
+            <circle
+              cx={active.x}
+              cy={active.y}
+              r={4}
+              className="fill-background stroke-foreground"
+              strokeWidth={2}
+            />
+          </>
+        ) : null}
+
+        {first && last ? (
+          <>
+            <text
+              x={padL}
+              y={height - 6}
+              className="fill-muted-foreground"
+              fontSize={10}
+            >
+              {formatClock(first.minute, timeZone)}
+            </text>
+            <text
+              x={width - padR}
+              y={height - 6}
+              textAnchor="end"
+              className="fill-muted-foreground"
+              fontSize={10}
+            >
+              {formatClock(last.minute, timeZone)}
+            </text>
+          </>
+        ) : null}
+      </svg>
+
+      {!hasViews ? (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">No activity in the last hour</p>
+        </div>
+      ) : null}
+
+      {active ? (
+        <div
+          className={cn(
+            "pointer-events-none absolute top-2 rounded-md border bg-background/95 px-2 py-1 text-xs shadow-sm backdrop-blur-sm",
+            active.x / width > 0.7 ? "right-3" : "left-10",
+          )}
+        >
+          <span className="tabular-nums text-muted-foreground">
+            {formatClock(active.minute, timeZone)}
+          </span>
+          <span className="mx-1.5 text-border">·</span>
+          <span className="font-medium tabular-nums">
+            {formatCount(active.views)}{" "}
+            {active.views === 1 ? "view" : "views"}
+          </span>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -236,17 +410,13 @@ function Ga4TrafficPanel({
       <section className="overflow-hidden rounded-xl border border-dashed bg-card shadow-sm">
         <div className="border-b px-4 py-3">
           <h3 className="text-sm font-medium">Google Analytics</h3>
-          <p className="text-xs text-muted-foreground">
-            Sessions &amp; active users — separate from first-party page views
-            above.
-          </p>
         </div>
         <p className="p-4 text-sm text-muted-foreground">
-          Add <code className="text-xs">NEXT_PUBLIC_GA_ID</code> for storefront
-          tracking. Optional: set <code className="text-xs">GA4_PROPERTY_ID</code>
-          , <code className="text-xs">GA4_CLIENT_EMAIL</code>, and{" "}
-          <code className="text-xs">GA4_PRIVATE_KEY</code> to show GA4 summaries
-          here.
+          Add <code className="text-xs">NEXT_PUBLIC_GA_ID</code> to enable. Set{" "}
+          <code className="text-xs">GA4_PROPERTY_ID</code>,{" "}
+          <code className="text-xs">GA4_CLIENT_EMAIL</code>, and{" "}
+          <code className="text-xs">GA4_PRIVATE_KEY</code> for dashboard
+          summaries.
         </p>
       </section>
     );
@@ -267,46 +437,35 @@ function Ga4TrafficPanel({
     <section className="space-y-4 overflow-hidden rounded-xl border bg-card shadow-sm">
       <div className="border-b px-4 py-3">
         <h3 className="text-sm font-medium">Google Analytics</h3>
-        <p className="text-xs text-muted-foreground">
-          Sessions &amp; active users from GA4 — not the same as first-party page
-          views above. Realtime refreshes about every minute; daily sessions can
-          lag by several hours.
-        </p>
       </div>
 
       <div className="grid gap-4 px-4 pb-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Active users now"
           value={formatCount(ga4.realtimeActiveUsers)}
-          hint="Matches GA4 Realtime"
         />
         <StatCard
-          label="US active users now"
+          label="US active now"
           value={formatCount(ga4.usActiveUsersNow)}
-          hint="Realtime, United States"
         />
         <StatCard
           label="Sessions today"
           value={formatCount(ga4.todaySessions)}
-          hint="Daily report — may show 0 early in the day"
         />
         <StatCard
           label="US sessions today"
           value={formatCount(ga4.usSessionsToday)}
-          hint="Daily report — updates later"
         />
       </div>
 
       <div className="grid gap-6 border-t lg:grid-cols-2">
         <section>
           <div className="border-b px-4 py-3">
-            <h4 className="text-sm font-medium">Active users by country (now)</h4>
+            <h4 className="text-sm font-medium">By country</h4>
           </div>
           <div className="divide-y">
             {ga4.topCountriesNow.length === 0 ? (
-              <p className="p-4 text-sm text-muted-foreground">
-                No active users right now.
-              </p>
+              <p className="p-4 text-sm text-muted-foreground">No active users.</p>
             ) : (
               ga4.topCountriesNow.map((row) => (
                 <div
@@ -315,7 +474,7 @@ function Ga4TrafficPanel({
                 >
                   <span className="truncate">{row.country}</span>
                   <span className="shrink-0 tabular-nums text-muted-foreground">
-                    {formatCount(row.activeUsers)} active
+                    {formatCount(row.activeUsers)}
                   </span>
                 </div>
               ))
@@ -325,14 +484,11 @@ function Ga4TrafficPanel({
 
         <section>
           <div className="border-b px-4 py-3">
-            <h4 className="text-sm font-medium">Top traffic sources (today)</h4>
+            <h4 className="text-sm font-medium">Top sources</h4>
           </div>
           <div className="divide-y">
             {ga4.topSources.length === 0 ? (
-              <p className="p-4 text-sm text-muted-foreground">
-                Daily sources appear after GA4 finishes processing today&apos;s
-                data.
-              </p>
+              <p className="p-4 text-sm text-muted-foreground">No data yet.</p>
             ) : (
               ga4.topSources.map((source) => (
                 <div
@@ -341,7 +497,7 @@ function Ga4TrafficPanel({
                 >
                   <span className="truncate">{source.source}</span>
                   <span className="shrink-0 tabular-nums text-muted-foreground">
-                    {formatCount(source.sessions)} sessions
+                    {formatCount(source.sessions)}
                   </span>
                 </div>
               ))
