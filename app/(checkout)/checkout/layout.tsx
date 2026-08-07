@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { Logo } from "@/components/brand/logo";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
@@ -14,6 +15,7 @@ export default async function CheckoutLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      <PageViewTracker />
       <header className="border-b border-border/60 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Logo variant="lockup" />

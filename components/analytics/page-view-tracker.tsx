@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
-const DEBOUNCE_MS = 60_000;
+const DEBOUNCE_MS = 3_000;
 
 export function PageViewTracker() {
   const pathname = usePathname();

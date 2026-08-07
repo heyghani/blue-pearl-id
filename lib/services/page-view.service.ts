@@ -7,10 +7,13 @@ const TRACKABLE_PREFIXES = [
   "/checkout",
   "/account",
   "/lookbook",
+  "/legal",
+  "/payment",
 ];
 
-/** Record ~1 in 4 views to cut write amplification while keeping relative trends. */
-const SAMPLE_RATE = 0.25;
+const TIMEZONE = "Asia/Jakarta";
+const RETENTION_DAYS = 35;
+const STATS_WINDOW_DAYS = 30;
 
 function isTrackablePath(path: string) {
   if (path.startsWith("/admin") || path.startsWith("/api")) {
@@ -22,12 +25,50 @@ function isTrackablePath(path: string) {
   );
 }
 
-export async function recordPageView(path: string, referrer?: string | null) {
-  if (!isTrackablePath(path)) {
-    return;
+/** Start of the current calendar day in Asia/Jakarta, as a UTC Date. */
+function startOfTodayInTimeZone(timeZone: string, now = new Date()): Date {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+
+  const year = Number(parts.find((p) => p.type === "year")?.value);
+  const month = Number(parts.find((p) => p.type === "month")?.value);
+  const day = Number(parts.find((p) => p.type === "day")?.value);
+
+  // Interpret Y-M-D 00:00 in the target zone via a temporary UTC guess + offset correction.
+  const utcGuess = Date.UTC(year, month - 1, day, 0, 0, 0, 0);
+  const offsetMinutes = getTimeZoneOffsetMinutes(timeZone, new Date(utcGuess));
+  return new Date(utcGuess - offsetMinutes * 60_000);
+}
+
+function getTimeZoneOffsetMinutes(timeZone: string, date: Date): number {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    timeZoneName: "shortOffset",
+    hour: "2-digit",
+    hourCycle: "h23",
+  });
+  const tzName = formatter
+    .formatToParts(date)
+    .find((p) => p.type === "timeZoneName")?.value;
+
+  // e.g. "GMT+7", "GMT+07:00", "GMT-5:30"
+  const match = tzName?.match(/GMT([+-])(\d{1,2})(?::?(\d{2}))?/i);
+  if (!match) {
+    return 0;
   }
 
-  if (Math.random() > SAMPLE_RATE) {
+  const sign = match[1] === "-" ? -1 : 1;
+  const hours = Number(match[2]);
+  const minutes = Number(match[3] ?? "0");
+  return sign * (hours * 60 + minutes);
+}
+
+export async function recordPageView(path: string, referrer?: string | null) {
+  if (!isTrackablePath(path)) {
     return;
   }
 
@@ -39,18 +80,35 @@ export async function recordPageView(path: string, referrer?: string | null) {
   });
 }
 
+async function pruneOldPageViews(now: Date) {
+  const cutoff = new Date(now.getTime() - RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  try {
+    await prisma.pageView.deleteMany({
+      where: { createdAt: { lt: cutoff } },
+    });
+  } catch {
+    // Best-effort retention; stats must still return.
+  }
+}
+
 export async function getPageViewTrafficStats() {
   const now = new Date();
   const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-  const startOfDay = new Date(now);
-  startOfDay.setHours(0, 0, 0, 0);
+  const startOfDay = startOfTodayInTimeZone(TIMEZONE, now);
+  const thirtyDaysAgo = new Date(
+    now.getTime() - STATS_WINDOW_DAYS * 24 * 60 * 60 * 1000,
+  );
 
-  const [recentViews, hourlyBuckets, todayViews, topPagesToday] = await Promise.all([
-    prisma.pageView.count({
-      where: { createdAt: { gte: fiveMinutesAgo } },
-    }),
-    prisma.$queryRaw<Array<{ minute: Date; views: bigint }>>`
+  // Soft retention — do not block stats on prune latency.
+  void pruneOldPageViews(now);
+
+  const [recentViews, hourlyBuckets, todayViews, viewsLast30Days, topPagesToday] =
+    await Promise.all([
+      prisma.pageView.count({
+        where: { createdAt: { gte: fiveMinutesAgo } },
+      }),
+      prisma.$queryRaw<Array<{ minute: Date; views: bigint }>>`
       SELECT date_trunc('minute', "createdAt") AS minute,
              COUNT(*)::bigint AS views
       FROM page_views
@@ -58,17 +116,20 @@ export async function getPageViewTrafficStats() {
       GROUP BY 1
       ORDER BY 1 ASC
     `,
-    prisma.pageView.count({
-      where: { createdAt: { gte: startOfDay } },
-    }),
-    prisma.pageView.groupBy({
-      by: ["path"],
-      where: { createdAt: { gte: startOfDay } },
-      _count: { path: true },
-      orderBy: { _count: { path: "desc" } },
-      take: 8,
-    }),
-  ]);
+      prisma.pageView.count({
+        where: { createdAt: { gte: startOfDay } },
+      }),
+      prisma.pageView.count({
+        where: { createdAt: { gte: thirtyDaysAgo } },
+      }),
+      prisma.pageView.groupBy({
+        by: ["path"],
+        where: { createdAt: { gte: startOfDay } },
+        _count: { path: true },
+        orderBy: { _count: { path: "desc" } },
+        take: 8,
+      }),
+    ]);
 
   const viewsByMinute = new Map(
     hourlyBuckets.map((bucket) => [
@@ -83,19 +144,20 @@ export async function getPageViewTrafficStats() {
 
     return {
       minute: bucketStart.toISOString(),
-      // Scale sampled writes back to approximate full traffic.
-      views: Math.round((viewsByMinute.get(bucketStart.getTime()) ?? 0) / SAMPLE_RATE),
+      views: viewsByMinute.get(bucketStart.getTime()) ?? 0,
     };
   });
 
   return {
     updatedAt: now.toISOString(),
-    recentViews: Math.round(recentViews / SAMPLE_RATE),
-    todayViews: Math.round(todayViews / SAMPLE_RATE),
+    timezone: TIMEZONE,
+    recentViews,
+    todayViews,
+    viewsLast30Days,
     minuteBuckets,
     topPagesToday: topPagesToday.map((item) => ({
       path: item.path,
-      views: Math.round(item._count.path / SAMPLE_RATE),
+      views: item._count.path,
     })),
   };
 }

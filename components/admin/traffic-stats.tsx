@@ -6,8 +6,10 @@ import { StatCard } from "@/components/admin/stat-card";
 
 type TrafficStats = {
   updatedAt: string;
+  timezone: string;
   recentViews: number;
   todayViews: number;
+  viewsLast30Days: number;
   minuteBuckets: { minute: string; views: number }[];
   topPagesToday: { path: string; views: number }[];
   ga4?:
@@ -29,6 +31,19 @@ type TrafficStats = {
 };
 
 const POLL_INTERVAL_MS = 30_000;
+
+function formatCount(value: number) {
+  return new Intl.NumberFormat("id-ID").format(value);
+}
+
+function formatTimeLabel(iso: string, timeZone: string) {
+  return new Date(iso).toLocaleTimeString("id-ID", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
 
 export function TrafficStats() {
   const [stats, setStats] = useState<TrafficStats | null>(null);
@@ -70,7 +85,15 @@ export function TrafficStats() {
     };
   }, []);
 
-  const maxBucketViews = Math.max(...(stats?.minuteBuckets.map((bucket) => bucket.views) ?? [1]), 1);
+  const timezone = stats?.timezone ?? "Asia/Jakarta";
+  const maxBucketViews = Math.max(
+    ...(stats?.minuteBuckets.map((bucket) => bucket.views) ?? [1]),
+    1,
+  );
+  const firstBucket = stats?.minuteBuckets[0];
+  const lastBucket = stats?.minuteBuckets.at(-1);
+  const hasAnyHourlyViews =
+    stats?.minuteBuckets.some((bucket) => bucket.views > 0) ?? false;
 
   return (
     <section className="space-y-4">
@@ -78,51 +101,85 @@ export function TrafficStats() {
         <div>
           <h2 className="font-medium">Storefront traffic</h2>
           <p className="text-sm text-muted-foreground">
-            Live page views refresh every 30 seconds.
+            First-party page views (exact counts, {timezone}). Refreshes every
+            30 seconds.
           </p>
         </div>
         {stats ? (
           <p className="text-xs text-muted-foreground">
-            Updated {new Date(stats.updatedAt).toLocaleTimeString()}
+            Updated{" "}
+            {new Date(stats.updatedAt).toLocaleTimeString("id-ID", {
+              timeZone: timezone,
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: false,
+            })}{" "}
+            WIB
           </p>
         ) : null}
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
-          label="Views (last 5 min)"
-          value={stats?.recentViews ?? "—"}
-          hint="Recent storefront activity"
+          label="Live (5 menit)"
+          value={stats ? formatCount(stats.recentViews) : "—"}
+          hint="Aktivitas storefront terkini"
         />
         <StatCard
-          label="Views today"
-          value={stats?.todayViews ?? "—"}
-          hint="Since midnight"
+          label="Hari ini (WIB)"
+          value={stats ? formatCount(stats.todayViews) : "—"}
+          hint="00:00–sekarang WIB"
+        />
+        <StatCard
+          label="30 hari terakhir"
+          value={stats ? formatCount(stats.viewsLast30Days) : "—"}
+          hint="Rolling 30 days"
         />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
           <div className="border-b px-4 py-3">
-            <h3 className="text-sm font-medium">Last 60 minutes</h3>
+            <h3 className="text-sm font-medium">60 menit terakhir</h3>
+            <p className="text-xs text-muted-foreground">
+              Page views per menit ({timezone})
+            </p>
           </div>
           <div className="p-4">
             {stats ? (
-              <div className="flex h-28 items-end gap-1">
-                {stats.minuteBuckets.map((bucket) => (
-                  <div
-                    key={bucket.minute}
-                    className="flex-1 rounded-sm bg-primary/80"
-                    style={{
-                      height: `${Math.max(8, (bucket.views / maxBucketViews) * 100)}%`,
-                      opacity: bucket.views > 0 ? 1 : 0.2,
-                    }}
-                    title={`${new Date(bucket.minute).toLocaleTimeString()}: ${bucket.views} views`}
-                  />
-                ))}
-              </div>
+              hasAnyHourlyViews ? (
+                <div className="space-y-2">
+                  <div className="flex h-28 items-end gap-1">
+                    {stats.minuteBuckets.map((bucket) => (
+                      <div
+                        key={bucket.minute}
+                        className="flex-1 rounded-sm bg-primary/80"
+                        style={{
+                          height: `${Math.max(
+                            8,
+                            (bucket.views / maxBucketViews) * 100,
+                          )}%`,
+                          opacity: bucket.views > 0 ? 1 : 0.2,
+                        }}
+                        title={`${formatTimeLabel(bucket.minute, timezone)}: ${formatCount(bucket.views)} views`}
+                      />
+                    ))}
+                  </div>
+                  {firstBucket && lastBucket ? (
+                    <div className="flex justify-between text-[11px] text-muted-foreground">
+                      <span>{formatTimeLabel(firstBucket.minute, timezone)}</span>
+                      <span>{formatTimeLabel(lastBucket.minute, timezone)}</span>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Belum ada page view dalam 60 menit terakhir.
+                </p>
+              )
             ) : (
               <p className="text-sm text-muted-foreground">Loading chart…</p>
             )}
@@ -131,21 +188,28 @@ export function TrafficStats() {
 
         <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
           <div className="border-b px-4 py-3">
-            <h3 className="text-sm font-medium">Top pages today</h3>
+            <h3 className="text-sm font-medium">Halaman teratas hari ini</h3>
+            <p className="text-xs text-muted-foreground">Sejak 00:00 WIB</p>
           </div>
           <div className="divide-y">
             {!stats ? (
               <p className="p-4 text-sm text-muted-foreground">Loading pages…</p>
             ) : stats.topPagesToday.length === 0 ? (
-              <p className="p-4 text-sm text-muted-foreground">No page views yet.</p>
+              <p className="p-4 text-sm text-muted-foreground">
+                Belum ada page view hari ini.
+              </p>
             ) : (
               stats.topPagesToday.map((page) => (
                 <div
                   key={page.path}
                   className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
                 >
-                  <span className="truncate font-mono text-xs">{page.path}</span>
-                  <span className="shrink-0 text-muted-foreground">{page.views}</span>
+                  <span className="truncate font-mono text-xs" title={page.path}>
+                    {page.path === "/" ? "/ (home)" : page.path}
+                  </span>
+                  <span className="shrink-0 tabular-nums text-muted-foreground">
+                    {formatCount(page.views)}
+                  </span>
                 </div>
               ))
             )}
@@ -172,12 +236,17 @@ function Ga4TrafficPanel({
       <section className="overflow-hidden rounded-xl border border-dashed bg-card shadow-sm">
         <div className="border-b px-4 py-3">
           <h3 className="text-sm font-medium">Google Analytics</h3>
+          <p className="text-xs text-muted-foreground">
+            Sessions &amp; active users — separate from first-party page views
+            above.
+          </p>
         </div>
         <p className="p-4 text-sm text-muted-foreground">
-          Add <code className="text-xs">NEXT_PUBLIC_GA_ID</code> for storefront tracking.
-          Optional: set <code className="text-xs">GA4_PROPERTY_ID</code>,{" "}
-          <code className="text-xs">GA4_CLIENT_EMAIL</code>, and{" "}
-          <code className="text-xs">GA4_PRIVATE_KEY</code> to show GA4 summaries here.
+          Add <code className="text-xs">NEXT_PUBLIC_GA_ID</code> for storefront
+          tracking. Optional: set <code className="text-xs">GA4_PROPERTY_ID</code>
+          , <code className="text-xs">GA4_CLIENT_EMAIL</code>, and{" "}
+          <code className="text-xs">GA4_PRIVATE_KEY</code> to show GA4 summaries
+          here.
         </p>
       </section>
     );
@@ -199,29 +268,31 @@ function Ga4TrafficPanel({
       <div className="border-b px-4 py-3">
         <h3 className="text-sm font-medium">Google Analytics</h3>
         <p className="text-xs text-muted-foreground">
-          Realtime data refreshes about every minute. Daily sessions can lag behind GA4 Realtime by several hours.
+          Sessions &amp; active users from GA4 — not the same as first-party page
+          views above. Realtime refreshes about every minute; daily sessions can
+          lag by several hours.
         </p>
       </div>
 
       <div className="grid gap-4 px-4 pb-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Active users now"
-          value={ga4.realtimeActiveUsers}
+          value={formatCount(ga4.realtimeActiveUsers)}
           hint="Matches GA4 Realtime"
         />
         <StatCard
           label="US active users now"
-          value={ga4.usActiveUsersNow}
+          value={formatCount(ga4.usActiveUsersNow)}
           hint="Realtime, United States"
         />
         <StatCard
           label="Sessions today"
-          value={ga4.todaySessions}
+          value={formatCount(ga4.todaySessions)}
           hint="Daily report — may show 0 early in the day"
         />
         <StatCard
           label="US sessions today"
-          value={ga4.usSessionsToday}
+          value={formatCount(ga4.usSessionsToday)}
           hint="Daily report — updates later"
         />
       </div>
@@ -233,7 +304,9 @@ function Ga4TrafficPanel({
           </div>
           <div className="divide-y">
             {ga4.topCountriesNow.length === 0 ? (
-              <p className="p-4 text-sm text-muted-foreground">No active users right now.</p>
+              <p className="p-4 text-sm text-muted-foreground">
+                No active users right now.
+              </p>
             ) : (
               ga4.topCountriesNow.map((row) => (
                 <div
@@ -241,8 +314,8 @@ function Ga4TrafficPanel({
                   className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
                 >
                   <span className="truncate">{row.country}</span>
-                  <span className="shrink-0 text-muted-foreground">
-                    {row.activeUsers} active
+                  <span className="shrink-0 tabular-nums text-muted-foreground">
+                    {formatCount(row.activeUsers)} active
                   </span>
                 </div>
               ))
@@ -257,7 +330,8 @@ function Ga4TrafficPanel({
           <div className="divide-y">
             {ga4.topSources.length === 0 ? (
               <p className="p-4 text-sm text-muted-foreground">
-                Daily sources appear after GA4 finishes processing today&apos;s data.
+                Daily sources appear after GA4 finishes processing today&apos;s
+                data.
               </p>
             ) : (
               ga4.topSources.map((source) => (
@@ -266,8 +340,8 @@ function Ga4TrafficPanel({
                   className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
                 >
                   <span className="truncate">{source.source}</span>
-                  <span className="shrink-0 text-muted-foreground">
-                    {source.sessions} sessions
+                  <span className="shrink-0 tabular-nums text-muted-foreground">
+                    {formatCount(source.sessions)} sessions
                   </span>
                 </div>
               ))
