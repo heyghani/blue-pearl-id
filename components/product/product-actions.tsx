@@ -6,15 +6,23 @@ import { useState, useTransition } from "react";
 import { ChevronLeft } from "lucide-react";
 
 import { useTranslations } from "@/components/i18n/locale-provider";
+import {
+  sendMetaCapiBrowser,
+  trackMetaPixelEvent,
+  whenFbqReady,
+} from "@/lib/analytics/meta-pixel-client";
 import { notifyCartUpdated } from "@/lib/cart/events";
 import { addToCartAction } from "@/lib/actions/cart";
-import { WHATSAPP_PHONE, buildWhatsAppUrl } from "@/lib/constants";
+import { CURRENCY, WHATSAPP_PHONE, buildWhatsAppUrl } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface ProductActionsProps {
   productId: string;
   variantId?: string;
+  /** Unit price for Meta AddToCart (display price). */
+  value: number;
+  currency?: string;
   inStock: boolean;
   /** True only when the resolved display stock is sold out (not while waiting for a size). */
   soldOut?: boolean;
@@ -22,9 +30,37 @@ interface ProductActionsProps {
   layout?: "inline" | "sticky";
 }
 
+function trackAddToCart(input: {
+  productId: string;
+  variantId?: string;
+  value: number;
+  currency: string;
+}) {
+  const eventId = `atc_${input.productId}_${input.variantId ?? "base"}_${Date.now()}`;
+  const params = {
+    value: input.value,
+    currency: input.currency,
+    content_ids: [input.productId],
+    content_type: "product",
+    num_items: 1,
+  };
+
+  whenFbqReady(() => {
+    trackMetaPixelEvent("AddToCart", params, eventId);
+  });
+
+  void sendMetaCapiBrowser({
+    event_name: "AddToCart",
+    event_id: eventId,
+    custom_data: params,
+  });
+}
+
 export function ProductActions({
   productId,
   variantId,
+  value,
+  currency = CURRENCY,
   inStock,
   soldOut = false,
   requiresSelection = false,
@@ -52,6 +88,7 @@ export function ProductActions({
         return;
       }
       setAdded(true);
+      trackAddToCart({ productId, variantId, value, currency });
       notifyCartUpdated();
       router.refresh();
       if (redirectToCart) {

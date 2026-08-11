@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { DutiesNotice } from "@/components/shared/duties-notice";
 import { Price } from "@/components/shared/price";
+import { sendMetaPurchaseCapi } from "@/lib/analytics/meta-capi";
 import { resolveOrderLineImageUrl } from "@/lib/orders/line-item";
 import { getOrderByNumber } from "@/lib/services/order.service";
 import { getSession } from "@/lib/auth";
@@ -36,6 +37,18 @@ export default async function OrderConfirmationPage({ params }: Props) {
   const locale = await getLocale();
   const t = getDictionary(locale);
   const email = order.guestEmail ?? session?.user?.email;
+
+  // Browser Pixel + server CAPI share event_id = orderNumber for Meta dedup.
+  // CAPI runs even if the browser Pixel is blocked (ad blocker / ITP).
+  if (order.status === "PAID") {
+    const purchaseEmail = email ?? order.guestEmail;
+    void sendMetaPurchaseCapi({
+      ...order,
+      guestEmail: purchaseEmail,
+    }).catch((error) => {
+      console.error("[Meta CAPI] Purchase send failed:", error);
+    });
+  }
 
   return (
     <div className="min-h-screen bg-muted/20">

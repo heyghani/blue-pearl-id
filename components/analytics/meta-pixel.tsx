@@ -4,6 +4,8 @@ import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
+import type { MetaAdvancedMatching } from "@/lib/analytics/meta-advanced-matching";
+
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim();
 
 function whenFbqReady(callback: () => void, timeoutMs = 10_000) {
@@ -43,14 +45,41 @@ function MetaPixelTracker() {
   return null;
 }
 
-export function MetaPixel() {
+function buildInitCall(advancedMatching?: MetaAdvancedMatching) {
+  const params: MetaAdvancedMatching = {};
+  if (advancedMatching?.em) params.em = advancedMatching.em;
+  if (advancedMatching?.ph) params.ph = advancedMatching.ph;
+
+  if (Object.keys(params).length === 0) {
+    return `fbq('init', '${PIXEL_ID}');`;
+  }
+
+  return `fbq('init', '${PIXEL_ID}', ${JSON.stringify(params)});`;
+}
+
+type Props = {
+  advancedMatching?: MetaAdvancedMatching;
+};
+
+export function MetaPixel({ advancedMatching }: Props) {
+  useEffect(() => {
+    if (!PIXEL_ID) {
+      console.warn(
+        "[Meta Pixel] NEXT_PUBLIC_META_PIXEL_ID is missing or empty. " +
+          "Browser Pixel events will not fire. Set it in Vercel → Project → Settings → Environment Variables (Production), then redeploy.",
+      );
+    }
+  }, []);
+
   if (!PIXEL_ID) {
     return null;
   }
 
+  const initCall = buildInitCall(advancedMatching);
+
   return (
     <>
-      <Script id="meta-pixel" strategy="lazyOnload">
+      <Script id="meta-pixel" strategy="afterInteractive">
         {`
           !function(f,b,e,v,n,t,s)
           {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -60,7 +89,7 @@ export function MetaPixel() {
           t.src=v;s=b.getElementsByTagName(e)[0];
           s.parentNode.insertBefore(t,s)}(window, document,'script',
           'https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init', '${PIXEL_ID}');
+          ${initCall}
           fbq('track', 'PageView');
         `}
       </Script>

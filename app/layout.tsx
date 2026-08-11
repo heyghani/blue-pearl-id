@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { IBM_Plex_Mono, Inter, Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Suspense } from "react";
 
+import { MetaPixelRoot } from "@/components/analytics/meta-pixel-root";
 import { LocaleProvider } from "@/components/i18n/locale-provider";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n";
@@ -82,6 +84,9 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans">
         <LocaleProvider locale={locale} dictionary={dictionary}>
+          <Suspense fallback={null}>
+            <MetaPixelRoot />
+          </Suspense>
           {children}
         </LocaleProvider>
         <Analytics />

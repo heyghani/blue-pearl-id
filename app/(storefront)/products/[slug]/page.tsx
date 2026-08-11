@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+import { MetaPixelFunnelEvent } from "@/components/analytics/meta-pixel-funnel-event";
 import { Badge } from "@/components/ui/badge";
 import { ProductBackNav, ProductWhatsAppLink } from "@/components/product/product-actions";
 import { ProductPurchaseSection } from "@/components/product/product-purchase-section";
@@ -13,6 +14,7 @@ import {
 import { ProductDetailTabs } from "@/components/product/product-detail-tabs";
 import { RelatedProductsSection } from "@/components/product/related-products";
 import { ProductJsonLd } from "@/components/shared/product-json-ld";
+import { CURRENCY } from "@/lib/constants";
 import {
   getProductBySlug,
   getRelatedProducts,
@@ -99,6 +101,13 @@ export default async function ProductDetailPage({ params }: Props) {
 
   return (
     <>
+      <MetaPixelFunnelEvent
+        eventName="ViewContent"
+        eventId={`vc_${product.id}`}
+        value={Number(product.price)}
+        currency={CURRENCY}
+        contentIds={[product.id]}
+      />
       <ProductJsonLd
         name={product.name}
         description={product.shortDescription ?? product.description}

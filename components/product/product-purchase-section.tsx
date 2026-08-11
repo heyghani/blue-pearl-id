@@ -161,6 +161,7 @@ export function ProductPurchaseSection({
       <ProductActions
         productId={productId}
         variantId={selectedVariant?.id}
+        value={Number(displayPrice)}
         inStock={canPurchase}
         soldOut={!stockStatus.inStock && !requiresSelection}
         requiresSelection={requiresSelection}
