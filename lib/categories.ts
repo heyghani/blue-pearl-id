@@ -4,7 +4,16 @@ import { prisma } from "@/lib/db";
 
 const CATEGORY_REVALIDATE_SECONDS = 60;
 
-export async function getActiveCategories() {
+function productCountWhere(halloween = false) {
+  return {
+    isActive: true,
+    deletedAt: null,
+    isHalloween: halloween,
+  } as const;
+}
+
+export async function getActiveCategories(options?: { halloween?: boolean }) {
+  const halloween = Boolean(options?.halloween);
   return prisma.category.findMany({
     where: { isActive: true },
     orderBy: { sortOrder: "asc" },
@@ -12,7 +21,7 @@ export async function getActiveCategories() {
       _count: {
         select: {
           products: {
-            where: { isActive: true, deletedAt: null },
+            where: productCountWhere(halloween),
           },
         },
       },
@@ -20,7 +29,8 @@ export async function getActiveCategories() {
   });
 }
 
-export async function getActiveCategoryTree() {
+export async function getActiveCategoryTree(options?: { halloween?: boolean }) {
+  const halloween = Boolean(options?.halloween);
   return unstable_cache(
     async () => {
       const categories = await prisma.category.findMany({
@@ -34,7 +44,7 @@ export async function getActiveCategoryTree() {
               _count: {
                 select: {
                   products: {
-                    where: { isActive: true, deletedAt: null },
+                    where: productCountWhere(halloween),
                   },
                 },
               },
@@ -43,7 +53,7 @@ export async function getActiveCategoryTree() {
           _count: {
             select: {
               products: {
-                where: { isActive: true, deletedAt: null },
+                where: productCountWhere(halloween),
               },
             },
           },
@@ -52,7 +62,7 @@ export async function getActiveCategoryTree() {
 
       return categories.filter((category) => !category.parentId);
     },
-    ["active-category-tree"],
+    ["active-category-tree", halloween ? "halloween" : "main"],
     { revalidate: CATEGORY_REVALIDATE_SECONDS, tags: ["categories"] },
   )();
 }
@@ -144,7 +154,8 @@ export async function expandCategorySlugs(slugs: string[]): Promise<string[] | n
   return [...expanded];
 }
 
-export async function getActiveBrands() {
+export async function getActiveBrands(options?: { halloween?: boolean }) {
+  const halloween = Boolean(options?.halloween);
   return unstable_cache(
     async () => {
       return prisma.brand.findMany({
@@ -154,14 +165,14 @@ export async function getActiveBrands() {
           _count: {
             select: {
               products: {
-                where: { isActive: true, deletedAt: null },
+                where: productCountWhere(halloween),
               },
             },
           },
         },
       });
     },
-    ["active-brands"],
+    ["active-brands", halloween ? "halloween" : "main"],
     { revalidate: CATEGORY_REVALIDATE_SECONDS, tags: ["brands"] },
   )();
 }

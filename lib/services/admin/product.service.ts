@@ -29,6 +29,8 @@ export type AdminProductListFilters = {
   /** `active` | `hidden` */
   status?: "active" | "hidden";
   featured?: boolean;
+  /** When true, only Halloween products; otherwise exclude them. */
+  halloween?: boolean;
   /** `low` = quantity at or below low-stock threshold */
   stock?: "low";
   categoryId?: string;
@@ -41,11 +43,15 @@ export async function listAdminProducts({
   limit = 20,
   status,
   featured,
+  halloween = false,
   stock,
   categoryId,
   brandId,
 }: AdminProductListFilters) {
-  const where: Prisma.ProductWhereInput = { deletedAt: null };
+  const where: Prisma.ProductWhereInput = {
+    deletedAt: null,
+    isHalloween: halloween,
+  };
 
   if (search?.trim()) {
     const q = search.trim();
@@ -125,6 +131,7 @@ export type ProductInput = {
   quantity: number;
   isActive: boolean;
   isFeatured: boolean;
+  isHalloween: boolean;
   hasVariants: boolean;
   options: ProductOptionInput[];
   variants: ProductVariantInput[];
@@ -305,6 +312,7 @@ export async function createProduct(input: ProductInput) {
         description: input.description ?? null,
         isActive: input.isActive,
         isFeatured: input.isFeatured,
+        isHalloween: input.isHalloween,
         hasVariants: input.hasVariants,
         images:
           input.imageUrls && input.imageUrls.length > 0
@@ -360,6 +368,7 @@ export async function updateProduct(id: string, input: ProductInput) {
         description: input.description ?? null,
         isActive: input.isActive,
         isFeatured: input.isFeatured,
+        isHalloween: input.isHalloween,
         hasVariants: input.hasVariants,
       },
     });
@@ -403,7 +412,7 @@ export async function setProductActive(id: string, isActive: boolean) {
   return prisma.product.update({
     where: { id, deletedAt: null },
     data: { isActive },
-    select: { slug: true },
+    select: { slug: true, isHalloween: true },
   });
 }
 

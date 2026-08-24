@@ -3,6 +3,10 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import {
+  catalogHref,
+  useCatalogBasePath,
+} from "@/components/catalog/catalog-base-path";
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -10,6 +14,7 @@ import { cn } from "@/lib/utils";
 export function PriceFilter({ className }: { className?: string }) {
   const t = useTranslations();
   const router = useRouter();
+  const basePath = useCatalogBasePath();
   const searchParams = useSearchParams();
   const activeMin = searchParams.get("minPrice") ?? "";
   const activeMax = searchParams.get("maxPrice") ?? "";
@@ -35,8 +40,7 @@ export function PriceFilter({ className }: { className?: string }) {
     if (max) params.set("maxPrice", max);
     else params.delete("maxPrice");
 
-    const qs = params.toString();
-    router.push(qs ? `/products?${qs}` : "/products");
+    router.push(catalogHref(basePath, params.toString()));
   }
 
   function clearFilter() {
@@ -46,8 +50,7 @@ export function PriceFilter({ className }: { className?: string }) {
     params.delete("page");
     params.delete("minPrice");
     params.delete("maxPrice");
-    const qs = params.toString();
-    router.push(qs ? `/products?${qs}` : "/products");
+    router.push(catalogHref(basePath, params.toString()));
   }
 
   const hasActive = Boolean(activeMin || activeMax);

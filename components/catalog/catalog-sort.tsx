@@ -3,6 +3,10 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
+import {
+  catalogHref,
+  useCatalogBasePath,
+} from "@/components/catalog/catalog-base-path";
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { SORT_OPTIONS } from "@/lib/catalog";
 import type { ProductSort } from "@/lib/products";
@@ -11,6 +15,7 @@ import { cn } from "@/lib/utils";
 export function CatalogSort({ className }: { className?: string }) {
   const t = useTranslations();
   const router = useRouter();
+  const basePath = useCatalogBasePath();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const current = (searchParams.get("sort") as ProductSort) || "newest";
@@ -23,7 +28,7 @@ export function CatalogSort({ className }: { className?: string }) {
         params.set("sort", e.target.value);
         params.delete("page");
         startTransition(() => {
-          router.push(`/products?${params.toString()}`);
+          router.push(catalogHref(basePath, params.toString()));
         });
       }}
       className={cn(

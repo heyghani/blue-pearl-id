@@ -1,6 +1,6 @@
 import { AdminProductListPage } from "@/components/admin/admin-product-list-page";
 
-export default async function AdminProductsPage({
+export default async function AdminHalloweenProductsPage({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -14,5 +14,5 @@ export default async function AdminProductsPage({
   }>;
 }) {
   const params = await searchParams;
-  return <AdminProductListPage catalog="main" searchParams={params} />;
+  return <AdminProductListPage catalog="halloween" searchParams={params} />;
 }

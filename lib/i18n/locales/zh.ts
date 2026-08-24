@@ -4,6 +4,7 @@ export const zh: Dictionary = {
   nav: {
     shop: "选购",
     featured: "精选",
+    halloween: "万圣节",
     lookbook: "造型手册",
     faq: "常见问题",
     shipping: "配送",
@@ -35,9 +36,15 @@ export const zh: Dictionary = {
     lookbookTitle: "造型手册",
     lookbookDesc: "当前库存的穿搭角度与当季热款。",
     lookbookCta: "查看造型手册",
+    halloweenTitle: "万圣节系列",
+    halloweenDesc: "季节限定，独立于主目录——少量现货，即刻发货。",
+    halloweenCta: "选购万圣节",
     recommendationsTitle: "精选热款",
     recommendationsDesc: "当下热门品牌与鞋型的店员精选。",
     featuredCategoryDesc: "该分类下的精选推荐。",
+  },
+  halloween: {
+    catalogTitle: "万圣节",
   },
   lookbook: {
     eyebrow: "造型手册",

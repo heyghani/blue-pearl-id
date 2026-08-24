@@ -14,7 +14,7 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
-export default async function EditProductPage({ params }: Props) {
+export default async function EditHalloweenProductPage({ params }: Props) {
   const { id } = await params;
   const product = await getAdminProduct(id);
 
@@ -22,8 +22,8 @@ export default async function EditProductPage({ params }: Props) {
     notFound();
   }
 
-  if (product.isHalloween) {
-    redirect(`/admin/halloween/${id}/edit`);
+  if (!product.isHalloween) {
+    redirect(`/admin/products/${id}/edit`);
   }
 
   const [categories, brands] = await Promise.all([
@@ -38,7 +38,9 @@ export default async function EditProductPage({ params }: Props) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Edit product</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Edit Halloween product
+          </h1>
           <p className="text-muted-foreground">{product.name}</p>
         </div>
         <div className="flex gap-2">
@@ -48,13 +50,13 @@ export default async function EditProductPage({ params }: Props) {
             </Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link href="/admin/products">Back</Link>
+            <Link href="/admin/halloween">Back</Link>
           </Button>
         </div>
       </div>
 
       <ProductForm
-        catalog="main"
+        catalog="halloween"
         productId={product.id}
         categories={categories}
         brands={brands}
@@ -84,6 +86,7 @@ export default async function EditProductPage({ params }: Props) {
         id={product.id}
         label="Delete product"
         confirmMessage={`Delete "${product.name}"? This cannot be undone.`}
+        hiddenFields={{ catalog: "halloween" }}
       />
     </div>
   );

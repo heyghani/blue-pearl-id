@@ -62,11 +62,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 async function RelatedProducts({
   categoryId,
   excludeSlug,
+  isHalloween,
 }: {
   categoryId: string | null | undefined;
   excludeSlug: string;
+  isHalloween: boolean;
 }) {
-  const related = await getRelatedProducts(categoryId, excludeSlug);
+  const related = await getRelatedProducts(categoryId, excludeSlug, 4, {
+    isHalloween,
+  });
   return <RelatedProductsSection products={related.map(toProductCard)} />;
 }
 
@@ -231,6 +235,7 @@ export default async function ProductDetailPage({ params }: Props) {
                     <RelatedProducts
                       categoryId={product.categoryId}
                       excludeSlug={product.slug}
+                      isHalloween={product.isHalloween}
                     />
                   </Suspense>
                 </div>

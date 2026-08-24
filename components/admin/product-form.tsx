@@ -67,12 +67,16 @@ export function ProductForm({
   brands,
   productId,
   defaults = {},
+  catalog = "main",
 }: {
   categories: Category[];
   brands: Brand[];
   productId?: string;
   defaults?: ProductDefaults;
+  catalog?: "main" | "halloween";
 }) {
+  const isHalloween = catalog === "halloween";
+  const listHref = isHalloween ? "/admin/halloween" : "/admin/products";
   const action = productId
     ? updateProductAction.bind(null, productId)
     : createProductAction;
@@ -451,6 +455,7 @@ export function ProductForm({
         <CardContent className="flex flex-wrap gap-6">
           <input type="hidden" name="isActive" value={isActive ? "true" : "false"} />
           <input type="hidden" name="isFeatured" value={isFeatured ? "true" : "false"} />
+          <input type="hidden" name="isHalloween" value={isHalloween ? "true" : "false"} />
 
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -486,7 +491,7 @@ export function ProductForm({
                   : "Create product"}
           </Button>
           <Button type="button" variant="outline" asChild>
-            <Link href="/admin/products">Cancel</Link>
+            <Link href={listHref}>Cancel</Link>
           </Button>
         </div>
       </div>

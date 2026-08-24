@@ -196,6 +196,7 @@ model Product {
   hasVariants      Boolean  @default(false)
   isActive         Boolean  @default(true)
   isFeatured       Boolean  @default(false)
+  isHalloween      Boolean  @default(false)
   metadata         Json?
 
   images     ProductImage[]
@@ -214,6 +215,7 @@ model Product {
   @@index([categoryId])
   @@index([brandId])
   @@index([isActive, isFeatured])
+  @@index([isActive, isHalloween])
   @@index([price])
   @@map("products")
 }

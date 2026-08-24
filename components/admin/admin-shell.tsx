@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ExternalLink,
+  Ghost,
   LayoutDashboard,
   Layers,
   LogOut,
@@ -33,6 +34,7 @@ import { cn } from "@/lib/utils";
 export const adminNavItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/products", label: "Products", icon: Package },
+  { href: "/admin/halloween", label: "Halloween", icon: Ghost },
   { href: "/admin/categories", label: "Categories", icon: Layers },
   { href: "/admin/brands", label: "Brands", icon: Tag },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },

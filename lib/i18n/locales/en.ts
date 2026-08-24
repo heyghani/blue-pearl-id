@@ -4,6 +4,7 @@ export const en: Dictionary = {
   nav: {
     shop: "Shop",
     featured: "Featured",
+    halloween: "Halloween",
     lookbook: "Lookbook",
     faq: "FAQ",
     shipping: "Shipping",
@@ -35,9 +36,15 @@ export const en: Dictionary = {
     lookbookTitle: "The Lookbook",
     lookbookDesc: "Fits, angles, and seasonal heat from the current vault.",
     lookbookCta: "Explore lookbook",
+    halloweenTitle: "Halloween drop",
+    halloweenDesc: "Seasonal heat, separate from the main vault — limited styles ready to ship.",
+    halloweenCta: "Shop Halloween",
     recommendationsTitle: "Featured heat",
     recommendationsDesc: "Staff picks across the brands and silhouettes moving right now.",
     featuredCategoryDesc: "Staff picks from this category.",
+  },
+  halloween: {
+    catalogTitle: "Halloween",
   },
   lookbook: {
     eyebrow: "Lookbook",
