@@ -118,18 +118,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {recommendationCards.length > 0 ? (
-        <HomeRecommendationsSection
-          id="recommendations"
-          title={t.home.recommendationsTitle}
-          description={t.home.recommendationsDesc}
-          cards={recommendationCards}
-          productLabel={t.catalog.product}
-          productsLabel={t.catalog.products}
-          viewAllLabel={t.home.viewAll}
-        />
-      ) : null}
-
       {halloween.products.length > 0 ? (
         <ProductRail
           id="halloween"
@@ -169,6 +157,18 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {recommendationCards.length > 0 ? (
+        <HomeRecommendationsSection
+          id="recommendations"
+          title={t.home.recommendationsTitle}
+          description={t.home.recommendationsDesc}
+          cards={recommendationCards}
+          productLabel={t.catalog.product}
+          productsLabel={t.catalog.products}
+          viewAllLabel={t.home.viewAll}
+        />
+      ) : null}
 
       <section className="py-8 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
