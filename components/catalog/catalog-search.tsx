@@ -4,6 +4,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { Search, X } from "lucide-react";
 
+import {
+  catalogHref,
+  useCatalogBasePath,
+} from "@/components/catalog/catalog-base-path";
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +16,7 @@ import { cn } from "@/lib/utils";
 export function CatalogSearch({ className }: { className?: string }) {
   const t = useTranslations();
   const router = useRouter();
+  const basePath = useCatalogBasePath();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const currentQuery = searchParams.get("q") ?? "";
@@ -33,10 +38,10 @@ export function CatalogSearch({ className }: { className?: string }) {
       }
       params.delete("page");
       startTransition(() => {
-        router.push(`/products?${params.toString()}`);
+        router.push(catalogHref(basePath, params.toString()));
       });
     },
-    [router, searchParams],
+    [basePath, router, searchParams],
   );
 
   return (

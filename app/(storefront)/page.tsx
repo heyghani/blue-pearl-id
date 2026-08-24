@@ -4,12 +4,17 @@ import dynamic from "next/dynamic";
 import { ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ProductRail } from "@/components/catalog/product-rail";
 import { HomeCategorySection } from "@/components/home/home-category-section";
 import { HomeRecommendationsSection } from "@/components/home/home-recommendation-card";
 import { getActiveCategoryTree, getHomepageCategoryItems } from "@/lib/categories";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
-import { getFeaturedRecommendationsByCategory } from "@/lib/products";
+import {
+  getFeaturedRecommendationsByCategory,
+  getHalloweenProducts,
+  toProductCard,
+} from "@/lib/products";
 
 const HomeFaq = dynamic(
   () => import("@/components/home/home-faq").then((mod) => mod.HomeFaq),
@@ -26,13 +31,24 @@ async function getFeaturedSection() {
   }
 }
 
+async function getHalloweenSection() {
+  try {
+    const products = await getHalloweenProducts(8);
+    return { products: products.map(toProductCard) };
+  } catch {
+    return { products: [] };
+  }
+}
+
 export default async function HomePage() {
   const locale = await getLocale();
   const t = getDictionary(locale);
-  const [{ categories: featuredCategories }, categoryTree] = await Promise.all([
-    getFeaturedSection(),
-    getActiveCategoryTree().catch(() => []),
-  ]);
+  const [{ categories: featuredCategories }, categoryTree, halloween] =
+    await Promise.all([
+      getFeaturedSection(),
+      getActiveCategoryTree().catch(() => []),
+      getHalloweenSection(),
+    ]);
 
   const categories = getHomepageCategoryItems(
     categoryTree.filter(
@@ -113,6 +129,46 @@ export default async function HomePage() {
           viewAllLabel={t.home.viewAll}
         />
       ) : null}
+
+      {halloween.products.length > 0 ? (
+        <ProductRail
+          id="halloween"
+          title={t.home.halloweenTitle}
+          description={t.home.halloweenDesc}
+          products={halloween.products}
+          viewAllLabel={t.home.halloweenCta}
+          viewAllHref="/halloween"
+          className="border-t border-border/60 bg-[linear-gradient(180deg,rgba(28,16,8,0.04),transparent_60%)]"
+        />
+      ) : (
+        <section id="halloween" className="scroll-mt-20 border-t border-border/60 py-10 sm:py-14">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <Link
+              href="/halloween"
+              className="group relative block overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm transition-shadow hover:shadow-md"
+            >
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(120,40,10,0.18),transparent_55%),linear-gradient(135deg,rgba(20,12,8,0.92),rgba(40,22,12,0.75))]" />
+              <div className="relative flex flex-col gap-4 p-8 sm:flex-row sm:items-center sm:justify-between sm:p-10">
+                <div className="max-w-xl text-white">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-white/60">
+                    {t.nav.halloween}
+                  </p>
+                  <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+                    {t.home.halloweenTitle}
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-white/75 sm:text-base">
+                    {t.home.halloweenDesc}
+                  </p>
+                </div>
+                <div className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 text-sm font-medium text-white backdrop-blur transition-colors group-hover:bg-white/20">
+                  {t.home.halloweenCta}
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </div>
+              </div>
+            </Link>
+          </div>
+        </section>
+      )}
 
       <section className="py-8 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

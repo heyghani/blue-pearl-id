@@ -4,11 +4,16 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { LayoutGrid, List } from "lucide-react";
 
+import {
+  catalogHref,
+  useCatalogBasePath,
+} from "@/components/catalog/catalog-base-path";
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
 
 export function CatalogViewToggle({ className }: { className?: string }) {
   const t = useTranslations();
+  const basePath = useCatalogBasePath();
   const searchParams = useSearchParams();
   const view = searchParams.get("view") === "list" ? "list" : "grid";
 
@@ -20,8 +25,7 @@ export function CatalogViewToggle({ className }: { className?: string }) {
     } else {
       params.set("view", "list");
     }
-    const qs = params.toString();
-    return qs ? `/products?${qs}` : "/products";
+    return catalogHref(basePath, params.toString());
   }
 
   return (

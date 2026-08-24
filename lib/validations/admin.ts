@@ -71,6 +71,7 @@ export const productFormSchema = z
     quantity: z.coerce.number().int().min(0, "Quantity cannot be negative."),
     isActive: z.boolean(),
     isFeatured: z.boolean(),
+    isHalloween: z.boolean(),
     hasVariants: z.boolean(),
     variantsPayload: z.string().optional(),
   })

@@ -16,6 +16,8 @@ export interface CatalogParams {
   brand?: string | string[];
   sort?: ProductSort;
   featured?: boolean;
+  /** When true, only Halloween products; when false/undefined, exclude them. */
+  halloween?: boolean;
   minPrice?: number;
   maxPrice?: number;
 }
@@ -72,6 +74,7 @@ function buildWhere(params: CatalogParams, categorySlugs?: string[]): Prisma.Pro
   const where: Prisma.ProductWhereInput = {
     isActive: true,
     deletedAt: null,
+    isHalloween: Boolean(params.halloween),
   };
 
   if (params.featured) {
@@ -129,6 +132,7 @@ function catalogCacheKey(params: CatalogParams): string {
     brand: params.brand ?? null,
     sort: params.sort ?? "newest",
     featured: Boolean(params.featured),
+    halloween: Boolean(params.halloween),
     minPrice: params.minPrice ?? null,
     maxPrice: params.maxPrice ?? null,
   });
@@ -209,12 +213,18 @@ export const getProductBySlug = cache(async (slug: string) => {
 });
 
 const fetchRelatedProducts = unstable_cache(
-  async (categoryId: string, excludeSlug: string, limit: number) => {
+  async (
+    categoryId: string,
+    excludeSlug: string,
+    limit: number,
+    isHalloween: boolean,
+  ) => {
     return prisma.product.findMany({
       where: {
         categoryId,
         isActive: true,
         deletedAt: null,
+        isHalloween,
         slug: { not: excludeSlug },
       },
       include: {
@@ -237,9 +247,15 @@ export async function getRelatedProducts(
   categoryId: string | null | undefined,
   excludeSlug: string,
   limit = 4,
+  options?: { isHalloween?: boolean },
 ) {
   if (!categoryId) return [];
-  return fetchRelatedProducts(categoryId, excludeSlug, limit);
+  return fetchRelatedProducts(
+    categoryId,
+    excludeSlug,
+    limit,
+    Boolean(options?.isHalloween),
+  );
 }
 
 export async function getAllProductSlugs() {
@@ -251,7 +267,7 @@ export async function getAllProductSlugs() {
 
 export async function getFeaturedProducts(limit = 8) {
   return prisma.product.findMany({
-    where: { isActive: true, isFeatured: true, deletedAt: null },
+    where: { isActive: true, isFeatured: true, isHalloween: false, deletedAt: null },
     include: {
       images: { where: { isPrimary: true }, take: 1 },
       inventory: true,
@@ -267,7 +283,24 @@ export async function getFeaturedProducts(limit = 8) {
 
 export async function getFeaturedProductCount() {
   return prisma.product.count({
-    where: { isActive: true, isFeatured: true, deletedAt: null },
+    where: { isActive: true, isFeatured: true, isHalloween: false, deletedAt: null },
+  });
+}
+
+export async function getHalloweenProducts(limit = 8) {
+  return prisma.product.findMany({
+    where: { isActive: true, isHalloween: true, deletedAt: null },
+    include: {
+      images: { where: { isPrimary: true }, take: 1 },
+      inventory: true,
+      brand: { select: { name: true, slug: true } },
+      variants: {
+        where: { isActive: true },
+        select: { quantity: true, isActive: true },
+      },
+    },
+    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+    take: limit,
   });
 }
 
@@ -284,7 +317,12 @@ export async function getFeaturedRecommendationsByCategory() {
   return unstable_cache(
     async () => {
       const featured = await prisma.product.findMany({
-        where: { isActive: true, isFeatured: true, deletedAt: null },
+        where: {
+          isActive: true,
+          isFeatured: true,
+          isHalloween: false,
+          deletedAt: null,
+        },
         select: {
           images: { orderBy: { sortOrder: "asc" }, take: 1, select: { url: true } },
           category: {
@@ -336,7 +374,7 @@ export async function getFeaturedRecommendationsByCategory() {
 
 export async function getBestSellerProducts(limit = 8) {
   return prisma.product.findMany({
-    where: { isActive: true, deletedAt: null },
+    where: { isActive: true, isHalloween: false, deletedAt: null },
     include: {
       images: { where: { isPrimary: true }, take: 1 },
       inventory: true,

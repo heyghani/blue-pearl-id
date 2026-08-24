@@ -11,6 +11,7 @@ function baseProduct(overrides: Record<string, unknown> = {}) {
     quantity: 0,
     isActive: true,
     isFeatured: false,
+    isHalloween: false,
     hasVariants: true,
     ...overrides,
   };

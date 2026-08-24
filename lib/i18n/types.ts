@@ -13,6 +13,7 @@ export interface Dictionary {
   nav: {
     shop: string;
     featured: string;
+    halloween: string;
     lookbook: string;
     faq: string;
     shipping: string;
@@ -43,9 +44,15 @@ export interface Dictionary {
     lookbookTitle: string;
     lookbookDesc: string;
     lookbookCta: string;
+    halloweenTitle: string;
+    halloweenDesc: string;
+    halloweenCta: string;
     recommendationsTitle: string;
     recommendationsDesc: string;
     featuredCategoryDesc: string;
+  };
+  halloween: {
+    catalogTitle: string;
   };
   lookbook: {
     eyebrow: string;

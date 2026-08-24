@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
+import {
+  catalogHref,
+  useCatalogBasePath,
+} from "@/components/catalog/catalog-base-path";
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -18,6 +22,7 @@ export function CatalogPagination({
   className?: string;
 }) {
   const t = useTranslations();
+  const basePath = useCatalogBasePath();
   const params = useSearchParams();
 
   if (totalPages <= 1) return null;
@@ -29,8 +34,7 @@ export function CatalogPagination({
     } else {
       next.delete("page");
     }
-    const qs = next.toString();
-    return qs ? `/products?${qs}` : "/products";
+    return catalogHref(basePath, next.toString());
   }
 
   return (

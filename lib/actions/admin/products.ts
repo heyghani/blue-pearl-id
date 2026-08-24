@@ -60,15 +60,24 @@ function parseProductForm(formData: FormData) {
     quantity: formData.get("quantity"),
     isActive: parseCheckbox(formData.get("isActive")),
     isFeatured: parseCheckbox(formData.get("isFeatured")),
+    isHalloween: parseCheckbox(formData.get("isHalloween")),
     hasVariants: parseCheckbox(formData.get("hasVariants")),
     variantsPayload: formData.get("variantsPayload") || undefined,
   });
 }
 
+function adminCatalogPaths(halloween: boolean) {
+  return halloween
+    ? { list: "/admin/halloween", edit: (id: string) => `/admin/halloween/${id}/edit` }
+    : { list: "/admin/products", edit: (id: string) => `/admin/products/${id}/edit` };
+}
+
 function revalidateProductPaths(slug?: string) {
   revalidatePath("/");
   revalidatePath("/products");
+  revalidatePath("/halloween");
   revalidatePath("/admin/products");
+  revalidatePath("/admin/halloween");
 
   if (slug) {
     revalidatePath(`/products/${slug}`);
@@ -130,13 +139,14 @@ export async function createProductAction(
       quantity: data.quantity,
       isActive: data.isActive,
       isFeatured: data.isFeatured,
+      isHalloween: data.isHalloween,
       hasVariants: variantData.hasVariants,
       options: variantData.options,
       variants: variantData.variants,
     });
 
     revalidateProductPaths();
-    return { redirectTo: `/admin/products/${product.id}/edit` };
+    return { redirectTo: adminCatalogPaths(data.isHalloween).edit(product.id) };
   } catch (error) {
     return {
       error: formatAdminError(error, "Could not create product."),
@@ -177,13 +187,14 @@ export async function updateProductAction(
       quantity: data.quantity,
       isActive: data.isActive,
       isFeatured: data.isFeatured,
+      isHalloween: data.isHalloween,
       hasVariants: variantData.hasVariants,
       options: variantData.options,
       variants: variantData.variants,
     });
 
     revalidateProductPaths(data.slug);
-    revalidatePath(`/admin/products/${productId}/edit`);
+    revalidatePath(adminCatalogPaths(data.isHalloween).edit(productId));
     return { success: true };
   } catch (error) {
     return {
@@ -199,14 +210,17 @@ export async function deleteProductAction(formData: FormData): Promise<void> {
   const productId = formData.get("id");
   if (typeof productId !== "string" || !productId) return;
 
+  const halloween = formData.get("catalog") === "halloween";
+  const paths = adminCatalogPaths(halloween);
+
   try {
     await deleteProduct(productId);
     revalidateProductPaths();
-    redirect("/admin/products");
+    redirect(paths.list);
   } catch (error) {
     rethrowIfRedirect(error);
     redirect(
-      `/admin/products/${productId}/edit?error=${encodeURIComponent(formatAdminError(error, "Could not delete product."))}`,
+      `${paths.edit(productId)}?error=${encodeURIComponent(formatAdminError(error, "Could not delete product."))}`,
     );
   }
 }
@@ -220,5 +234,5 @@ export async function toggleProductActiveAction(
 
   const product = await setProductActive(productId, nextActive);
   revalidateProductPaths(product.slug);
-  revalidatePath(`/admin/products/${productId}/edit`);
+  revalidatePath(adminCatalogPaths(product.isHalloween).edit(productId));
 }

@@ -5,6 +5,11 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 
+import {
+  CatalogBasePathProvider,
+  catalogHref,
+  useCatalogBasePath,
+} from "@/components/catalog/catalog-base-path";
 import { CatalogSearch } from "@/components/catalog/catalog-search";
 import { CatalogSort } from "@/components/catalog/catalog-sort";
 import { CatalogViewToggle } from "@/components/catalog/catalog-view-toggle";
@@ -39,6 +44,7 @@ function isNavCategoryVisible(category: RootCategory) {
 
 function useCatalogFilters() {
   const searchParams = useSearchParams();
+  const basePath = useCatalogBasePath();
   const activeCategory = searchParams.get("category") ?? "";
   const activeBrand = searchParams.get("brand") ?? "";
   const activeSearch = searchParams.get("q") ?? "";
@@ -75,8 +81,7 @@ function useCatalogFilters() {
     if (updates.maxPrice === null) next.delete("maxPrice");
     else if (updates.maxPrice) next.set("maxPrice", updates.maxPrice);
 
-    const qs = next.toString();
-    return qs ? `/products?${qs}` : "/products";
+    return catalogHref(basePath, next.toString());
   }
 
   function clearFiltersHref() {
@@ -85,8 +90,7 @@ function useCatalogFilters() {
     const view = searchParams.get("view");
     if (sort) next.set("sort", sort);
     if (view) next.set("view", view);
-    const qs = next.toString();
-    return qs ? `/products?${qs}` : "/products";
+    return catalogHref(basePath, next.toString());
   }
 
   return {
@@ -421,10 +425,15 @@ function CatalogShellInner({
   );
 }
 
-export function CatalogShell(props: React.ComponentProps<typeof CatalogShellInner>) {
+export function CatalogShell({
+  basePath = "/products",
+  ...props
+}: React.ComponentProps<typeof CatalogShellInner> & { basePath?: string }) {
   return (
-    <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-muted" />}>
-      <CatalogShellInner {...props} />
-    </Suspense>
+    <CatalogBasePathProvider basePath={basePath}>
+      <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-muted" />}>
+        <CatalogShellInner {...props} />
+      </Suspense>
+    </CatalogBasePathProvider>
   );
 }

@@ -6,7 +6,7 @@ import { listCategoriesForProductForm } from "@/lib/services/admin/category.serv
 import { listBrandsForProductForm } from "@/lib/services/admin/brand.service";
 import { getDefaultBasePrice } from "@/lib/services/admin/store-settings.service";
 
-export default async function NewProductPage() {
+export default async function NewHalloweenProductPage() {
   const [categories, brands, defaultBasePrice] = await Promise.all([
     listCategoriesForProductForm(),
     listBrandsForProductForm(),
@@ -17,16 +17,20 @@ export default async function NewProductPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">New product</h1>
-          <p className="text-muted-foreground">Add a product to the catalog.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            New Halloween product
+          </h1>
+          <p className="text-muted-foreground">
+            Add a product to the Halloween catalog.
+          </p>
         </div>
         <Button variant="outline" asChild>
-          <Link href="/admin/products">Back to products</Link>
+          <Link href="/admin/halloween">Back to Halloween</Link>
         </Button>
       </div>
 
       <ProductForm
-        catalog="main"
+        catalog="halloween"
         categories={categories}
         brands={brands}
         defaults={{ price: String(defaultBasePrice) }}
