@@ -38,7 +38,6 @@ type Brand = {
 
 function isNavCategoryVisible(category: RootCategory) {
   if (category._count.products > 0) return true;
-  if (category.children.length > 0) return true;
   return category.children.some((child) => child._count.products > 0);
 }
 
@@ -243,7 +242,7 @@ function CatalogSidebarNav({
         buildHref={buildHref}
       />
 
-      {brands.length > 0 ? (
+      {brands.filter((b) => b._count.products > 0).length > 0 ? (
         <div className="space-y-0.5 border-t border-border/60 pt-2 sm:pt-3">
           <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:px-3 sm:text-[11px]">
             {brandsLabel}
@@ -253,15 +252,17 @@ function CatalogSidebarNav({
             label={allBrandsLabel}
             isActive={!activeBrand}
           />
-          {brands.map((brand) => (
-            <SidebarLink
-              key={brand.slug}
-              href={buildHref({ brand: brand.slug })}
-              label={brand.name}
-              isActive={activeBrand === brand.slug}
-              count={brand._count.products}
-            />
-          ))}
+          {brands
+            .filter((brand) => brand._count.products > 0)
+            .map((brand) => (
+              <SidebarLink
+                key={brand.slug}
+                href={buildHref({ brand: brand.slug })}
+                label={brand.name}
+                isActive={activeBrand === brand.slug}
+                count={brand._count.products}
+              />
+            ))}
         </div>
       ) : null}
     </nav>
