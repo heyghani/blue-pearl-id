@@ -53,6 +53,8 @@ export interface Dictionary {
   };
   halloween: {
     catalogTitle: string;
+    catalogEyebrow: string;
+    catalogLead: string;
   };
   lookbook: {
     eyebrow: string;

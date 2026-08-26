@@ -5,6 +5,7 @@ import { CatalogPagination } from "@/components/catalog/catalog-pagination";
 import { CatalogShell } from "@/components/catalog/catalog-shell";
 import { ProductGrid } from "@/components/catalog/product-grid";
 import { ProductList } from "@/components/catalog/product-list";
+import { HalloweenCatalogFrame } from "@/components/halloween/halloween-catalog-frame";
 import { parseCatalogParams } from "@/lib/catalog";
 import {
   getActiveBrands,
@@ -89,7 +90,10 @@ export default async function HalloweenCatalogPage({
     params.view === "list" ? ProductList : ProductGrid;
 
   return (
-    <div className="mx-auto max-w-7xl px-2 pb-12 pt-3 sm:px-6 sm:py-8 lg:px-8">
+    <HalloweenCatalogFrame
+      eyebrow={t.halloween.catalogEyebrow}
+      lead={t.halloween.catalogLead}
+    >
       <CatalogShell
         basePath="/halloween"
         categories={categoryTree}
@@ -111,6 +115,6 @@ export default async function HalloweenCatalogPage({
           />
         </Suspense>
       </CatalogShell>
-    </div>
+    </HalloweenCatalogFrame>
   );
 }
