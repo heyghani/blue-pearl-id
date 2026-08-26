@@ -45,6 +45,8 @@ export const zh: Dictionary = {
   },
   halloween: {
     catalogTitle: "万圣节",
+    catalogEyebrow: "诸圣节 · 季节限定",
+    catalogLead: "商店里更暗的一角——季节限定系列，浏览下方商品。",
   },
   lookbook: {
     eyebrow: "造型手册",

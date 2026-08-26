@@ -45,6 +45,9 @@ export const es: Dictionary = {
   },
   halloween: {
     catalogTitle: "Halloween",
+    catalogEyebrow: "Día de Todos los Santos · Bóveda de temporada",
+    catalogLead:
+      "Un rincón más oscuro de la tienda — drops limitados para la temporada. Explora la colección abajo.",
   },
   lookbook: {
     eyebrow: "Lookbook",
