@@ -9,6 +9,7 @@ import {
 import { generateOrderNumber } from "@/lib/order-number";
 import { prisma } from "@/lib/db";
 import { orderItemImageInclude } from "@/lib/orders/line-item";
+import { applyPlatformFeeToTotals } from "@/lib/payments/platform-fee";
 import {
   getVariantLabel,
   getVariantOptions,
@@ -21,6 +22,7 @@ export type CheckoutTotals = {
   shipping: string;
   discount: string;
   tax: string;
+  platformFee: string;
   total: string;
   currency: string;
   shippingMethodName: string;
@@ -99,6 +101,7 @@ export async function calculateCheckoutTotals(
   cartItems: { productId: string; variantId?: string | null; quantity: number }[],
   shippingMethod: ShippingMethodType,
   couponCode?: string,
+  paymentMethod?: PaymentMethod,
 ): Promise<CheckoutTotals | { error: string }> {
   if (cartItems.length === 0) {
     return { error: "Your cart is empty." };
@@ -170,13 +173,19 @@ export async function calculateCheckoutTotals(
   const discount = calculateDiscount(subtotal, coupon);
   const shipping = Number(shippingRate.price);
   const tax = 0;
-  const total = Math.max(0, subtotal + shipping - discount + tax);
+  const { platformFee, total } = applyPlatformFeeToTotals(
+    subtotal,
+    shipping,
+    discount,
+    paymentMethod,
+  );
 
   return {
     subtotal: subtotal.toFixed(2),
     shipping: shipping.toFixed(2),
     discount: discount.toFixed(2),
     tax: tax.toFixed(2),
+    platformFee: platformFee.toFixed(2),
     total: total.toFixed(2),
     currency: "USD",
     shippingMethodName: shippingRate.name,
@@ -257,6 +266,7 @@ export async function createOrderFromCart(
     })),
     input.shippingMethod,
     input.couponCode,
+    input.paymentMethod,
   );
 
   if ("error" in totals) {
@@ -323,6 +333,7 @@ export async function createOrderFromCart(
           shippingMethodName: shippingRate?.name ?? totals.shippingMethodName,
           discountAmount: totals.discount,
           taxAmount: totals.tax,
+          platformFeeAmount: totals.platformFee,
           total: totals.total,
           currency: totals.currency,
           shippingAddress: input.shippingAddress,

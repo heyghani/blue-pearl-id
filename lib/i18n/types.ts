@@ -194,6 +194,9 @@ export interface Dictionary {
     atNextStep: string;
     discount: string;
     total: string;
+    platformFee: string;
+    platformFeeLine: string;
+    paypalDescWithFee: string;
     backToBag: string;
     secureBadge: string;
     secureCheckout: string;

@@ -10,6 +10,10 @@ export const ENABLE_CREDIT_CARD_PAYMENT =
   process.env.NEXT_PUBLIC_ENABLE_CREDIT_CARD_PAYMENT === "true";
 export const ENABLE_USDT_PAYMENT =
   process.env.NEXT_PUBLIC_ENABLE_USDT_PAYMENT === "true";
+/** Percentage surcharge added to PayPal checkout totals (paid by customer). Set to 0 to disable. */
+export const PAYPAL_PLATFORM_FEE_PERCENT = Number(
+  process.env.PAYPAL_PLATFORM_FEE_PERCENT ?? "3.49",
+);
 export const TAX_NOTICE =
   "Import duties and local taxes are not included. Your carrier may collect them on delivery.";
 const DEFAULT_SUPPORT_EMAIL = "support@primeluxr.com";

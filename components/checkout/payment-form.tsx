@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
+import { PaymentMethod } from "@prisma/client";
 
 import { CheckoutSecureNotice } from "@/components/checkout/checkout-secure-notice";
+import { useCheckoutPaymentMethod } from "@/components/checkout/checkout-payment-context";
 import {
   CardMark,
   MidtransMark,
@@ -22,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import {
   ENABLE_CREDIT_CARD_PAYMENT,
   ENABLE_USDT_PAYMENT,
+  PAYPAL_PLATFORM_FEE_PERCENT,
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +34,12 @@ function defaultPaymentMethod(): "CREDIT_CARD" | "PAYPAL" | "USDT" {
   if (ENABLE_CREDIT_CARD_PAYMENT) return "CREDIT_CARD";
   if (ENABLE_USDT_PAYMENT) return "USDT";
   return "PAYPAL";
+}
+
+function toPaymentMethod(value: string): PaymentMethod {
+  if (value === "CREDIT_CARD") return PaymentMethod.CREDIT_CARD;
+  if (value === "USDT") return PaymentMethod.USDT;
+  return PaymentMethod.PAYPAL;
 }
 
 export function PaymentForm({
@@ -45,6 +54,7 @@ export function PaymentForm({
   email: string;
 }) {
   const t = useTranslations();
+  const paymentContext = useCheckoutPaymentMethod();
   const idempotencyKey = useMemo(() => crypto.randomUUID(), []);
   const [referenceUploading, setReferenceUploading] = useState(false);
   const [state, formAction, pending] = useActionState(
@@ -52,6 +62,14 @@ export function PaymentForm({
     initialState,
   );
   const selectedDefault = defaultPaymentMethod();
+
+  useEffect(() => {
+    paymentContext?.setPaymentMethod(toPaymentMethod(selectedDefault));
+  }, [paymentContext, selectedDefault]);
+
+  function handlePaymentMethodChange(value: string) {
+    paymentContext?.setPaymentMethod(toPaymentMethod(value));
+  }
 
   return (
     <form action={formAction} className="space-y-8">
@@ -96,6 +114,7 @@ export function PaymentForm({
                 defaultChecked={selectedDefault === "CREDIT_CARD"}
                 required
                 className="accent-verified-green"
+                onChange={(event) => handlePaymentMethodChange(event.target.value)}
               />
               <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
                 <div>
@@ -122,11 +141,19 @@ export function PaymentForm({
               defaultChecked={selectedDefault === "PAYPAL"}
               required
               className="accent-verified-green"
+              onChange={(event) => handlePaymentMethodChange(event.target.value)}
             />
             <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
               <div>
                 <p className="font-medium">{t.checkout.paypalTitle}</p>
-                <p className="text-sm text-muted-foreground">{t.checkout.paypalDesc}</p>
+                <p className="text-sm text-muted-foreground">
+                  {PAYPAL_PLATFORM_FEE_PERCENT > 0
+                    ? t.checkout.paypalDescWithFee.replace(
+                        "{percent}",
+                        PAYPAL_PLATFORM_FEE_PERCENT.toString(),
+                      )
+                    : t.checkout.paypalDesc}
+                </p>
               </div>
               <PayPalMark className="shrink-0" />
             </div>
@@ -145,6 +172,7 @@ export function PaymentForm({
                 defaultChecked={selectedDefault === "USDT"}
                 required
                 className="accent-verified-green"
+                onChange={(event) => handlePaymentMethodChange(event.target.value)}
               />
               <div>
                 <p className="font-medium">{t.checkout.usdtTitle}</p>

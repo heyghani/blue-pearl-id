@@ -213,6 +213,8 @@ export const en: Dictionary = {
     shippingLabel: "Shipping",
     atNextStep: "At next step",
     discount: "Discount",
+    platformFee: "PayPal processing fee ({percent}%)",
+    platformFeeLine: "PayPal processing fee",
     total: "Total",
     backToBag: "Back to bag",
     secureBadge: "Secure checkout",
@@ -223,6 +225,8 @@ export const en: Dictionary = {
     creditCardDesc: "Secure card payment via Midtrans",
     paypalTitle: "PayPal",
     paypalDesc: "Pay with your PayPal account",
+    paypalDescWithFee:
+      "Pay with PayPal. A {percent}% processing fee is added to your total.",
     usdtTitle: "USDT (TRC20)",
     usdtDesc: "Pay with USDT on Tron. Network fees are paid by you at checkout.",
     couponLabel: "Coupon code (optional)",

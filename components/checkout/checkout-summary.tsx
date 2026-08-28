@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import { DutiesNotice } from "@/components/shared/duties-notice";
 import { Price } from "@/components/shared/price";
+import { CheckoutSummaryTotals } from "@/components/checkout/checkout-summary-totals";
 import { Separator } from "@/components/ui/separator";
 import { getCheckoutDraft } from "@/lib/checkout/draft";
 import { getDictionary } from "@/lib/i18n";
@@ -128,37 +129,23 @@ export async function CheckoutSummary({
 
       <Separator className="my-4" />
 
-      <div className="space-y-2 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">{t.checkout.subtotal}</span>
-          <Price amount={totals?.subtotal ?? subtotal.toFixed(2)} />
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">{t.checkout.shippingLabel}</span>
-          <span>
-            {totals ? (
-              <Price amount={totals.shipping} />
-            ) : (
-              <span className="text-muted-foreground">{t.checkout.atNextStep}</span>
-            )}
-          </span>
-        </div>
-        {totals && Number(totals.discount) > 0 && (
-          <div className="flex justify-between text-emerald-700">
-            <span>{t.checkout.discount}</span>
-            <span>-<Price amount={totals.discount} /></span>
+      {totals ? (
+        <CheckoutSummaryTotals
+          subtotal={totals.subtotal}
+          shipping={totals.shipping}
+          discount={totals.discount}
+        />
+      ) : (
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">{t.checkout.subtotal}</span>
+            <Price amount={subtotal.toFixed(2)} />
           </div>
-        )}
-      </div>
-
-      {totals && (
-        <>
-          <Separator className="my-4" />
-          <div className="flex justify-between font-medium">
-            <span>{t.checkout.total}</span>
-            <Price amount={totals.total} />
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">{t.checkout.shippingLabel}</span>
+            <span className="text-muted-foreground">{t.checkout.atNextStep}</span>
           </div>
-        </>
+        </div>
       )}
 
       <DutiesNotice message={t.common.taxNotice} className="mt-4" />

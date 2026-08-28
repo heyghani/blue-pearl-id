@@ -122,6 +122,12 @@ export default async function OrderConfirmationPage({ params }: Props) {
                 <span>-<Price amount={order.discountAmount.toString()} /></span>
               </div>
             )}
+            {Number(order.platformFeeAmount) > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t.checkout.platformFeeLine}</span>
+                <Price amount={order.platformFeeAmount.toString()} />
+              </div>
+            )}
           </div>
 
           <Separator className="my-4" />

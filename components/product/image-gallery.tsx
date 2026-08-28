@@ -11,6 +11,56 @@ interface GalleryImage {
   alt?: string | null;
 }
 
+function GalleryThumbnails({
+  images,
+  activeIndex,
+  onSelect,
+  viewImageLabel,
+  className,
+}: {
+  images: GalleryImage[];
+  activeIndex: number;
+  onSelect: (index: number) => void;
+  viewImageLabel: string;
+  className?: string;
+}) {
+  if (images.length <= 1) return null;
+
+  return (
+    <div
+      className={cn(
+        "mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        className,
+      )}
+    >
+      {images.map((image, index) => (
+        <button
+          key={`${image.url}-${index}`}
+          type="button"
+          onClick={() => onSelect(index)}
+          className={cn(
+            "relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition-colors",
+            index === activeIndex
+              ? "border-foreground"
+              : "border-transparent opacity-70 hover:opacity-100",
+          )}
+          aria-label={`${viewImageLabel} ${index + 1}`}
+          aria-current={index === activeIndex}
+        >
+          <Image
+            src={image.url}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="64px"
+            loading="lazy"
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function subscribeLg(onStoreChange: () => void) {
   const media = window.matchMedia("(min-width: 1024px)");
   media.addEventListener("change", onStoreChange);
@@ -83,7 +133,7 @@ export function ImageGallery({
   return (
     <div className="space-y-3 sm:space-y-4">
       {showMobile ? (
-        <div className="relative">
+        <div className={cn(images.length > 1 && "pb-6")}>
           <div
             ref={scrollRef}
             className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -99,7 +149,7 @@ export function ImageGallery({
               <div
                 key={`${image.url}-${index}`}
                 className={cn(
-                  "relative w-full shrink-0 snap-center bg-muted",
+                  "relative min-w-full flex-[0_0_100%] snap-center bg-muted",
                   compact ? "aspect-square" : "aspect-[4/5]",
                 )}
               >
@@ -116,22 +166,13 @@ export function ImageGallery({
             ))}
           </div>
 
-          {images.length > 1 ? (
-            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-              {images.map((_, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => goTo(index)}
-                  className={cn(
-                    "h-1.5 rounded-full transition-all",
-                    index === activeIndex ? "w-5 bg-white" : "w-1.5 bg-white/50",
-                  )}
-                  aria-label={`${t.product.viewImage} ${index + 1}`}
-                />
-              ))}
-            </div>
-          ) : null}
+          <GalleryThumbnails
+            images={images}
+            activeIndex={activeIndex}
+            onSelect={goTo}
+            viewImageLabel={t.product.viewImage}
+            className="px-4"
+          />
         </div>
       ) : null}
 
@@ -148,34 +189,12 @@ export function ImageGallery({
             />
           </div>
 
-          {images.length > 1 ? (
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {images.map((image, index) => (
-                <button
-                  key={`${image.url}-${index}`}
-                  type="button"
-                  onClick={() => goTo(index)}
-                  className={cn(
-                    "relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition-colors",
-                    index === activeIndex
-                      ? "border-foreground"
-                      : "border-transparent opacity-70 hover:opacity-100",
-                  )}
-                  aria-label={`${t.product.viewImage} ${index + 1}`}
-                  aria-current={index === activeIndex}
-                >
-                  <Image
-                    src={image.url}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                    loading="lazy"
-                  />
-                </button>
-              ))}
-            </div>
-          ) : null}
+          <GalleryThumbnails
+            images={images}
+            activeIndex={activeIndex}
+            onSelect={goTo}
+            viewImageLabel={t.product.viewImage}
+          />
         </div>
       ) : null}
     </div>
