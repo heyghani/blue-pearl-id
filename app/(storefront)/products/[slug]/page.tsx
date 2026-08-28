@@ -128,9 +128,9 @@ export default async function ProductDetailPage({ params }: Props) {
         variants={variants}
         hasVariants={product.hasVariants}
       >
-        <div className="pb-28 lg:pb-12">
-          <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 lg:gap-16 lg:pt-10">
+        <div className="min-w-0 overflow-x-clip pb-28 lg:pb-12">
+          <div className="mx-auto min-w-0 max-w-7xl sm:px-6 lg:px-8">
+            <div className="grid min-w-0 lg:grid-cols-2 lg:gap-16 lg:pt-10">
               <div className="min-w-0 lg:px-0">
                 <div className="lg:sticky lg:top-24">
                   <ProductGallery
@@ -140,7 +140,7 @@ export default async function ProductDetailPage({ params }: Props) {
                 </div>
               </div>
 
-              <div className="relative z-10 -mt-5 rounded-t-3xl bg-background px-4 pt-5 sm:mt-0 sm:rounded-none sm:px-0 sm:pt-0 lg:mt-0">
+              <div className="relative z-10 -mt-5 min-w-0 rounded-t-3xl bg-background px-4 pt-5 sm:mt-0 sm:rounded-none sm:px-0 sm:pt-0 lg:mt-0">
                 <ProductBackNav />
 
                 <nav className="mb-4 hidden text-sm text-muted-foreground lg:block">
@@ -221,7 +221,7 @@ export default async function ProductDetailPage({ params }: Props) {
                   <ProductWhatsAppLink productName={product.name} />
                 </div>
 
-                <div className="px-0 sm:px-0">
+                <div className="min-w-0 px-0 sm:px-0">
                   <ProductDetailTabs
                     description={product.description}
                     specs={specs}
