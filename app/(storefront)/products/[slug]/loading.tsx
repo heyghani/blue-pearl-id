@@ -4,9 +4,12 @@ export default function ProductDetailLoading() {
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
         <div className="space-y-3">
           <div className="aspect-square w-full animate-pulse rounded-2xl bg-muted lg:rounded-3xl" />
-          <div className="hidden grid-cols-4 gap-2 lg:grid">
+          <div className="flex gap-2 overflow-x-auto px-4 lg:px-0">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="aspect-square animate-pulse rounded-xl bg-muted" />
+              <div
+                key={i}
+                className="h-16 w-16 shrink-0 animate-pulse rounded-xl bg-muted"
+              />
             ))}
           </div>
         </div>

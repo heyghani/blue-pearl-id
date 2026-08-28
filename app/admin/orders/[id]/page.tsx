@@ -106,6 +106,12 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                 <span className="text-muted-foreground">Shipping ({order.shippingMethodName})</span>
                 <Price amount={order.shippingAmount.toString()} />
               </div>
+              {Number(order.platformFeeAmount) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">PayPal processing fee</span>
+                  <Price amount={order.platformFeeAmount.toString()} />
+                </div>
+              )}
               <div className="flex justify-between font-medium">
                 <span>Total</span>
                 <Price amount={order.total.toString()} />

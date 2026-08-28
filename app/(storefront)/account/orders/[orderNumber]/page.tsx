@@ -101,6 +101,12 @@ export default async function AccountOrderDetailPage({ params }: Props) {
             <span className="text-muted-foreground">Shipping</span>
             <Price amount={order.shippingAmount.toString()} />
           </div>
+          {Number(order.platformFeeAmount) > 0 && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">PayPal processing fee</span>
+              <Price amount={order.platformFeeAmount.toString()} />
+            </div>
+          )}
         </div>
 
         <Separator className="my-4" />

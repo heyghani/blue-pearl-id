@@ -70,7 +70,38 @@ describe("calculateCheckoutTotals", () => {
       shipping: "15.00",
       discount: "0.00",
       tax: "0.00",
+      platformFee: "0.00",
       total: "215.00",
+      currency: "USD",
+      shippingMethodName: "Standard Shipping",
+    });
+  });
+
+  it("adds PayPal platform fee when payment method is PayPal", async () => {
+    mockProductFindMany.mockResolvedValue([
+      {
+        id: "prod-1",
+        name: "Pearl Necklace",
+        price: new Decimal(100),
+        hasVariants: false,
+        inventory: { quantity: 10, reservedQuantity: 0 },
+      },
+    ]);
+
+    const result = await calculateCheckoutTotals(
+      [{ productId: "prod-1", quantity: 2 }],
+      ShippingMethodType.STANDARD,
+      undefined,
+      PaymentMethod.PAYPAL,
+    );
+
+    expect(result).toEqual({
+      subtotal: "200.00",
+      shipping: "15.00",
+      discount: "0.00",
+      tax: "0.00",
+      platformFee: "7.50",
+      total: "222.50",
       currency: "USD",
       shippingMethodName: "Standard Shipping",
     });
