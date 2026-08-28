@@ -29,7 +29,7 @@ function GalleryThumbnails({
   return (
     <div
       className={cn(
-        "mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        "mt-3 flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         className,
       )}
     >
@@ -92,7 +92,7 @@ export function ImageGallery({
 }) {
   const t = useTranslations();
   const isDesktop = useIsDesktop();
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const active = images[activeIndex] ?? images[0];
 
@@ -106,15 +106,32 @@ export function ImageGallery({
       if (images.length === 0) return;
       const next = Math.max(0, Math.min(index, images.length - 1));
       setActiveIndex(next);
-      const container = scrollRef.current;
-      if (container) {
-        container.scrollTo({
-          left: next * container.clientWidth,
-          behavior: "smooth",
-        });
-      }
     },
     [images.length],
+  );
+
+  const handleTouchStart = useCallback((event: React.TouchEvent) => {
+    touchStartX.current = event.touches[0]?.clientX ?? null;
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (event: React.TouchEvent) => {
+      if (touchStartX.current == null || images.length <= 1) return;
+
+      const endX = event.changedTouches[0]?.clientX;
+      if (endX == null) return;
+
+      const delta = endX - touchStartX.current;
+      touchStartX.current = null;
+
+      if (Math.abs(delta) < 40) return;
+      if (delta < 0) {
+        goTo(activeIndex + 1);
+      } else {
+        goTo(activeIndex - 1);
+      }
+    },
+    [activeIndex, goTo, images.length],
   );
 
   if (!active) {
@@ -131,44 +148,27 @@ export function ImageGallery({
   }
 
   return (
-    <div className="w-full max-w-full space-y-3 sm:space-y-4">
+    <div className="min-w-0 w-full max-w-full space-y-3 sm:space-y-4">
       {showMobile ? (
-        <div
-          className={cn(
-            "w-full max-w-full overflow-hidden",
-            images.length > 1 && "pb-6",
-          )}
-        >
+        <div className={cn("min-w-0 w-full max-w-full", images.length > 1 && "pb-6")}>
           <div
-            ref={scrollRef}
-            className="flex w-full max-w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            onScroll={(e) => {
-              const el = e.currentTarget;
-              const index = Math.round(el.scrollLeft / el.clientWidth);
-              if (index !== activeIndex && index >= 0 && index < images.length) {
-                setActiveIndex(index);
-              }
-            }}
+            className={cn(
+              "relative w-full max-w-full bg-muted",
+              compact ? "aspect-square" : "aspect-[4/5]",
+            )}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
           >
-            {images.map((image, index) => (
-              <div
-                key={`${image.url}-${index}`}
-                className={cn(
-                  "relative box-border w-full shrink-0 basis-full snap-center bg-muted",
-                  compact ? "aspect-square" : "aspect-[4/5]",
-                )}
-              >
-                <Image
-                  src={image.url}
-                  alt={image.alt ?? `${productName} ${index + 1}`}
-                  fill
-                  className="object-contain"
-                  sizes="100vw"
-                  priority={index === 0}
-                  loading={index === 0 ? "eager" : "lazy"}
-                />
-              </div>
-            ))}
+            <Image
+              key={active.url}
+              src={active.url}
+              alt={active.alt ?? `${productName} ${activeIndex + 1}`}
+              fill
+              className="object-contain"
+              sizes="100vw"
+              priority={activeIndex === 0}
+              loading={activeIndex === 0 ? "eager" : "lazy"}
+            />
           </div>
 
           <GalleryThumbnails
@@ -182,8 +182,8 @@ export function ImageGallery({
       ) : null}
 
       {showDesktop ? (
-        <div>
-          <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
+        <div className="min-w-0 w-full max-w-full">
+          <div className="relative aspect-square w-full max-w-full overflow-hidden rounded-2xl bg-muted">
             <Image
               src={active.url}
               alt={active.alt ?? productName}
