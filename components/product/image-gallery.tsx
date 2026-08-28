@@ -131,12 +131,17 @@ export function ImageGallery({
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="w-full max-w-full space-y-3 sm:space-y-4">
       {showMobile ? (
-        <div className={cn(images.length > 1 && "pb-6")}>
+        <div
+          className={cn(
+            "w-full max-w-full overflow-hidden",
+            images.length > 1 && "pb-6",
+          )}
+        >
           <div
             ref={scrollRef}
-            className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex w-full max-w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             onScroll={(e) => {
               const el = e.currentTarget;
               const index = Math.round(el.scrollLeft / el.clientWidth);
@@ -149,7 +154,7 @@ export function ImageGallery({
               <div
                 key={`${image.url}-${index}`}
                 className={cn(
-                  "relative min-w-full flex-[0_0_100%] snap-center bg-muted",
+                  "relative box-border w-full shrink-0 basis-full snap-center bg-muted",
                   compact ? "aspect-square" : "aspect-[4/5]",
                 )}
               >

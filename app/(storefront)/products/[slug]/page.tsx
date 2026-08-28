@@ -130,7 +130,7 @@ export default async function ProductDetailPage({ params }: Props) {
       >
         <div className="pb-28 lg:pb-12">
           <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 lg:gap-16 lg:pt-10">
+            <div className="grid overflow-x-hidden lg:grid-cols-2 lg:gap-16 lg:overflow-visible lg:pt-10">
               <div className="min-w-0 lg:px-0">
                 <div className="lg:sticky lg:top-24">
                   <ProductGallery
