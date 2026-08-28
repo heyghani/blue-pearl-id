@@ -157,7 +157,7 @@ export function ImageGallery({
                   src={image.url}
                   alt={image.alt ?? `${productName} ${index + 1}`}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   sizes="100vw"
                   priority={index === 0}
                   loading={index === 0 ? "eager" : "lazy"}
@@ -183,7 +183,7 @@ export function ImageGallery({
               src={active.url}
               alt={active.alt ?? productName}
               fill
-              className="object-cover"
+              className="object-contain"
               sizes="(max-width: 1024px) 100vw, 50vw"
               priority
             />
