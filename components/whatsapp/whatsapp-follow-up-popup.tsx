@@ -53,6 +53,12 @@ function getPopupCopy(
         description: popup.descriptionCart,
         message: popup.prefilledMessageCart,
       };
+    case "browse":
+      return {
+        title: popup.titleBrowse,
+        description: popup.descriptionBrowse,
+        message: popup.prefilledMessageBrowse,
+      };
     default:
       return {
         title: popup.titleHome,

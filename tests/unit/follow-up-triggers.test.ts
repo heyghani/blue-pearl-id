@@ -8,12 +8,14 @@ import {
 } from "@/lib/whatsapp/follow-up-triggers";
 
 describe("getPageType", () => {
-  it("detects homepage, product, cart, and other routes", () => {
+  it("detects homepage, product, cart, browse, and other routes", () => {
     expect(getPageType("/")).toBe("home");
     expect(getPageType("/products/air-jordan-1")).toBe("product");
     expect(getPageType("/cart")).toBe("cart");
-    expect(getPageType("/products")).toBe("other");
-    expect(getPageType("/lookbook")).toBe("other");
+    expect(getPageType("/products")).toBe("browse");
+    expect(getPageType("/lookbook")).toBe("browse");
+    expect(getPageType("/halloween")).toBe("browse");
+    expect(getPageType("/legal/terms")).toBe("other");
   });
 });
 
@@ -53,11 +55,21 @@ describe("getFollowUpContext", () => {
       delayMs: 10_000,
       enableExitIntent: true,
     });
+    expect(getFollowUpContext("/products", false)).toEqual({
+      pageType: "browse",
+      delayMs: 20_000,
+      enableExitIntent: true,
+    });
+    expect(getFollowUpContext("/lookbook", false)).toEqual({
+      pageType: "browse",
+      delayMs: 20_000,
+      enableExitIntent: true,
+    });
   });
 
   it("returns null for ineligible or unsupported pages", () => {
     expect(getFollowUpContext("/checkout/information", false)).toBeNull();
-    expect(getFollowUpContext("/lookbook", false)).toBeNull();
+    expect(getFollowUpContext("/legal/terms", false)).toBeNull();
   });
 });
 

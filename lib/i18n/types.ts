@@ -179,13 +179,16 @@ export interface Dictionary {
       titleHome: string;
       titleProduct: string;
       titleCart: string;
+      titleBrowse: string;
       descriptionHome: string;
       descriptionProduct: string;
       descriptionProductFallback: string;
       descriptionCart: string;
+      descriptionBrowse: string;
       prefilledMessageHome: string;
       prefilledMessageProduct: string;
       prefilledMessageCart: string;
+      prefilledMessageBrowse: string;
       cta: string;
       dismiss: string;
     };
@@ -209,6 +212,7 @@ export interface Dictionary {
     discount: string;
     total: string;
     platformFee: string;
+    platformFeeCalc: string;
     platformFeeLine: string;
     paypalDescWithFee: string;
     backToBag: string;
