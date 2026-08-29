@@ -1,6 +1,5 @@
-import { PaymentMethod } from "@prisma/client";
-
 import { PAYPAL_PLATFORM_FEE_PERCENT } from "@/lib/constants";
+import { isPayPalMethod } from "@/lib/payments/default-method";
 
 export function checkoutBaseAmount(
   subtotal: number,
@@ -12,10 +11,10 @@ export function checkoutBaseAmount(
 
 export function calculatePlatformFee(
   baseAmount: number,
-  paymentMethod?: PaymentMethod | null,
+  paymentMethod?: string | null,
   feePercent = PAYPAL_PLATFORM_FEE_PERCENT,
 ): number {
-  if (paymentMethod !== PaymentMethod.PAYPAL) return 0;
+  if (!isPayPalMethod(paymentMethod)) return 0;
   if (feePercent <= 0) return 0;
   if (baseAmount <= 0) return 0;
 
@@ -27,7 +26,7 @@ export function applyPlatformFeeToTotals(
   subtotal: number,
   shipping: number,
   discount: number,
-  paymentMethod?: PaymentMethod | null,
+  paymentMethod?: string | null,
   feePercent = PAYPAL_PLATFORM_FEE_PERCENT,
 ) {
   const baseAmount = checkoutBaseAmount(subtotal, shipping, discount);

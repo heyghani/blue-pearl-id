@@ -22,15 +22,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ENABLE_CREDIT_CARD_PAYMENT, ENABLE_USDT_PAYMENT } from "@/lib/constants";
+import { getDefaultCheckoutPaymentMethod } from "@/lib/payments/default-method";
 import { cn } from "@/lib/utils";
 
 const initialState: CheckoutActionState = {};
-
-function defaultPaymentMethod(): "CREDIT_CARD" | "PAYPAL" | "USDT" {
-  if (ENABLE_CREDIT_CARD_PAYMENT) return "CREDIT_CARD";
-  if (ENABLE_USDT_PAYMENT) return "USDT";
-  return "PAYPAL";
-}
 
 function toPaymentMethod(value: string): PaymentMethod {
   if (value === "CREDIT_CARD") return PaymentMethod.CREDIT_CARD;
@@ -59,7 +54,7 @@ export function PaymentForm({
     placeOrderAction,
     initialState,
   );
-  const selectedDefault = defaultPaymentMethod();
+  const selectedDefault = getDefaultCheckoutPaymentMethod();
 
   useEffect(() => {
     paymentContext?.setPaymentMethod(toPaymentMethod(selectedDefault));
