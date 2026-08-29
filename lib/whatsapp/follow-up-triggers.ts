@@ -1,4 +1,6 @@
-export type FollowUpPageType = "home" | "product" | "cart" | "other";
+export type FollowUpPageType = "home" | "product" | "cart" | "browse" | "other";
+
+const BROWSE_PATHS = new Set(["/products", "/lookbook", "/halloween"]);
 
 export type FollowUpTrigger = "time" | "exit_intent";
 
@@ -18,6 +20,7 @@ export function getPageType(pathname: string): FollowUpPageType {
   if (pathname === "/") return "home";
   if (/^\/products\/[^/]+$/.test(pathname)) return "product";
   if (pathname === "/cart") return "cart";
+  if (BROWSE_PATHS.has(pathname)) return "browse";
   return "other";
 }
 
@@ -44,6 +47,8 @@ export function getFollowUpContext(
       return { pageType, delayMs: 30_000, enableExitIntent: true };
     case "cart":
       return { pageType, delayMs: 10_000, enableExitIntent: true };
+    case "browse":
+      return { pageType, delayMs: 20_000, enableExitIntent: true };
     default:
       return null;
   }

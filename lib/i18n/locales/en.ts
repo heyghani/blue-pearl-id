@@ -199,6 +199,7 @@ export const en: Dictionary = {
       titleHome: "Need help finding the right pair?",
       titleProduct: "Questions about this item?",
       titleCart: "Need help completing your order?",
+      titleBrowse: "See something you like?",
       descriptionHome:
         "Chat with our team on WhatsApp — we can help with sizing, availability, and shipping.",
       descriptionProduct:
@@ -207,11 +208,15 @@ export const en: Dictionary = {
         "Ask us about this item — sizing, stock, or shipping. We typically reply within a few hours.",
       descriptionCart:
         "Your bag is waiting. Message us on WhatsApp if you need help with checkout or payment.",
+      descriptionBrowse:
+        "Message us on WhatsApp — we can help you find the right size, check stock, or answer any questions.",
       prefilledMessageHome: "Hi PrimeLuxr! I'm browsing your store and have a question.",
       prefilledMessageProduct:
         "Hi! I'm interested in {productName}. Is my size available?",
       prefilledMessageCart:
         "Hi! I have items in my cart but need help completing my order.",
+      prefilledMessageBrowse:
+        "Hi PrimeLuxr! I'm browsing your collection and would like some help.",
       cta: "Chat on WhatsApp",
       dismiss: "Not now",
     },
@@ -234,6 +239,7 @@ export const en: Dictionary = {
     atNextStep: "At next step",
     discount: "Discount",
     platformFee: "PayPal processing fee ({percent}%)",
+    platformFeeCalc: "{percent}% × {base}",
     platformFeeLine: "PayPal processing fee",
     total: "Total",
     backToBag: "Back to bag",

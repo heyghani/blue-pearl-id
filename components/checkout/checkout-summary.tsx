@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { getCheckoutDraft } from "@/lib/checkout/draft";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
+import { PAYPAL_PLATFORM_FEE_PERCENT } from "@/lib/constants";
 import {
   getVariantLabel,
   resolveVariantImageUrl,
@@ -134,6 +135,7 @@ export async function CheckoutSummary({
           subtotal={totals.subtotal}
           shipping={totals.shipping}
           discount={totals.discount}
+          feePercent={PAYPAL_PLATFORM_FEE_PERCENT}
         />
       ) : (
         <div className="space-y-2 text-sm">

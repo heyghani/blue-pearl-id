@@ -199,6 +199,7 @@ export const es: Dictionary = {
       titleHome: "¿Necesita ayuda para encontrar el par ideal?",
       titleProduct: "¿Preguntas sobre este artículo?",
       titleCart: "¿Necesita ayuda para completar su pedido?",
+      titleBrowse: "¿Ve algo que le guste?",
       descriptionHome:
         "Escríbanos por WhatsApp — le ayudamos con tallas, disponibilidad y envío.",
       descriptionProduct:
@@ -207,11 +208,15 @@ export const es: Dictionary = {
         "Pregunte por este artículo — talla, stock o envío. Solemos responder en pocas horas.",
       descriptionCart:
         "Su bolsa le espera. Escríbanos por WhatsApp si necesita ayuda con el pago.",
+      descriptionBrowse:
+        "Escríbanos por WhatsApp — le ayudamos con tallas, stock o cualquier duda.",
       prefilledMessageHome: "Hola PrimeLuxr! Estoy navegando la tienda y tengo una pregunta.",
       prefilledMessageProduct:
         "Hola! Me interesa {productName}. ¿Tienen mi talla disponible?",
       prefilledMessageCart:
         "Hola! Tengo artículos en mi bolsa pero necesito ayuda para completar el pedido.",
+      prefilledMessageBrowse:
+        "Hola PrimeLuxr! Estoy explorando la colección y me gustaría recibir ayuda.",
       cta: "Chat por WhatsApp",
       dismiss: "Ahora no",
     },
@@ -234,6 +239,7 @@ export const es: Dictionary = {
     atNextStep: "En el siguiente paso",
     discount: "Descuento",
     platformFee: "Comisión PayPal ({percent}%)",
+    platformFeeCalc: "{percent}% × {base}",
     platformFeeLine: "Comisión PayPal",
     total: "Total",
     backToBag: "Volver a la bolsa",

@@ -1,39 +1,52 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-
+import { PlatformFeeRow } from "@/components/shared/platform-fee-row";
 import { Price } from "@/components/shared/price";
 import { Separator } from "@/components/ui/separator";
 import { useCheckoutPaymentMethod } from "@/components/checkout/checkout-payment-context";
 import { useTranslations } from "@/components/i18n/locale-provider";
-import { PAYPAL_PLATFORM_FEE_PERCENT } from "@/lib/constants";
-import { calculatePlatformFee } from "@/lib/payments/platform-fee";
+import { formatPrice } from "@/lib/currency";
+import {
+  calculatePlatformFee,
+  checkoutBaseAmount,
+  platformFeeCopy,
+} from "@/lib/payments/platform-fee";
 
 type CheckoutSummaryTotalsProps = {
   subtotal: string;
   shipping: string;
   discount: string;
+  feePercent: number;
 };
 
 export function CheckoutSummaryTotals({
   subtotal,
   shipping,
   discount,
+  feePercent,
 }: CheckoutSummaryTotalsProps) {
   const t = useTranslations();
-  const pathname = usePathname();
   const paymentContext = useCheckoutPaymentMethod();
-  const showPaymentFee = pathname.endsWith("/checkout/payment");
-  const paymentMethod = showPaymentFee ? paymentContext?.paymentMethod : null;
+  const paymentMethod = paymentContext?.paymentMethod ?? null;
 
   const subtotalAmount = Number(subtotal);
   const shippingAmount = Number(shipping);
   const discountAmount = Number(discount);
-  const baseAmount = Math.max(0, subtotalAmount + shippingAmount - discountAmount);
-  const platformFee = showPaymentFee
-    ? calculatePlatformFee(baseAmount, paymentMethod)
-    : 0;
+  const baseAmount = checkoutBaseAmount(
+    subtotalAmount,
+    shippingAmount,
+    discountAmount,
+  );
+  const platformFee = calculatePlatformFee(
+    baseAmount,
+    paymentMethod,
+    feePercent,
+  );
   const total = (baseAmount + platformFee).toFixed(2);
+  const feeCopy =
+    platformFee > 0
+      ? platformFeeCopy(t.checkout, feePercent, formatPrice(baseAmount))
+      : null;
 
   return (
     <>
@@ -54,17 +67,13 @@ export function CheckoutSummaryTotals({
             </span>
           </div>
         )}
-        {platformFee > 0 && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">
-              {t.checkout.platformFee.replace(
-                "{percent}",
-                PAYPAL_PLATFORM_FEE_PERCENT.toString(),
-              )}
-            </span>
-            <Price amount={platformFee.toFixed(2)} />
-          </div>
-        )}
+        {feeCopy ? (
+          <PlatformFeeRow
+            label={feeCopy.label}
+            calculation={feeCopy.calculation}
+            amount={platformFee}
+          />
+        ) : null}
       </div>
 
       <Separator className="my-4" />

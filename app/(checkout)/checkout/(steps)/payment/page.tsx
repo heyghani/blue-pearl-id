@@ -5,6 +5,7 @@ import { CheckoutSteps } from "@/components/checkout/checkout-steps";
 import { PaymentForm } from "@/components/checkout/payment-form";
 import { getCheckoutDraft } from "@/lib/checkout/draft";
 import { requireCheckoutCart } from "@/lib/checkout/guard";
+import { PAYPAL_PLATFORM_FEE_PERCENT } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
 
@@ -36,6 +37,7 @@ export default async function CheckoutPaymentPage() {
           defaultCoupon={draft.couponCode ?? ""}
           defaultOrderReferencePhotoUrl={draft.orderReferencePhotoUrl ?? ""}
           defaultOrderDimensions={draft.orderDimensions ?? ""}
+          feePercent={PAYPAL_PLATFORM_FEE_PERCENT}
         />
       </div>
     </div>
