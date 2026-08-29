@@ -10,9 +10,17 @@ export const ENABLE_CREDIT_CARD_PAYMENT =
   process.env.NEXT_PUBLIC_ENABLE_CREDIT_CARD_PAYMENT === "true";
 export const ENABLE_USDT_PAYMENT =
   process.env.NEXT_PUBLIC_ENABLE_USDT_PAYMENT === "true";
+
+function envNumber(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 /** Percentage surcharge added to PayPal checkout totals (paid by customer). Set to 0 to disable. */
-export const PAYPAL_PLATFORM_FEE_PERCENT = Number(
-  process.env.PAYPAL_PLATFORM_FEE_PERCENT ?? "3.49",
+export const PAYPAL_PLATFORM_FEE_PERCENT = envNumber(
+  process.env.NEXT_PUBLIC_PAYPAL_PLATFORM_FEE_PERCENT ??
+    process.env.PAYPAL_PLATFORM_FEE_PERCENT,
+  3.49,
 );
 export const TAX_NOTICE =
   "Import duties and local taxes are not included. Your carrier may collect them on delivery.";

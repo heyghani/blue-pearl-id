@@ -9,6 +9,7 @@ import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { RefundForm } from "@/components/admin/refund-form";
 import { OrderLineItemRow } from "@/components/orders/order-line-item";
 import { DutiesNotice } from "@/components/shared/duties-notice";
+import { PlatformFeeRow } from "@/components/shared/platform-fee-row";
 import { Price } from "@/components/shared/price";
 import {
   formatCityStatePostal,
@@ -21,6 +22,8 @@ import { resolveOrderLineImageUrl } from "@/lib/orders/line-item";
 import { formatPhoneDisplay, getCountryName } from "@/lib/phone";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
+import { formatPrice } from "@/lib/currency";
+import { orderPlatformFeeDisplay } from "@/lib/payments/platform-fee";
 import { getAdminOrder } from "@/lib/services/admin/order.service";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -37,6 +40,8 @@ export default async function AdminOrderDetailPage({ params }: Props) {
   if (!order) {
     notFound();
   }
+
+  const feeRow = orderPlatformFeeDisplay(order, t.checkout, formatPrice);
 
   const shippingAddress = order.shippingAddress as StoredShippingAddress;
   const addressLine1 = getAddressLine1(shippingAddress);
@@ -106,12 +111,13 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                 <span className="text-muted-foreground">Shipping ({order.shippingMethodName})</span>
                 <Price amount={order.shippingAmount.toString()} />
               </div>
-              {Number(order.platformFeeAmount) > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">PayPal processing fee</span>
-                  <Price amount={order.platformFeeAmount.toString()} />
-                </div>
-              )}
+              {feeRow ? (
+                <PlatformFeeRow
+                  label={feeRow.label}
+                  calculation={feeRow.calculation}
+                  amount={feeRow.amount}
+                />
+              ) : null}
               <div className="flex justify-between font-medium">
                 <span>Total</span>
                 <Price amount={order.total.toString()} />

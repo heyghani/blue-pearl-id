@@ -8,6 +8,7 @@ import { OrderLineItemRow } from "@/components/orders/order-line-item";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { DutiesNotice } from "@/components/shared/duties-notice";
+import { PlatformFeeRow } from "@/components/shared/platform-fee-row";
 import { Price } from "@/components/shared/price";
 import { sendMetaPurchaseCapi } from "@/lib/analytics/meta-capi";
 import { resolveOrderLineImageUrl } from "@/lib/orders/line-item";
@@ -15,6 +16,8 @@ import { getOrderByNumber } from "@/lib/services/order.service";
 import { getSession } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
+import { formatPrice } from "@/lib/currency";
+import { orderPlatformFeeDisplay } from "@/lib/payments/platform-fee";
 
 type Props = {
   params: Promise<{ orderNumber: string }>;
@@ -37,6 +40,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
   const locale = await getLocale();
   const t = getDictionary(locale);
   const email = order.guestEmail ?? session?.user?.email;
+  const feeRow = orderPlatformFeeDisplay(order, t.checkout, formatPrice);
 
   // Browser Pixel + server CAPI share event_id = orderNumber for Meta dedup.
   // CAPI runs even if the browser Pixel is blocked (ad blocker / ITP).
@@ -122,12 +126,13 @@ export default async function OrderConfirmationPage({ params }: Props) {
                 <span>-<Price amount={order.discountAmount.toString()} /></span>
               </div>
             )}
-            {Number(order.platformFeeAmount) > 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">{t.checkout.platformFeeLine}</span>
-                <Price amount={order.platformFeeAmount.toString()} />
-              </div>
-            )}
+            {feeRow ? (
+              <PlatformFeeRow
+                label={feeRow.label}
+                calculation={feeRow.calculation}
+                amount={feeRow.amount}
+              />
+            ) : null}
           </div>
 
           <Separator className="my-4" />

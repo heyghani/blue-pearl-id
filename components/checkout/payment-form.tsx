@@ -21,11 +21,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  ENABLE_CREDIT_CARD_PAYMENT,
-  ENABLE_USDT_PAYMENT,
-  PAYPAL_PLATFORM_FEE_PERCENT,
-} from "@/lib/constants";
+import { ENABLE_CREDIT_CARD_PAYMENT, ENABLE_USDT_PAYMENT } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const initialState: CheckoutActionState = {};
@@ -47,11 +43,13 @@ export function PaymentForm({
   defaultOrderReferencePhotoUrl = "",
   defaultOrderDimensions = "",
   email,
+  feePercent,
 }: {
   defaultCoupon?: string;
   defaultOrderReferencePhotoUrl?: string;
   defaultOrderDimensions?: string;
   email: string;
+  feePercent: number;
 }) {
   const t = useTranslations();
   const paymentContext = useCheckoutPaymentMethod();
@@ -147,10 +145,10 @@ export function PaymentForm({
               <div>
                 <p className="font-medium">{t.checkout.paypalTitle}</p>
                 <p className="text-sm text-muted-foreground">
-                  {PAYPAL_PLATFORM_FEE_PERCENT > 0
+                  {feePercent > 0
                     ? t.checkout.paypalDescWithFee.replace(
                         "{percent}",
-                        PAYPAL_PLATFORM_FEE_PERCENT.toString(),
+                        feePercent.toString(),
                       )
                     : t.checkout.paypalDesc}
                 </p>

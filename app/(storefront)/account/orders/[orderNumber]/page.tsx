@@ -6,6 +6,7 @@ import { OrderLineItemRow } from "@/components/orders/order-line-item";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { DutiesNotice } from "@/components/shared/duties-notice";
+import { PlatformFeeRow } from "@/components/shared/platform-fee-row";
 import { Price } from "@/components/shared/price";
 import {
   formatCityStatePostal,
@@ -18,7 +19,9 @@ import { formatPhoneDisplay, getCountryName } from "@/lib/phone";
 import { getSession } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
+import { formatPrice } from "@/lib/currency";
 import { resolveOrderLineImageUrl } from "@/lib/orders/line-item";
+import { orderPlatformFeeDisplay } from "@/lib/payments/platform-fee";
 import { getUserOrder } from "@/lib/services/account.service";
 
 type Props = {
@@ -39,6 +42,8 @@ export default async function AccountOrderDetailPage({ params }: Props) {
   if (!order) {
     notFound();
   }
+
+  const feeRow = orderPlatformFeeDisplay(order, t.checkout, formatPrice);
 
   const shippingAddress = order.shippingAddress as StoredShippingAddress;
   const formattedPhone = formatPhoneDisplay(
@@ -101,12 +106,13 @@ export default async function AccountOrderDetailPage({ params }: Props) {
             <span className="text-muted-foreground">Shipping</span>
             <Price amount={order.shippingAmount.toString()} />
           </div>
-          {Number(order.platformFeeAmount) > 0 && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">PayPal processing fee</span>
-              <Price amount={order.platformFeeAmount.toString()} />
-            </div>
-          )}
+          {feeRow ? (
+            <PlatformFeeRow
+              label={feeRow.label}
+              calculation={feeRow.calculation}
+              amount={feeRow.amount}
+            />
+          ) : null}
         </div>
 
         <Separator className="my-4" />
