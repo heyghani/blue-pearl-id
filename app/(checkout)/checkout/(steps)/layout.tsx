@@ -1,21 +1,14 @@
-import { CheckoutSummary } from "@/components/checkout/checkout-summary";
-import { CheckoutPaymentProvider } from "@/components/checkout/checkout-payment-context";
+import { CheckoutStepsShell } from "@/components/checkout/checkout-steps-shell";
+import { getCheckoutSummaryPayload } from "@/components/checkout/checkout-summary";
 
-export default function CheckoutStepsLayout({
+export default async function CheckoutStepsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const summary = await getCheckoutSummaryPayload();
+
   return (
-    <CheckoutPaymentProvider>
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="grid gap-10 lg:grid-cols-[1fr_360px] lg:items-start">
-          <div>{children}</div>
-          <aside className="lg:sticky lg:top-8">
-            <CheckoutSummary showTotals />
-          </aside>
-        </div>
-      </main>
-    </CheckoutPaymentProvider>
+    <CheckoutStepsShell summary={summary}>{children}</CheckoutStepsShell>
   );
 }

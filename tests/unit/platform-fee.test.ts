@@ -25,6 +25,10 @@ describe("platform fee", () => {
     expect(calculatePlatformFee(200, PaymentMethod.PAYPAL, 0)).toBe(0);
   });
 
+  it("accepts a plain PAYPAL string from the checkout UI", () => {
+    expect(calculatePlatformFee(160, "PAYPAL", 4)).toBe(6.4);
+  });
+
   it("adds PayPal fee to checkout totals", () => {
     expect(
       applyPlatformFeeToTotals(200, 15, 0, PaymentMethod.PAYPAL),

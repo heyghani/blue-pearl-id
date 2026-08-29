@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 
-import { ENABLE_CREDIT_CARD_PAYMENT, ENABLE_USDT_PAYMENT } from "@/lib/constants";
+import { getDefaultCheckoutPaymentMethod } from "@/lib/payments/default-method";
 
 type CheckoutPaymentContextValue = {
   paymentMethod: PaymentMethod | null;
@@ -20,15 +20,9 @@ const CheckoutPaymentContext = createContext<CheckoutPaymentContextValue | null>
   null,
 );
 
-function defaultCheckoutPaymentMethod(): PaymentMethod {
-  if (ENABLE_CREDIT_CARD_PAYMENT) return PaymentMethod.CREDIT_CARD;
-  if (ENABLE_USDT_PAYMENT) return PaymentMethod.USDT;
-  return PaymentMethod.PAYPAL;
-}
-
 export function CheckoutPaymentProvider({ children }: { children: ReactNode }) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
-    defaultCheckoutPaymentMethod,
+    getDefaultCheckoutPaymentMethod,
   );
   const value = useMemo(
     () => ({ paymentMethod, setPaymentMethod }),

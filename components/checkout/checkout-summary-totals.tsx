@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { useCheckoutPaymentMethod } from "@/components/checkout/checkout-payment-context";
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { formatPrice } from "@/lib/currency";
+import type { CheckoutPaymentMethodId } from "@/lib/payments/default-method";
 import {
   calculatePlatformFee,
   checkoutBaseAmount,
@@ -17,6 +18,7 @@ type CheckoutSummaryTotalsProps = {
   shipping: string;
   discount: string;
   feePercent: number;
+  defaultPaymentMethod: CheckoutPaymentMethodId;
 };
 
 export function CheckoutSummaryTotals({
@@ -24,10 +26,12 @@ export function CheckoutSummaryTotals({
   shipping,
   discount,
   feePercent,
+  defaultPaymentMethod,
 }: CheckoutSummaryTotalsProps) {
   const t = useTranslations();
   const paymentContext = useCheckoutPaymentMethod();
-  const paymentMethod = paymentContext?.paymentMethod ?? null;
+  const paymentMethod =
+    paymentContext?.paymentMethod ?? defaultPaymentMethod;
 
   const subtotalAmount = Number(subtotal);
   const shippingAmount = Number(shipping);
