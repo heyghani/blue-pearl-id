@@ -195,6 +195,26 @@ export const es: Dictionary = {
     label: "Escríbenos",
     ariaLabel: "Chat por WhatsApp",
     prefilledMessage: "Hola, tengo una pregunta sobre la tienda.",
+    popup: {
+      titleHome: "¿Necesita ayuda para encontrar el par ideal?",
+      titleProduct: "¿Preguntas sobre este artículo?",
+      titleCart: "¿Necesita ayuda para completar su pedido?",
+      descriptionHome:
+        "Escríbanos por WhatsApp — le ayudamos con tallas, disponibilidad y envío.",
+      descriptionProduct:
+        "Pregunte por {productName} — talla, stock o envío. Solemos responder en pocas horas.",
+      descriptionProductFallback:
+        "Pregunte por este artículo — talla, stock o envío. Solemos responder en pocas horas.",
+      descriptionCart:
+        "Su bolsa le espera. Escríbanos por WhatsApp si necesita ayuda con el pago.",
+      prefilledMessageHome: "Hola PrimeLuxr! Estoy navegando la tienda y tengo una pregunta.",
+      prefilledMessageProduct:
+        "Hola! Me interesa {productName}. ¿Tienen mi talla disponible?",
+      prefilledMessageCart:
+        "Hola! Tengo artículos en mi bolsa pero necesito ayuda para completar el pedido.",
+      cta: "Chat por WhatsApp",
+      dismiss: "Ahora no",
+    },
   },
   checkout: {
     progressLabel: "Progreso del pago",

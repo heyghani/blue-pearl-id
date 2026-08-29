@@ -188,6 +188,24 @@ export const zh: Dictionary = {
     label: "联系我们",
     ariaLabel: "通过 WhatsApp 联系",
     prefilledMessage: "您好，想咨询一下商品。",
+    popup: {
+      titleHome: "需要帮您挑选合适的鞋款吗？",
+      titleProduct: "对这件商品有疑问？",
+      titleCart: "需要帮忙完成订单吗？",
+      descriptionHome:
+        "通过 WhatsApp 联系我们的团队 — 尺码、库存、物流都可以咨询。",
+      descriptionProduct:
+        "咨询 {productName} — 尺码、库存或物流。我们通常会在几小时内回复。",
+      descriptionProductFallback:
+        "咨询此商品 — 尺码、库存或物流。我们通常会在几小时内回复。",
+      descriptionCart:
+        "您的购物袋还在等您。如需结账或支付帮助，请通过 WhatsApp 联系我们。",
+      prefilledMessageHome: "您好 PrimeLuxr！我在浏览网站，想咨询一下。",
+      prefilledMessageProduct: "您好！我对 {productName} 感兴趣，请问我的尺码有货吗？",
+      prefilledMessageCart: "您好！购物袋里有商品，需要帮忙完成订单。",
+      cta: "WhatsApp 咨询",
+      dismiss: "暂时不用",
+    },
   },
   checkout: {
     progressLabel: "结账进度",

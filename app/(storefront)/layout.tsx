@@ -5,6 +5,7 @@ import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { WhatsAppButton } from "@/components/layout/whatsapp-button";
+import { WhatsAppFollowUpPopup } from "@/components/whatsapp/whatsapp-follow-up-popup";
 
 export default function StorefrontLayout({
   children,
@@ -21,6 +22,7 @@ export default function StorefrontLayout({
       <main className="flex-1 overflow-x-clip">{children}</main>
       <Footer />
       <WhatsAppButton />
+      <WhatsAppFollowUpPopup />
     </>
   );
 }
