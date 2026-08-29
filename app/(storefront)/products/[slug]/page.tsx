@@ -189,7 +189,10 @@ export default async function ProductDetailPage({ params }: Props) {
                       ) : null}
                     </div>
 
-                    <h1 className="font-display text-xl font-semibold leading-snug tracking-tight sm:text-2xl lg:text-3xl">
+                    <h1
+                      className="font-display text-xl font-semibold leading-snug tracking-tight sm:text-2xl lg:text-3xl"
+                      data-product-name
+                    >
                       {product.name}
                     </h1>
 

@@ -175,6 +175,20 @@ export interface Dictionary {
     label: string;
     ariaLabel: string;
     prefilledMessage: string;
+    popup: {
+      titleHome: string;
+      titleProduct: string;
+      titleCart: string;
+      descriptionHome: string;
+      descriptionProduct: string;
+      descriptionProductFallback: string;
+      descriptionCart: string;
+      prefilledMessageHome: string;
+      prefilledMessageProduct: string;
+      prefilledMessageCart: string;
+      cta: string;
+      dismiss: string;
+    };
   };
   checkout: {
     progressLabel: string;

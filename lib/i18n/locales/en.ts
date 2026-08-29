@@ -195,6 +195,26 @@ export const en: Dictionary = {
     label: "Message us",
     ariaLabel: "Chat on WhatsApp",
     prefilledMessage: "Hi, I have a question about your store.",
+    popup: {
+      titleHome: "Need help finding the right pair?",
+      titleProduct: "Questions about this item?",
+      titleCart: "Need help completing your order?",
+      descriptionHome:
+        "Chat with our team on WhatsApp — we can help with sizing, availability, and shipping.",
+      descriptionProduct:
+        "Ask us about {productName} — sizing, stock, or shipping. We typically reply within a few hours.",
+      descriptionProductFallback:
+        "Ask us about this item — sizing, stock, or shipping. We typically reply within a few hours.",
+      descriptionCart:
+        "Your bag is waiting. Message us on WhatsApp if you need help with checkout or payment.",
+      prefilledMessageHome: "Hi PrimeLuxr! I'm browsing your store and have a question.",
+      prefilledMessageProduct:
+        "Hi! I'm interested in {productName}. Is my size available?",
+      prefilledMessageCart:
+        "Hi! I have items in my cart but need help completing my order.",
+      cta: "Chat on WhatsApp",
+      dismiss: "Not now",
+    },
   },
   checkout: {
     progressLabel: "Checkout progress",
