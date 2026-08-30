@@ -56,6 +56,20 @@ describe("priceForShippingMethod", () => {
     ).toBe(52);
   });
 
+  it("charges one fee for six pairs, not two times the three-pair rate", () => {
+    const splitPacks = [
+      { quantity: 3, standardPrice: 20, expressPrice: 40 },
+      { quantity: 10, standardPrice: 32, expressPrice: 58 },
+    ];
+
+    expect(
+      priceForShippingMethod(ShippingMethodType.STANDARD, 6, 15, splitPacks),
+    ).toBe(32);
+    expect(
+      priceForShippingMethod(ShippingMethodType.STANDARD, 3, 15, splitPacks) * 2,
+    ).toBe(40);
+  });
+
   it("charges the next pack when quantity falls between sizes", () => {
     expect(
       priceForShippingMethod(ShippingMethodType.STANDARD, 7, 15, tiers),

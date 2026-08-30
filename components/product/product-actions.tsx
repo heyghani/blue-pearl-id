@@ -12,7 +12,7 @@ import {
   whenFbqReady,
 } from "@/lib/analytics/meta-pixel-client";
 import { notifyCartUpdated } from "@/lib/cart/events";
-import { addToCartAction } from "@/lib/actions/cart";
+import { addToCartAction, addToCartPackAction } from "@/lib/actions/cart";
 import { CURRENCY, WHATSAPP_PHONE, buildWhatsAppUrl } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 interface ProductActionsProps {
   productId: string;
   variantId?: string;
+  variantIds?: string[];
   /** Line total for Meta AddToCart (unit price × quantity). */
   value: number;
   quantity?: number;
@@ -61,6 +62,7 @@ function trackAddToCart(input: {
 export function ProductActions({
   productId,
   variantId,
+  variantIds,
   value,
   quantity = 1,
   currency = CURRENCY,
@@ -80,18 +82,36 @@ export function ProductActions({
     setAdded(false);
 
     if (requiresSelection) {
-      setError(t.product.selectOptions);
+      setError(
+        quantity > 1
+          ? t.product.selectSizes.replace("{count}", String(quantity))
+          : t.product.selectOptions,
+      );
       return;
     }
 
     startTransition(async () => {
-      const result = await addToCartAction(productId, quantity, variantId);
+      const packIds = variantIds?.filter(Boolean) ?? [];
+      const result =
+        packIds.length > 1
+          ? await addToCartPackAction(productId, packIds)
+          : await addToCartAction(
+              productId,
+              packIds.length === 1 ? 1 : quantity,
+              packIds[0] ?? variantId,
+            );
       if (result.error) {
         setError(result.error);
         return;
       }
       setAdded(true);
-      trackAddToCart({ productId, variantId, value, quantity, currency });
+      trackAddToCart({
+        productId,
+        variantId: packIds[0] ?? variantId,
+        value,
+        quantity: packIds.length > 0 ? packIds.length : quantity,
+        currency,
+      });
       notifyCartUpdated();
       router.refresh();
       if (redirectToCart) {
