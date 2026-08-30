@@ -20,8 +20,9 @@ import { cn } from "@/lib/utils";
 interface ProductActionsProps {
   productId: string;
   variantId?: string;
-  /** Unit price for Meta AddToCart (display price). */
+  /** Line total for Meta AddToCart (unit price × quantity). */
   value: number;
+  quantity?: number;
   currency?: string;
   inStock: boolean;
   /** True only when the resolved display stock is sold out (not while waiting for a size). */
@@ -34,6 +35,7 @@ function trackAddToCart(input: {
   productId: string;
   variantId?: string;
   value: number;
+  quantity: number;
   currency: string;
 }) {
   const eventId = `atc_${input.productId}_${input.variantId ?? "base"}_${Date.now()}`;
@@ -42,7 +44,7 @@ function trackAddToCart(input: {
     currency: input.currency,
     content_ids: [input.productId],
     content_type: "product",
-    num_items: 1,
+    num_items: input.quantity,
   };
 
   whenFbqReady(() => {
@@ -60,6 +62,7 @@ export function ProductActions({
   productId,
   variantId,
   value,
+  quantity = 1,
   currency = CURRENCY,
   inStock,
   soldOut = false,
@@ -82,13 +85,13 @@ export function ProductActions({
     }
 
     startTransition(async () => {
-      const result = await addToCartAction(productId, 1, variantId);
+      const result = await addToCartAction(productId, quantity, variantId);
       if (result.error) {
         setError(result.error);
         return;
       }
       setAdded(true);
-      trackAddToCart({ productId, variantId, value, currency });
+      trackAddToCart({ productId, variantId, value, quantity, currency });
       notifyCartUpdated();
       router.refresh();
       if (redirectToCart) {

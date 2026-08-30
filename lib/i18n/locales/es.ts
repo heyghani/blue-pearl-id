@@ -162,6 +162,9 @@ export const es: Dictionary = {
     variantPreview: "Vista previa",
     trustReturns: "Devoluciones fáciles dentro del plazo si algo no cuadra.",
     trustShipping: "Envío mundial con seguimiento cuando el pedido se confirma.",
+    quantityLabel: "Cantidad",
+    packLabel: "{count} pares",
+    eachPrice: "{price} cada uno",
   },
   cart: {
     title: "Tu bolsa",

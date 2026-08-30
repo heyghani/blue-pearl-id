@@ -9,6 +9,7 @@ import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
 import { getProductBySlug } from "@/lib/products";
 import { addToCart, getCart } from "@/lib/services/cart.service";
+import { listActiveQuantityPacks } from "@/lib/services/admin/shipping.service";
 
 export const dynamic = "force-dynamic";
 
@@ -22,9 +23,13 @@ export default async function CartPage({
   const t = getDictionary(locale);
 
   if (buy) {
-    const product = await getProductBySlug(buy);
+    const [product, packs] = await Promise.all([
+      getProductBySlug(buy),
+      listActiveQuantityPacks(),
+    ]);
     if (product && !product.hasVariants) {
-      await addToCart(product.id, 1);
+      const quantity = packs[0] ?? 1;
+      await addToCart(product.id, quantity);
       redirect("/cart");
     }
     redirect(product ? `/products/${product.slug}` : "/products");
@@ -57,7 +62,7 @@ export default async function CartPage({
         <div className="space-y-6">
           {cart.items.map((item, index) => (
             <div key={item.id}>
-              <CartItemRow item={item} />
+              <CartItemRow item={item} quantityPacks={cart.quantityPacks} />
               {index < cart.items.length - 1 && <Separator className="mt-6" />}
             </div>
           ))}

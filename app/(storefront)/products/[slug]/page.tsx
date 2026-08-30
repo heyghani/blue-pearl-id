@@ -25,6 +25,8 @@ import {
 import { serializeProductVariants } from "@/lib/products/variants";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
+import { listActiveQuantityPacks } from "@/lib/services/admin/shipping.service";
+import { MAX_ORDER_QUANTITY } from "@/lib/shipping/quantity-tiers";
 
 export const revalidate = 30;
 
@@ -76,7 +78,11 @@ async function RelatedProducts({
 
 export default async function ProductDetailPage({ params }: Props) {
   const { slug } = await params;
-  const [product, locale] = await Promise.all([getProductBySlug(slug), getLocale()]);
+  const [product, locale, quantityPacks] = await Promise.all([
+    getProductBySlug(slug),
+    getLocale(),
+    listActiveQuantityPacks(),
+  ]);
   const t = getDictionary(locale);
 
   if (!product) {
@@ -100,6 +106,8 @@ export default async function ProductDetailPage({ params }: Props) {
     compareAtPrice: product.compareAtPrice?.toString() ?? null,
     hasVariants: product.hasVariants,
     inStock,
+    stockQuantity: product.inventory?.quantity ?? MAX_ORDER_QUANTITY,
+    quantityPacks,
     options,
   };
 

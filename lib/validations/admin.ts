@@ -156,6 +156,17 @@ export const shippingRateSchema = z.object({
   isActive: z.coerce.boolean(),
 });
 
+export const shippingQuantityTierSchema = z.object({
+  quantity: z.coerce
+    .number()
+    .int()
+    .min(1, "Quantity must be at least 1 pair.")
+    .max(999, "Quantity cannot exceed 999 pairs."),
+  standardPrice: z.coerce.number().min(0, "Standard shipping cannot be negative."),
+  expressPrice: z.coerce.number().min(0, "Express shipping cannot be negative."),
+  isActive: z.coerce.boolean(),
+});
+
 export const defaultBasePriceSchema = z.object({
   defaultBasePrice: z.coerce
     .number()

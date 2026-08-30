@@ -1,5 +1,7 @@
+import { MAX_ORDER_QUANTITY } from "@/lib/shipping/quantity-tiers";
+
 export function getAvailableQuantity(inventory?: { quantity: number } | null) {
-  if (!inventory) return 99;
+  if (!inventory) return MAX_ORDER_QUANTITY;
   return Math.max(0, inventory.quantity);
 }
 

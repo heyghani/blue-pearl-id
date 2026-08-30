@@ -10,6 +10,7 @@ const emptyCart: CartView = {
   items: [],
   itemCount: 0,
   subtotal: "0.00",
+  quantityPacks: [],
 };
 
 async function fetchCart(): Promise<CartView> {

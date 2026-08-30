@@ -7,6 +7,9 @@ function uniqueFieldMessage(fields: string): string | null {
   if (fields.includes("sku")) {
     return "This SKU is already in use. Choose a different one.";
   }
+  if (fields.includes("quantity")) {
+    return "A pack with this quantity already exists.";
+  }
   return null;
 }
 

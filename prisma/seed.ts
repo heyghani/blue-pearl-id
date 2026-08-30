@@ -412,6 +412,28 @@ async function main() {
     });
   }
 
+  const standardRate = await prisma.shippingRate.findUnique({
+    where: { method: ShippingMethodType.STANDARD },
+  });
+  const expressRate = await prisma.shippingRate.findUnique({
+    where: { method: ShippingMethodType.EXPRESS },
+  });
+  const standardPrice = standardRate?.price ?? 15;
+  const expressPrice = expressRate?.price ?? 35;
+
+  for (const [index, quantity] of [3, 5, 10, 20, 50].entries()) {
+    await prisma.shippingQuantityTier.upsert({
+      where: { quantity },
+      update: {},
+      create: {
+        quantity,
+        sortOrder: index,
+        standardPrice,
+        expressPrice,
+      },
+    });
+  }
+
   await prisma.storeSetting.upsert({
     where: { id: "default" },
     update: {},

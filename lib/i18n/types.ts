@@ -143,6 +143,9 @@ export interface Dictionary {
     variantPreview: string;
     trustReturns: string;
     trustShipping: string;
+    quantityLabel: string;
+    packLabel: string;
+    eachPrice: string;
   };
   cart: {
     title: string;

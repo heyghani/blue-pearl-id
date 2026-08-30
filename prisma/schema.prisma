@@ -379,6 +379,22 @@ model ShippingRate {
   @@map("shipping_rates")
 }
 
+/** Pack sizes shown on product pages; each has Standard/Express shipping prices. */
+model ShippingQuantityTier {
+  id             String  @id @default(cuid())
+  quantity       Int     @unique
+  isActive       Boolean @default(true)
+  sortOrder      Int     @default(0)
+  standardPrice  Decimal @db.Decimal(12, 2)
+  expressPrice   Decimal @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("shipping_quantity_tiers")
+}
+
 model Order {
   id                 String              @id @default(cuid())
   orderNumber        String              @unique

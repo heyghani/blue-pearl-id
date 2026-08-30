@@ -29,7 +29,7 @@ export default function ShippingPage() {
       </ul>
       <p>
         Exact rates and estimated delivery windows are shown at checkout based on your
-        selected method.
+        selected method and the number of pairs in your order.
       </p>
 
       <h2>Processing time</h2>

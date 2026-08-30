@@ -15,6 +15,11 @@ import {
   getVariantOptions,
   resolveVariantImageUrl,
 } from "@/lib/products/variants";
+import {
+  MAX_ORDER_QUANTITY,
+  priceForShippingMethod,
+  toQuantityTierPrices,
+} from "@/lib/shipping/quantity-tiers";
 import type { AddressInput } from "@/lib/validations/checkout";
 
 export type CheckoutTotals = {
@@ -155,7 +160,7 @@ export async function calculateCheckoutTotals(
 
     const available = product.inventory
       ? product.inventory.quantity - product.inventory.reservedQuantity
-      : 99;
+      : MAX_ORDER_QUANTITY;
 
     if (available < item.quantity) {
       return { error: `Not enough stock for ${product.name}.` };
@@ -171,7 +176,16 @@ export async function calculateCheckoutTotals(
 
   const coupon = await resolveCoupon(couponCode);
   const discount = calculateDiscount(subtotal, coupon);
-  const shipping = Number(shippingRate.price);
+  const cartQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const quantityTiers = await prisma.shippingQuantityTier.findMany({
+    where: { isActive: true },
+  });
+  const shipping = priceForShippingMethod(
+    shippingMethod,
+    cartQuantity,
+    Number(shippingRate.price),
+    quantityTiers.map(toQuantityTierPrices),
+  );
   const tax = 0;
   const { platformFee, total } = applyPlatformFeeToTotals(
     subtotal,

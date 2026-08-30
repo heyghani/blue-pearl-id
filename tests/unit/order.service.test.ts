@@ -3,6 +3,7 @@ import { Decimal } from "@prisma/client/runtime/library";
 
 const mockProductFindMany = vi.fn();
 const mockShippingFindFirst = vi.fn();
+const mockShippingQuantityFindMany = vi.fn();
 const mockCouponFindUnique = vi.fn();
 const mockOrderFindUnique = vi.fn();
 
@@ -13,6 +14,9 @@ vi.mock("@/lib/db", () => ({
     },
     shippingRate: {
       findFirst: (...args: unknown[]) => mockShippingFindFirst(...args),
+    },
+    shippingQuantityTier: {
+      findMany: (...args: unknown[]) => mockShippingQuantityFindMany(...args),
     },
     coupon: {
       findUnique: (...args: unknown[]) => mockCouponFindUnique(...args),
@@ -41,6 +45,7 @@ describe("calculateCheckoutTotals", () => {
       name: "Standard Shipping",
       price: new Decimal(15),
     });
+    mockShippingQuantityFindMany.mockResolvedValue([]);
   });
 
   it("returns error for empty cart", async () => {
@@ -72,6 +77,46 @@ describe("calculateCheckoutTotals", () => {
       tax: "0.00",
       platformFee: "0.00",
       total: "215.00",
+      currency: "USD",
+      shippingMethodName: "Standard Shipping",
+    });
+  });
+
+  it("uses quantity pack shipping when a matching tier exists", async () => {
+    mockProductFindMany.mockResolvedValue([
+      {
+        id: "prod-1",
+        name: "Pearl Necklace",
+        price: new Decimal(100),
+        hasVariants: false,
+        inventory: { quantity: 20, reservedQuantity: 0 },
+      },
+    ]);
+    mockShippingQuantityFindMany.mockResolvedValue([
+      {
+        quantity: 3,
+        standardPrice: new Decimal(20),
+        expressPrice: new Decimal(40),
+      },
+      {
+        quantity: 10,
+        standardPrice: new Decimal(45),
+        expressPrice: new Decimal(80),
+      },
+    ]);
+
+    const result = await calculateCheckoutTotals(
+      [{ productId: "prod-1", quantity: 10 }],
+      ShippingMethodType.STANDARD,
+    );
+
+    expect(result).toEqual({
+      subtotal: "1000.00",
+      shipping: "45.00",
+      discount: "0.00",
+      tax: "0.00",
+      platformFee: "0.00",
+      total: "1045.00",
       currency: "USD",
       shippingMethodName: "Standard Shipping",
     });

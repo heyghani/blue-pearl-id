@@ -8,13 +8,17 @@ import { requireCheckoutCart } from "@/lib/checkout/guard";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n/server";
 import { prisma } from "@/lib/db";
+import {
+  priceForShippingMethod,
+  toQuantityTierPrices,
+} from "@/lib/shipping/quantity-tiers";
 
 export const metadata: Metadata = {
   title: "Checkout — Shipping",
 };
 
 export default async function CheckoutShippingPage() {
-  await requireCheckoutCart();
+  const cart = await requireCheckoutCart();
   const [draft, locale] = await Promise.all([getCheckoutDraft(), getLocale()]);
   const t = getDictionary(locale);
 
@@ -22,10 +26,18 @@ export default async function CheckoutShippingPage() {
     redirect("/checkout/information");
   }
 
-  const rates = await prisma.shippingRate.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: "asc" },
-  });
+  const [rates, quantityTiers] = await Promise.all([
+    prisma.shippingRate.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+    prisma.shippingQuantityTier.findMany({
+      where: { isActive: true },
+    }),
+  ]);
+
+  const cartQuantity = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+  const tierPrices = quantityTiers.map(toQuantityTierPrices);
 
   return (
     <div>
@@ -42,7 +54,12 @@ export default async function CheckoutShippingPage() {
           rates={rates.map((rate) => ({
             method: rate.method,
             name: rate.name,
-            price: rate.price.toString(),
+            price: priceForShippingMethod(
+              rate.method,
+              cartQuantity,
+              Number(rate.price),
+              tierPrices,
+            ).toFixed(2),
             estimatedDaysMin: rate.estimatedDaysMin,
             estimatedDaysMax: rate.estimatedDaysMax,
           }))}
