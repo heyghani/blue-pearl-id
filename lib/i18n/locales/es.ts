@@ -166,6 +166,10 @@ export const es: Dictionary = {
     packLabel: "{count} pares",
     packLabelOne: "{count} par",
     eachPrice: "{price} cada uno",
+    selectSizes: "Elige {count} tallas diferentes",
+    sizesChosen: "{chosen} de {count} tallas seleccionadas",
+    addAnotherSize: "Selecciona otra talla",
+    removeSize: "Quitar talla",
   },
   cart: {
     title: "Tu bolsa",

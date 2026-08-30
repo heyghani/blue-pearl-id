@@ -519,6 +519,20 @@ export function findVariantBySelections(
   );
 }
 
+export function variantSelectionLabel(
+  variant: SerializedProductVariant,
+  options: SerializedProductOption[],
+) {
+  return options
+    .map(
+      (option) =>
+        option.values.find((value) => variant.optionValueIds.includes(value.id))
+          ?.value,
+    )
+    .filter((value): value is string => Boolean(value))
+    .join(" · ");
+}
+
 export function getVariantDisplayPrice(
   variant: SerializedProductVariant | null,
   basePrice: string,

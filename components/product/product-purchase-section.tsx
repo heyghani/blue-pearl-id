@@ -6,16 +6,20 @@ import { useState } from "react";
 
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { ProductActions } from "@/components/product/product-actions";
+import { ProductChosenSizes } from "@/components/product/product-chosen-sizes";
 import { ProductQuantityOptions } from "@/components/product/product-quantity-options";
 import { ProductTrustModule } from "@/components/product/product-trust-module";
 import { useProductVariant } from "@/components/product/product-variant-context";
 import { Price } from "@/components/shared/price";
 import { formatPrice } from "@/lib/currency";
 import {
+  findVariantBySelections,
   getVariantCompareAtPrice,
   getVariantDisplayPrice,
   resolveDisplayStockStatus,
+  variantSelectionLabel,
   type SerializedProductOption,
+  type SerializedProductVariant,
 } from "@/lib/products/variants";
 import { storefrontQuantityOptions } from "@/lib/shipping/quantity-tiers";
 import { cn } from "@/lib/utils";
@@ -30,6 +34,7 @@ type Props = {
   stockQuantity: number;
   quantityPacks: number[];
   options: SerializedProductOption[];
+  variants: SerializedProductVariant[];
   layout?: "inline" | "mobile-split";
 };
 
@@ -84,12 +89,16 @@ export function ProductPurchaseSection({
   stockQuantity,
   quantityPacks,
   options,
+  variants,
   layout = "inline",
 }: Props) {
   const t = useTranslations();
   const { selections, setSelection, selectedVariant, previewVariant } = useProductVariant();
   const selectablePacks = storefrontQuantityOptions(quantityPacks);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [chosenSizes, setChosenSizes] = useState<
+    { variantId: string; label: string }[]
+  >([]);
 
   const pricingVariant = selectedVariant ?? previewVariant;
   const unitPrice = getVariantDisplayPrice(pricingVariant, basePrice);
@@ -99,26 +108,73 @@ export function ProductPurchaseSection({
     productInStock: inStock,
     selectedVariant,
   });
-  const requiresSelection = hasVariants && !selectedVariant;
+  const inStockVariantCount = variants.filter(
+    (variant) => variant.isActive && variant.quantity > 0,
+  ).length;
+  const quantity = selectedQuantity;
+  const isSizePack = hasVariants && quantity > 1;
+  const requiresSelection = isSizePack
+    ? chosenSizes.length !== quantity
+    : hasVariants && !selectedVariant;
   const maxQuantity = hasVariants
-    ? (selectedVariant?.quantity ?? 0)
+    ? Math.max(inStockVariantCount, 1)
     : stockQuantity;
-  const stockCap = requiresSelection ? Number.POSITIVE_INFINITY : maxQuantity;
-  const quantity =
-    requiresSelection || selectedQuantity <= maxQuantity
-      ? selectedQuantity
-      : ([...selectablePacks].reverse().find((pack) => pack <= maxQuantity) ?? 1);
+  const showInStock = hasVariants
+    ? inStockVariantCount > 0
+    : stockStatus.inStock;
   const visiblePacks = quantityPacks.length > 0 ? selectablePacks : [];
+  const packReady =
+    !isSizePack ||
+    chosenSizes.every((size) => {
+      const variant = variants.find((entry) => entry.id === size.variantId);
+      return variant != null && variant.quantity > 0;
+    });
   const canPurchase =
     !requiresSelection &&
-    stockStatus.inStock &&
-    quantity <= maxQuantity;
+    packReady &&
+    (hasVariants
+      ? inStockVariantCount > 0
+      : stockStatus.inStock && quantity <= maxQuantity);
   const displayPrice = (Number(unitPrice) * quantity).toFixed(2);
   const displayCompareAt =
     unitCompareAt != null ? (Number(unitCompareAt) * quantity).toFixed(2) : null;
 
+  function handleQuantityChange(next: number) {
+    setSelectedQuantity(next);
+    setChosenSizes((current) => (next <= 1 ? [] : current.slice(0, next)));
+  }
+
   function handleSelect(optionId: string, value: string) {
     setSelection(optionId, value);
+
+    if (!isSizePack) return;
+
+    const variant = findVariantBySelections(variants, options, {
+      ...selections,
+      [optionId]: value,
+    });
+    if (!variant || variant.quantity < 1) return;
+
+    setChosenSizes((current) => {
+      if (current.some((size) => size.variantId === variant.id)) {
+        return current.filter((size) => size.variantId !== variant.id);
+      }
+      if (current.length >= quantity) return current;
+      return [
+        ...current,
+        { variantId: variant.id, label: variantSelectionLabel(variant, options) },
+      ];
+    });
+  }
+
+  function isOptionValueSelected(option: SerializedProductOption, value: string, valueId: string) {
+    if (isSizePack) {
+      return chosenSizes.some((size) => {
+        const variant = variants.find((entry) => entry.id === size.variantId);
+        return variant?.optionValueIds.includes(valueId);
+      });
+    }
+    return selections[option.id] === value;
   }
 
   const purchaseDetails = (
@@ -127,10 +183,10 @@ export function ProductPurchaseSection({
         <span
           className={cn(
             "inline-block text-xs font-medium",
-            stockStatus.inStock ? "text-verified-green" : "text-destructive",
+            showInStock ? "text-verified-green" : "text-destructive",
           )}
         >
-          {stockStatus.inStock ? t.product.inStock : t.product.outOfStock}
+          {showInStock ? t.product.inStock : t.product.outOfStock}
         </span>
 
         <Price
@@ -145,6 +201,13 @@ export function ProductPurchaseSection({
         ) : null}
       </div>
 
+      <ProductQuantityOptions
+        packs={visiblePacks}
+        value={quantity}
+        maxQuantity={hasVariants ? inStockVariantCount : stockQuantity}
+        onChange={handleQuantityChange}
+      />
+
       {hasVariants ? (
         <div className="space-y-4">
           <VariantImagePreview options={options} productName={productName} />
@@ -152,9 +215,18 @@ export function ProductPurchaseSection({
           {options.map((option) => (
             <div key={option.id} className="space-y-2">
               <p className="text-sm font-medium">{option.name}</p>
+              {isSizePack ? (
+                <p className="text-xs text-muted-foreground">
+                  {t.product.selectSizes.replace("{count}", String(quantity))}
+                </p>
+              ) : null}
               <div className="flex flex-wrap gap-2">
                 {option.values.map((value) => {
-                  const isSelected = selections[option.id] === value.value;
+                  const isSelected = isOptionValueSelected(
+                    option,
+                    value.value,
+                    value.id,
+                  );
                   return (
                     <button
                       key={value.id}
@@ -175,7 +247,17 @@ export function ProductPurchaseSection({
             </div>
           ))}
 
-          {selectedVariant ? (
+          {isSizePack ? (
+            <ProductChosenSizes
+              sizes={chosenSizes}
+              needed={quantity}
+              onRemove={(variantId) =>
+                setChosenSizes((current) =>
+                  current.filter((size) => size.variantId !== variantId),
+                )
+              }
+            />
+          ) : selectedVariant ? (
             <p className="font-mono text-xs text-muted-foreground">
               SKU: {selectedVariant.sku}
             </p>
@@ -184,13 +266,6 @@ export function ProductPurchaseSection({
           )}
         </div>
       ) : null}
-
-      <ProductQuantityOptions
-        packs={visiblePacks}
-        value={quantity}
-        maxQuantity={stockCap}
-        onChange={setSelectedQuantity}
-      />
     </>
   );
 
@@ -199,10 +274,21 @@ export function ProductPurchaseSection({
       <ProductActions
         productId={productId}
         variantId={selectedVariant?.id}
+        variantIds={
+          isSizePack
+            ? chosenSizes.map((size) => size.variantId)
+            : selectedVariant
+              ? [selectedVariant.id]
+              : undefined
+        }
         value={Number(displayPrice)}
-        quantity={quantity}
+        quantity={isSizePack ? chosenSizes.length : quantity}
         inStock={canPurchase}
-        soldOut={!stockStatus.inStock && !requiresSelection}
+        soldOut={
+          hasVariants
+            ? inStockVariantCount === 0
+            : !stockStatus.inStock && !requiresSelection
+        }
         requiresSelection={requiresSelection}
         layout={layout === "mobile-split" ? "sticky" : "inline"}
       />

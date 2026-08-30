@@ -4,11 +4,13 @@ import { revalidatePath } from "next/cache";
 
 import {
   addToCart,
+  addVariantPackToCart,
   getCart,
   removeCartItem,
   updateCartItem,
 } from "@/lib/services/cart.service";
 import {
+  addToCartPackSchema,
   addToCartSchema,
   updateCartItemSchema,
 } from "@/lib/validations/cart";
@@ -37,6 +39,25 @@ export async function addToCartAction(
     parsed.data.productId,
     parsed.data.quantity,
     parsed.data.variantId,
+  );
+  if (result.error) return { error: result.error };
+
+  revalidateCartPaths();
+  return { success: "Added to cart" };
+}
+
+export async function addToCartPackAction(
+  productId: string,
+  variantIds: string[],
+): Promise<CartActionState> {
+  const parsed = addToCartPackSchema.safeParse({ productId, variantIds });
+  if (!parsed.success) {
+    return { error: "Choose a different size for each pair." };
+  }
+
+  const result = await addVariantPackToCart(
+    parsed.data.productId,
+    parsed.data.variantIds,
   );
   if (result.error) return { error: result.error };
 

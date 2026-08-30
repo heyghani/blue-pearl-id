@@ -432,6 +432,10 @@ export async function addToCart(
     if (variant.quantity < quantity) {
       return { error: "Not enough stock available." };
     }
+
+    if (quantity !== 1) {
+      return { error: "Choose a different size for each pair." };
+    }
   } else if (variantId) {
     return { error: "This product does not have variants." };
   } else {
@@ -482,6 +486,23 @@ export async function addToCart(
   return { cart: await getCart() };
 }
 
+export async function addVariantPackToCart(
+  productId: string,
+  variantIds: string[],
+): Promise<{ cart?: CartView; error?: string }> {
+  if (new Set(variantIds).size !== variantIds.length) {
+    return { error: "Choose a different size for each pair." };
+  }
+
+  let result: { cart?: CartView; error?: string } = {};
+  for (const variantId of variantIds) {
+    result = await addToCart(productId, 1, variantId);
+    if (result.error) return result;
+  }
+
+  return result;
+}
+
 export async function updateCartItem(
   itemId: string,
   quantity: number,
@@ -496,6 +517,10 @@ export async function updateCartItem(
   if (!availability.inStock) {
     await prisma.cartItem.delete({ where: { id: itemId } });
     return { error: "Product is no longer available.", cart: await getCart() };
+  }
+
+  if (item.variantId && quantity > 1) {
+    return { error: "Each size can only be one pair." };
   }
 
   if (quantity > availability.maxQuantity) {

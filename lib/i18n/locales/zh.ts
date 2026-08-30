@@ -160,6 +160,10 @@ export const zh: Dictionary = {
     packLabel: "{count} 双",
     packLabelOne: "{count} 双",
     eachPrice: "每双 {price}",
+    selectSizes: "请选择 {count} 个不同尺码",
+    sizesChosen: "已选 {chosen}/{count} 个尺码",
+    addAnotherSize: "再选一个尺码",
+    removeSize: "移除尺码",
   },
   cart: {
     title: "购物袋",

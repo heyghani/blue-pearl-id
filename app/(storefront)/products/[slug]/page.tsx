@@ -109,6 +109,7 @@ export default async function ProductDetailPage({ params }: Props) {
     stockQuantity: product.inventory?.quantity ?? MAX_ORDER_QUANTITY,
     quantityPacks,
     options,
+    variants,
   };
 
   return (

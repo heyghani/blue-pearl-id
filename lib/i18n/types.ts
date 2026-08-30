@@ -147,6 +147,10 @@ export interface Dictionary {
     packLabel: string;
     packLabelOne: string;
     eachPrice: string;
+    selectSizes: string;
+    sizesChosen: string;
+    addAnotherSize: string;
+    removeSize: string;
   };
   cart: {
     title: string;
