@@ -18,7 +18,10 @@ export function OrderSummary({
   variant = "full",
   onCheckoutClick,
 }: {
-  cart: Pick<CartView, "subtotal" | "itemCount">;
+  cart: Pick<
+    CartView,
+    "subtotal" | "itemCount" | "estimatedShipping" | "estimatedTotal"
+  >;
   className?: string;
   showCheckout?: boolean;
   variant?: "full" | "drawer";
@@ -47,12 +50,14 @@ export function OrderSummary({
           <span className="text-muted-foreground">{subtotalLabel}</span>
           <Price amount={cart.subtotal} className={isDrawer ? "text-sm font-semibold" : undefined} />
         </div>
-        {!isDrawer ? (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{t.cart.shipping}</span>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">{t.cart.shipping}</span>
+          {cart.itemCount > 0 ? (
+            <Price amount={cart.estimatedShipping} className={isDrawer ? "text-sm" : undefined} />
+          ) : (
             <span className="text-muted-foreground">{t.cart.shippingAtCheckout}</span>
-          </div>
-        ) : null}
+          )}
+        </div>
       </div>
 
       {!isDrawer ? (
@@ -60,10 +65,15 @@ export function OrderSummary({
           <Separator />
           <div className="flex justify-between font-medium">
             <span>{t.cart.estimatedTotal}</span>
-            <Price amount={cart.subtotal} />
+            <Price amount={cart.estimatedTotal} />
           </div>
           <DutiesNotice message={t.common.taxNotice} />
         </>
+      ) : cart.itemCount > 0 ? (
+        <div className="flex justify-between font-medium">
+          <span>{t.cart.estimatedTotal}</span>
+          <Price amount={cart.estimatedTotal} />
+        </div>
       ) : null}
 
       {showCheckout && cart.itemCount > 0 ? (

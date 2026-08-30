@@ -27,6 +27,28 @@ export async function listActiveQuantityPacks(): Promise<number[]> {
   return tiers.map((tier) => tier.quantity);
 }
 
+export async function getStorefrontShippingRates() {
+  const [tiers, standardRate, expressRate] = await Promise.all([
+    listActiveShippingQuantityTiers(),
+    prisma.shippingRate.findFirst({
+      where: { method: ShippingMethodType.STANDARD, isActive: true },
+    }),
+    prisma.shippingRate.findFirst({
+      where: { method: ShippingMethodType.EXPRESS, isActive: true },
+    }),
+  ]);
+
+  return {
+    tiers: tiers.map((tier) => ({
+      quantity: tier.quantity,
+      standardPrice: tier.standardPrice.toString(),
+      expressPrice: tier.expressPrice.toString(),
+    })),
+    standardFallback: standardRate?.price.toString() ?? "15.00",
+    expressFallback: expressRate?.price.toString() ?? "35.00",
+  };
+}
+
 export async function createShippingQuantityTier(input: {
   quantity: number;
   standardPrice: number;

@@ -11,6 +11,13 @@ const emptyCart: CartView = {
   itemCount: 0,
   subtotal: "0.00",
   quantityPacks: [],
+  shippingRates: {
+    tiers: [],
+    standardFallback: "15.00",
+    expressFallback: "35.00",
+  },
+  estimatedShipping: "0.00",
+  estimatedTotal: "0.00",
 };
 
 async function fetchCart(): Promise<CartView> {

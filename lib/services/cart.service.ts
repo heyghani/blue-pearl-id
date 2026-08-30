@@ -15,6 +15,11 @@ import {
   resolveVariantImageUrl,
 } from "@/lib/products/variants";
 import { storefrontQuantityOptions } from "@/lib/shipping/quantity-tiers";
+import {
+  estimateShippingForQuantity,
+  type StorefrontShippingRates,
+} from "@/lib/shipping/storefront-rates";
+import { ShippingMethodType } from "@prisma/client";
 
 function isUniqueConstraintError(error: unknown) {
   return (
@@ -87,10 +92,28 @@ export type CartView = {
   itemCount: number;
   subtotal: string;
   quantityPacks: number[];
+  shippingRates: StorefrontShippingRates;
+  estimatedShipping: string;
+  estimatedTotal: string;
+};
+
+const emptyShippingRates: StorefrontShippingRates = {
+  tiers: [],
+  standardFallback: "15.00",
+  expressFallback: "35.00",
 };
 
 function emptyCart(): CartView {
-  return { id: null, items: [], itemCount: 0, subtotal: "0.00", quantityPacks: [] };
+  return {
+    id: null,
+    items: [],
+    itemCount: 0,
+    subtotal: "0.00",
+    quantityPacks: [],
+    shippingRates: emptyShippingRates,
+    estimatedShipping: "0.00",
+    estimatedTotal: "0.00",
+  };
 }
 
 function getItemUnitPrice(item: {
@@ -204,19 +227,54 @@ function toCartView(cart: {
     itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
     subtotal: subtotal.toFixed(2),
     quantityPacks: [],
+    shippingRates: emptyShippingRates,
+    estimatedShipping: "0.00",
+    estimatedTotal: subtotal.toFixed(2),
   };
 }
 
-async function withQuantityPacks(view: CartView): Promise<CartView> {
-  const tiers = await prisma.shippingQuantityTier.findMany({
-    where: { isActive: true },
-    orderBy: [{ sortOrder: "asc" }, { quantity: "asc" }],
-    select: { quantity: true },
-  });
+async function withShippingContext(view: CartView): Promise<CartView> {
+  const [tiers, standardRate, expressRate] = await Promise.all([
+    prisma.shippingQuantityTier.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { quantity: "asc" }],
+    }),
+    prisma.shippingRate.findFirst({
+      where: { method: ShippingMethodType.STANDARD, isActive: true },
+    }),
+    prisma.shippingRate.findFirst({
+      where: { method: ShippingMethodType.EXPRESS, isActive: true },
+    }),
+  ]);
+
+  const shippingRates: StorefrontShippingRates = {
+    tiers: tiers.map((tier) => ({
+      quantity: tier.quantity,
+      standardPrice: tier.standardPrice.toString(),
+      expressPrice: tier.expressPrice.toString(),
+    })),
+    standardFallback: standardRate?.price.toString() ?? "15.00",
+    expressFallback: expressRate?.price.toString() ?? "35.00",
+  };
+
+  const estimatedShipping =
+    view.itemCount > 0
+      ? estimateShippingForQuantity(
+          view.itemCount,
+          ShippingMethodType.STANDARD,
+          shippingRates,
+        )
+      : "0.00";
+  const estimatedTotal = (
+    Number(view.subtotal) + Number(estimatedShipping)
+  ).toFixed(2);
 
   return {
     ...view,
     quantityPacks: storefrontQuantityOptions(tiers.map((tier) => tier.quantity)),
+    shippingRates,
+    estimatedShipping,
+    estimatedTotal,
   };
 }
 
@@ -386,7 +444,7 @@ export async function getCart(): Promise<CartView> {
     include: cartInclude,
   });
 
-  return refreshed ? withQuantityPacks(toCartView(refreshed)) : emptyCart();
+  return refreshed ? withShippingContext(toCartView(refreshed)) : emptyCart();
 }
 
 export async function addToCart(

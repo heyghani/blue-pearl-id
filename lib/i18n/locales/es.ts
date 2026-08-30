@@ -170,6 +170,10 @@ export const es: Dictionary = {
     sizesChosen: "{chosen} de {count} tallas seleccionadas",
     addAnotherSize: "Selecciona otra talla",
     removeSize: "Quitar talla",
+    packShippingStandard: "{price} envío",
+    shippingStandard: "Envío estándar desde {price}",
+    shippingExpress: "Envío express desde {price}",
+    estimatedTotal: "Total estimado {price}",
   },
   cart: {
     title: "Tu bolsa",
