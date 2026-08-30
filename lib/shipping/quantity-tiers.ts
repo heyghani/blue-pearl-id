@@ -1,5 +1,6 @@
 import { ShippingMethodType } from "@prisma/client";
 
+export const SINGLE_PAIR_QUANTITY = 1;
 export const DEFAULT_QUANTITY_PACKS = [3, 5, 10, 20, 50] as const;
 export const MAX_ORDER_QUANTITY = 999;
 
@@ -17,6 +18,11 @@ export function sortQuantityPacks(packs: number[]) {
   return [...new Set(packs.filter((quantity) => quantity > 0))].sort(
     (a, b) => a - b,
   );
+}
+
+/** Always include a single pair so bulk packs stay optional. */
+export function storefrontQuantityOptions(packs: number[]) {
+  return sortQuantityPacks([SINGLE_PAIR_QUANTITY, ...packs]);
 }
 
 /** Next configured pack in `direction`, or null if none. Falls back to ±1 when no packs. */
@@ -70,6 +76,9 @@ export function priceForShippingMethod(
 
   const matched = matchQuantityTier(cartQuantity, tiers);
   if (!matched) return fallbackPrice;
+
+  const smallestPack = Math.min(...tiers.map((tier) => tier.quantity));
+  if (cartQuantity < smallestPack) return fallbackPrice;
 
   const packPrice =
     method === ShippingMethodType.EXPRESS

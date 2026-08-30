@@ -17,6 +17,7 @@ import {
   resolveDisplayStockStatus,
   type SerializedProductOption,
 } from "@/lib/products/variants";
+import { storefrontQuantityOptions } from "@/lib/shipping/quantity-tiers";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -87,7 +88,8 @@ export function ProductPurchaseSection({
 }: Props) {
   const t = useTranslations();
   const { selections, setSelection, selectedVariant, previewVariant } = useProductVariant();
-  const [selectedQuantity, setSelectedQuantity] = useState(quantityPacks[0] ?? 1);
+  const selectablePacks = storefrontQuantityOptions(quantityPacks);
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
 
   const pricingVariant = selectedVariant ?? previewVariant;
   const unitPrice = getVariantDisplayPrice(pricingVariant, basePrice);
@@ -103,22 +105,17 @@ export function ProductPurchaseSection({
     : stockQuantity;
   const stockCap = requiresSelection ? Number.POSITIVE_INFINITY : maxQuantity;
   const quantity =
-    requiresSelection || quantityPacks.length === 0 || selectedQuantity <= maxQuantity
+    requiresSelection || selectedQuantity <= maxQuantity
       ? selectedQuantity
-      : ([...quantityPacks].reverse().find((pack) => pack <= maxQuantity) ?? 1);
-  const packsAvailable =
-    requiresSelection || quantityPacks.some((pack) => pack <= maxQuantity);
-  const visiblePacks = packsAvailable ? quantityPacks : [];
-  const effectiveQuantity = visiblePacks.length > 0 ? quantity : 1;
+      : ([...selectablePacks].reverse().find((pack) => pack <= maxQuantity) ?? 1);
+  const visiblePacks = quantityPacks.length > 0 ? selectablePacks : [];
   const canPurchase =
     !requiresSelection &&
     stockStatus.inStock &&
-    effectiveQuantity <= maxQuantity;
-  const displayPrice = (Number(unitPrice) * effectiveQuantity).toFixed(2);
+    quantity <= maxQuantity;
+  const displayPrice = (Number(unitPrice) * quantity).toFixed(2);
   const displayCompareAt =
-    unitCompareAt != null
-      ? (Number(unitCompareAt) * effectiveQuantity).toFixed(2)
-      : null;
+    unitCompareAt != null ? (Number(unitCompareAt) * quantity).toFixed(2) : null;
 
   function handleSelect(optionId: string, value: string) {
     setSelection(optionId, value);
@@ -141,7 +138,7 @@ export function ProductPurchaseSection({
           compareAt={displayCompareAt}
           className="[&_span:first-child]:text-2xl [&_span:first-child]:font-bold sm:[&_span:first-child]:text-3xl"
         />
-        {effectiveQuantity > 1 ? (
+        {quantity > 1 ? (
           <p className="text-sm text-muted-foreground">
             {t.product.eachPrice.replace("{price}", formatPrice(unitPrice))}
           </p>
@@ -203,7 +200,7 @@ export function ProductPurchaseSection({
         productId={productId}
         variantId={selectedVariant?.id}
         value={Number(displayPrice)}
-        quantity={effectiveQuantity}
+        quantity={quantity}
         inStock={canPurchase}
         soldOut={!stockStatus.inStock && !requiresSelection}
         requiresSelection={requiresSelection}

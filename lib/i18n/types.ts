@@ -145,6 +145,7 @@ export interface Dictionary {
     trustShipping: string;
     quantityLabel: string;
     packLabel: string;
+    packLabelOne: string;
     eachPrice: string;
   };
   cart: {

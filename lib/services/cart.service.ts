@@ -14,6 +14,7 @@ import {
   getVariantLabel,
   resolveVariantImageUrl,
 } from "@/lib/products/variants";
+import { storefrontQuantityOptions } from "@/lib/shipping/quantity-tiers";
 
 function isUniqueConstraintError(error: unknown) {
   return (
@@ -215,7 +216,7 @@ async function withQuantityPacks(view: CartView): Promise<CartView> {
 
   return {
     ...view,
-    quantityPacks: tiers.map((tier) => tier.quantity),
+    quantityPacks: storefrontQuantityOptions(tiers.map((tier) => tier.quantity)),
   };
 }
 
