@@ -170,6 +170,10 @@ export const en: Dictionary = {
     sizesChosen: "{chosen} of {count} sizes selected",
     addAnotherSize: "Select another size",
     removeSize: "Remove size",
+    packShippingStandard: "{price} ship",
+    shippingStandard: "Standard shipping from {price}",
+    shippingExpress: "Express shipping from {price}",
+    estimatedTotal: "Estimated total {price}",
   },
   cart: {
     title: "Your cart",

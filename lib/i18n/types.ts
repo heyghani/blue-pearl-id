@@ -151,6 +151,10 @@ export interface Dictionary {
     sizesChosen: string;
     addAnotherSize: string;
     removeSize: string;
+    packShippingStandard: string;
+    shippingStandard: string;
+    shippingExpress: string;
+    estimatedTotal: string;
   };
   cart: {
     title: string;

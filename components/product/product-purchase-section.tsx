@@ -22,6 +22,11 @@ import {
   type SerializedProductVariant,
 } from "@/lib/products/variants";
 import { storefrontQuantityOptions } from "@/lib/shipping/quantity-tiers";
+import {
+  estimateShippingForQuantity,
+  type StorefrontShippingRates,
+} from "@/lib/shipping/storefront-rates";
+import { ShippingMethodType } from "@prisma/client";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -33,6 +38,7 @@ type Props = {
   inStock: boolean;
   stockQuantity: number;
   quantityPacks: number[];
+  shippingRates: StorefrontShippingRates;
   options: SerializedProductOption[];
   variants: SerializedProductVariant[];
   layout?: "inline" | "mobile-split";
@@ -88,6 +94,7 @@ export function ProductPurchaseSection({
   inStock,
   stockQuantity,
   quantityPacks,
+  shippingRates,
   options,
   variants,
   layout = "inline",
@@ -138,6 +145,17 @@ export function ProductPurchaseSection({
   const displayPrice = (Number(unitPrice) * quantity).toFixed(2);
   const displayCompareAt =
     unitCompareAt != null ? (Number(unitCompareAt) * quantity).toFixed(2) : null;
+  const estimatedShipping = estimateShippingForQuantity(
+    quantity,
+    ShippingMethodType.STANDARD,
+    shippingRates,
+  );
+  const estimatedExpressShipping = estimateShippingForQuantity(
+    quantity,
+    ShippingMethodType.EXPRESS,
+    shippingRates,
+  );
+  const estimatedTotal = (Number(displayPrice) + Number(estimatedShipping)).toFixed(2);
 
   function handleQuantityChange(next: number) {
     setSelectedQuantity(next);
@@ -199,12 +217,33 @@ export function ProductPurchaseSection({
             {t.product.eachPrice.replace("{price}", formatPrice(unitPrice))}
           </p>
         ) : null}
+        <div className="space-y-1 text-sm text-muted-foreground">
+          <p>
+            {t.product.shippingStandard.replace(
+              "{price}",
+              formatPrice(estimatedShipping),
+            )}
+          </p>
+          <p>
+            {t.product.shippingExpress.replace(
+              "{price}",
+              formatPrice(estimatedExpressShipping),
+            )}
+          </p>
+          <p className="font-medium text-foreground">
+            {t.product.estimatedTotal.replace(
+              "{price}",
+              formatPrice(estimatedTotal),
+            )}
+          </p>
+        </div>
       </div>
 
       <ProductQuantityOptions
         packs={visiblePacks}
         value={quantity}
         maxQuantity={hasVariants ? inStockVariantCount : stockQuantity}
+        shippingRates={shippingRates}
         onChange={handleQuantityChange}
       />
 

@@ -164,6 +164,10 @@ export const zh: Dictionary = {
     sizesChosen: "已选 {chosen}/{count} 个尺码",
     addAnotherSize: "再选一个尺码",
     removeSize: "移除尺码",
+    packShippingStandard: "运费 {price}",
+    shippingStandard: "标准配送 {price} 起",
+    shippingExpress: "加急配送 {price} 起",
+    estimatedTotal: "预估合计 {price}",
   },
   cart: {
     title: "购物袋",
