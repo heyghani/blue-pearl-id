@@ -164,6 +164,7 @@ export const en: Dictionary = {
     trustShipping: "Worldwide shipping with tracking once your order clears.",
     quantityLabel: "Quantity",
     packLabel: "{count} pairs",
+    packLabelOne: "{count} pair",
     eachPrice: "{price} each",
   },
   cart: {

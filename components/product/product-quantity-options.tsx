@@ -39,7 +39,10 @@ export function ProductQuantityOptions({
                 exceedsStock && "cursor-not-allowed opacity-40 hover:border-input",
               )}
             >
-              {t.product.packLabel.replace("{count}", String(quantity))}
+              {(quantity === 1 ? t.product.packLabelOne : t.product.packLabel).replace(
+                "{count}",
+                String(quantity),
+              )}
             </button>
           );
         })}

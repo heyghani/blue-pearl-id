@@ -5,6 +5,7 @@ import {
   adjacentQuantity,
   matchQuantityTier,
   priceForShippingMethod,
+  storefrontQuantityOptions,
 } from "@/lib/shipping/quantity-tiers";
 
 const tiers = [
@@ -40,6 +41,12 @@ describe("priceForShippingMethod", () => {
     ).toBe(15);
   });
 
+  it("uses the method price for a single pair when packs start above 1", () => {
+    expect(
+      priceForShippingMethod(ShippingMethodType.STANDARD, 1, 15, tiers),
+    ).toBe(15);
+  });
+
   it("uses the matching pack price", () => {
     expect(
       priceForShippingMethod(ShippingMethodType.STANDARD, 5, 15, tiers),
@@ -62,6 +69,16 @@ describe("priceForShippingMethod", () => {
   });
 });
 
+describe("storefrontQuantityOptions", () => {
+  it("always includes a single pair ahead of bulk packs", () => {
+    expect(storefrontQuantityOptions([3, 5, 10])).toEqual([1, 3, 5, 10]);
+  });
+
+  it("does not duplicate a 1-pair pack from admin", () => {
+    expect(storefrontQuantityOptions([1, 3, 5])).toEqual([1, 3, 5]);
+  });
+});
+
 describe("adjacentQuantity", () => {
   const packs = [3, 5, 10, 20, 50];
 
@@ -73,6 +90,10 @@ describe("adjacentQuantity", () => {
   it("returns null at the ends of the pack list", () => {
     expect(adjacentQuantity(3, packs, -1)).toBeNull();
     expect(adjacentQuantity(50, packs, 1)).toBeNull();
+  });
+
+  it("steps down to a single pair when 1 is included", () => {
+    expect(adjacentQuantity(3, storefrontQuantityOptions(packs), -1)).toBe(1);
   });
 
   it("falls back to plus or minus one when no packs are configured", () => {

@@ -158,6 +158,7 @@ export const zh: Dictionary = {
     trustShipping: "全球配送，订单确认后提供物流追踪。",
     quantityLabel: "数量",
     packLabel: "{count} 双",
+    packLabelOne: "{count} 双",
     eachPrice: "每双 {price}",
   },
   cart: {
