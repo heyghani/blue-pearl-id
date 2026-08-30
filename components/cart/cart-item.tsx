@@ -14,16 +14,19 @@ import {
 } from "@/lib/actions/cart";
 import { Price } from "@/components/shared/price";
 import { Button } from "@/components/ui/button";
+import { adjacentQuantity } from "@/lib/shipping/quantity-tiers";
 import type { CartLineItem } from "@/lib/services/cart.service";
 import { cn } from "@/lib/utils";
 
 export function CartItemRow({
   item,
   compact = false,
+  quantityPacks = [],
   onUpdated,
 }: {
   item: CartLineItem;
   compact?: boolean;
+  quantityPacks?: number[];
   onUpdated?: () => void;
 }) {
   const t = useTranslations();
@@ -40,6 +43,12 @@ export function CartItemRow({
   }
 
   const lineTotal = (Number(item.product.price) * item.quantity).toFixed(2);
+  const previousQuantity = adjacentQuantity(item.quantity, quantityPacks, -1);
+  const nextQuantity = adjacentQuantity(item.quantity, quantityPacks, 1);
+  const canIncrease =
+    nextQuantity != null &&
+    item.product.inStock &&
+    nextQuantity <= item.product.maxQuantity;
 
   return (
     <div className={cn("flex gap-3", isPending && "opacity-60", compact && "gap-3")}>
@@ -102,10 +111,11 @@ export function CartItemRow({
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-md"
-              disabled={isPending || item.quantity <= 1}
-              onClick={() =>
-                mutate(() => updateCartItemAction(item.id, item.quantity - 1))
-              }
+              disabled={isPending || previousQuantity == null}
+              onClick={() => {
+                if (previousQuantity == null) return;
+                mutate(() => updateCartItemAction(item.id, previousQuantity));
+              }}
               aria-label={t.cart.decreaseQuantity}
             >
               <Minus className="h-3 w-3" />
@@ -118,14 +128,11 @@ export function CartItemRow({
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-md"
-              disabled={
-                isPending ||
-                !item.product.inStock ||
-                item.quantity >= item.product.maxQuantity
-              }
-              onClick={() =>
-                mutate(() => updateCartItemAction(item.id, item.quantity + 1))
-              }
+              disabled={isPending || !canIncrease}
+              onClick={() => {
+                if (nextQuantity == null) return;
+                mutate(() => updateCartItemAction(item.id, nextQuantity));
+              }}
               aria-label={t.cart.increaseQuantity}
             >
               <Plus className="h-3 w-3" />

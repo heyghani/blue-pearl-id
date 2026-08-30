@@ -68,6 +68,9 @@ export function ShippingRateForm({
             defaultValue={price}
             required
           />
+          <p className="text-xs text-muted-foreground">
+            Fallback if no quantity packs are configured.
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor={`${method}-min`}>Min days</Label>

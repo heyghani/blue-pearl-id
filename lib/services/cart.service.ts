@@ -85,10 +85,11 @@ export type CartView = {
   items: CartLineItem[];
   itemCount: number;
   subtotal: string;
+  quantityPacks: number[];
 };
 
 function emptyCart(): CartView {
-  return { id: null, items: [], itemCount: 0, subtotal: "0.00" };
+  return { id: null, items: [], itemCount: 0, subtotal: "0.00", quantityPacks: [] };
 }
 
 function getItemUnitPrice(item: {
@@ -201,6 +202,20 @@ function toCartView(cart: {
     items,
     itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
     subtotal: subtotal.toFixed(2),
+    quantityPacks: [],
+  };
+}
+
+async function withQuantityPacks(view: CartView): Promise<CartView> {
+  const tiers = await prisma.shippingQuantityTier.findMany({
+    where: { isActive: true },
+    orderBy: [{ sortOrder: "asc" }, { quantity: "asc" }],
+    select: { quantity: true },
+  });
+
+  return {
+    ...view,
+    quantityPacks: tiers.map((tier) => tier.quantity),
   };
 }
 
@@ -370,7 +385,7 @@ export async function getCart(): Promise<CartView> {
     include: cartInclude,
   });
 
-  return refreshed ? toCartView(refreshed) : emptyCart();
+  return refreshed ? withQuantityPacks(toCartView(refreshed)) : emptyCart();
 }
 
 export async function addToCart(

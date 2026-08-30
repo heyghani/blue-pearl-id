@@ -84,7 +84,12 @@ export function CartDrawer({
             <ul className="divide-y">
               {cart.items.map((item) => (
                 <li key={item.id} className="py-4 first:pt-1">
-                  <CartItemRow item={item} compact onUpdated={onRefresh} />
+                  <CartItemRow
+                    item={item}
+                    compact
+                    quantityPacks={cart.quantityPacks}
+                    onUpdated={onRefresh}
+                  />
                 </li>
               ))}
             </ul>

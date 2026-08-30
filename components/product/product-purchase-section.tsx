@@ -2,11 +2,15 @@
 
 import Image from "next/image";
 
+import { useState } from "react";
+
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { ProductActions } from "@/components/product/product-actions";
+import { ProductQuantityOptions } from "@/components/product/product-quantity-options";
 import { ProductTrustModule } from "@/components/product/product-trust-module";
 import { useProductVariant } from "@/components/product/product-variant-context";
 import { Price } from "@/components/shared/price";
+import { formatPrice } from "@/lib/currency";
 import {
   getVariantCompareAtPrice,
   getVariantDisplayPrice,
@@ -22,6 +26,8 @@ type Props = {
   compareAtPrice: string | null;
   hasVariants: boolean;
   inStock: boolean;
+  stockQuantity: number;
+  quantityPacks: number[];
   options: SerializedProductOption[];
   layout?: "inline" | "mobile-split";
 };
@@ -74,22 +80,45 @@ export function ProductPurchaseSection({
   compareAtPrice,
   hasVariants,
   inStock,
+  stockQuantity,
+  quantityPacks,
   options,
   layout = "inline",
 }: Props) {
   const t = useTranslations();
   const { selections, setSelection, selectedVariant, previewVariant } = useProductVariant();
+  const [selectedQuantity, setSelectedQuantity] = useState(quantityPacks[0] ?? 1);
 
   const pricingVariant = selectedVariant ?? previewVariant;
-  const displayPrice = getVariantDisplayPrice(pricingVariant, basePrice);
-  const displayCompareAt = getVariantCompareAtPrice(pricingVariant, compareAtPrice);
+  const unitPrice = getVariantDisplayPrice(pricingVariant, basePrice);
+  const unitCompareAt = getVariantCompareAtPrice(pricingVariant, compareAtPrice);
   const stockStatus = resolveDisplayStockStatus({
     hasVariants,
     productInStock: inStock,
     selectedVariant,
   });
   const requiresSelection = hasVariants && !selectedVariant;
-  const canPurchase = !requiresSelection && stockStatus.inStock;
+  const maxQuantity = hasVariants
+    ? (selectedVariant?.quantity ?? 0)
+    : stockQuantity;
+  const stockCap = requiresSelection ? Number.POSITIVE_INFINITY : maxQuantity;
+  const quantity =
+    requiresSelection || quantityPacks.length === 0 || selectedQuantity <= maxQuantity
+      ? selectedQuantity
+      : ([...quantityPacks].reverse().find((pack) => pack <= maxQuantity) ?? 1);
+  const packsAvailable =
+    requiresSelection || quantityPacks.some((pack) => pack <= maxQuantity);
+  const visiblePacks = packsAvailable ? quantityPacks : [];
+  const effectiveQuantity = visiblePacks.length > 0 ? quantity : 1;
+  const canPurchase =
+    !requiresSelection &&
+    stockStatus.inStock &&
+    effectiveQuantity <= maxQuantity;
+  const displayPrice = (Number(unitPrice) * effectiveQuantity).toFixed(2);
+  const displayCompareAt =
+    unitCompareAt != null
+      ? (Number(unitCompareAt) * effectiveQuantity).toFixed(2)
+      : null;
 
   function handleSelect(optionId: string, value: string) {
     setSelection(optionId, value);
@@ -112,6 +141,11 @@ export function ProductPurchaseSection({
           compareAt={displayCompareAt}
           className="[&_span:first-child]:text-2xl [&_span:first-child]:font-bold sm:[&_span:first-child]:text-3xl"
         />
+        {effectiveQuantity > 1 ? (
+          <p className="text-sm text-muted-foreground">
+            {t.product.eachPrice.replace("{price}", formatPrice(unitPrice))}
+          </p>
+        ) : null}
       </div>
 
       {hasVariants ? (
@@ -153,6 +187,13 @@ export function ProductPurchaseSection({
           )}
         </div>
       ) : null}
+
+      <ProductQuantityOptions
+        packs={visiblePacks}
+        value={quantity}
+        maxQuantity={stockCap}
+        onChange={setSelectedQuantity}
+      />
     </>
   );
 
@@ -162,6 +203,7 @@ export function ProductPurchaseSection({
         productId={productId}
         variantId={selectedVariant?.id}
         value={Number(displayPrice)}
+        quantity={effectiveQuantity}
         inStock={canPurchase}
         soldOut={!stockStatus.inStock && !requiresSelection}
         requiresSelection={requiresSelection}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { getItemAvailability } from "@/lib/cart/availability";
+import { MAX_ORDER_QUANTITY } from "@/lib/shipping/quantity-tiers";
 
 describe("getItemAvailability", () => {
   it("treats simple products without inventory as in stock", () => {
@@ -15,7 +16,7 @@ describe("getItemAvailability", () => {
     });
 
     expect(result.inStock).toBe(true);
-    expect(result.maxQuantity).toBe(99);
+    expect(result.maxQuantity).toBe(MAX_ORDER_QUANTITY);
   });
 
   it("uses variant stock for variant products instead of zero product inventory", () => {

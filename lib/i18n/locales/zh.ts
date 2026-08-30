@@ -156,6 +156,9 @@ export const zh: Dictionary = {
     variantPreview: "预览",
     trustReturns: "如有问题，可在规定期限内轻松退换。",
     trustShipping: "全球配送，订单确认后提供物流追踪。",
+    quantityLabel: "数量",
+    packLabel: "{count} 双",
+    eachPrice: "每双 {price}",
   },
   cart: {
     title: "购物袋",

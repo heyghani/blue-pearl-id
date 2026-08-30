@@ -162,6 +162,9 @@ export const en: Dictionary = {
     variantPreview: "Preview",
     trustReturns: "Easy returns within the stated window if something’s off.",
     trustShipping: "Worldwide shipping with tracking once your order clears.",
+    quantityLabel: "Quantity",
+    packLabel: "{count} pairs",
+    eachPrice: "{price} each",
   },
   cart: {
     title: "Your cart",
