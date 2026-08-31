@@ -44,6 +44,8 @@ type Props = {
   layout?: "inline" | "mobile-split";
 };
 
+type ChosenSize = { variantId: string; label: string };
+
 function VariantImagePreview({
   options,
   productName,
@@ -85,6 +87,10 @@ function VariantImagePreview({
   );
 }
 
+function countChosenForVariant(chosenSizes: ChosenSize[], variantId: string) {
+  return chosenSizes.filter((size) => size.variantId === variantId).length;
+}
+
 export function ProductPurchaseSection({
   productId,
   productName,
@@ -100,12 +106,11 @@ export function ProductPurchaseSection({
   layout = "inline",
 }: Props) {
   const t = useTranslations();
-  const { selections, setSelection, selectedVariant, previewVariant } = useProductVariant();
+  const { selections, setSelection, clearSelections, selectedVariant, previewVariant } =
+    useProductVariant();
   const selectablePacks = storefrontQuantityOptions(quantityPacks);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
-  const [chosenSizes, setChosenSizes] = useState<
-    { variantId: string; label: string }[]
-  >([]);
+  const [chosenSizes, setChosenSizes] = useState<ChosenSize[]>([]);
 
   const pricingVariant = selectedVariant ?? previewVariant;
   const unitPrice = getVariantDisplayPrice(pricingVariant, basePrice);
@@ -115,20 +120,20 @@ export function ProductPurchaseSection({
     productInStock: inStock,
     selectedVariant,
   });
-  const inStockVariantCount = variants.filter(
+  const inStockVariants = variants.filter(
     (variant) => variant.isActive && variant.quantity > 0,
-  ).length;
+  );
+  const totalVariantStock = inStockVariants.reduce(
+    (sum, variant) => sum + variant.quantity,
+    0,
+  );
   const quantity = selectedQuantity;
   const isSizePack = hasVariants && quantity > 1;
   const requiresSelection = isSizePack
     ? chosenSizes.length !== quantity
     : hasVariants && !selectedVariant;
-  const maxQuantity = hasVariants
-    ? Math.max(inStockVariantCount, 1)
-    : stockQuantity;
-  const showInStock = hasVariants
-    ? inStockVariantCount > 0
-    : stockStatus.inStock;
+  const maxQuantity = hasVariants ? totalVariantStock : stockQuantity;
+  const showInStock = hasVariants ? inStockVariants.length > 0 : stockStatus.inStock;
   const visiblePacks = quantityPacks.length > 0 ? selectablePacks : [];
   const packReady =
     !isSizePack ||
@@ -140,11 +145,28 @@ export function ProductPurchaseSection({
     !requiresSelection &&
     packReady &&
     (hasVariants
-      ? inStockVariantCount > 0
+      ? inStockVariants.length > 0
       : stockStatus.inStock && quantity <= maxQuantity);
-  const displayPrice = (Number(unitPrice) * quantity).toFixed(2);
-  const displayCompareAt =
-    unitCompareAt != null ? (Number(unitCompareAt) * quantity).toFixed(2) : null;
+  const displayPrice = isSizePack
+    ? chosenSizes
+        .reduce((sum, size) => {
+          const variant = variants.find((entry) => entry.id === size.variantId) ?? null;
+          return sum + Number(getVariantDisplayPrice(variant, basePrice));
+        }, 0)
+        .toFixed(2)
+    : (Number(unitPrice) * quantity).toFixed(2);
+  const displayCompareAt = isSizePack
+    ? (() => {
+        const total = chosenSizes.reduce((sum, size) => {
+          const variant = variants.find((entry) => entry.id === size.variantId) ?? null;
+          const compareAt = getVariantCompareAtPrice(variant, compareAtPrice);
+          return compareAt != null ? sum + Number(compareAt) : sum;
+        }, 0);
+        return total > 0 ? total.toFixed(2) : null;
+      })()
+    : unitCompareAt != null
+      ? (Number(unitCompareAt) * quantity).toFixed(2)
+      : null;
   const estimatedShipping = estimateShippingForQuantity(
     quantity,
     ShippingMethodType.STANDARD,
@@ -160,9 +182,12 @@ export function ProductPurchaseSection({
   function handleQuantityChange(next: number) {
     setSelectedQuantity(next);
     setChosenSizes((current) => (next <= 1 ? [] : current.slice(0, next)));
+    if (next <= 1) clearSelections();
   }
 
   function handleSelect(optionId: string, value: string) {
+    if (isSizePack && chosenSizes.length >= quantity) return;
+
     setSelection(optionId, value);
 
     if (!isSizePack) return;
@@ -173,24 +198,36 @@ export function ProductPurchaseSection({
     });
     if (!variant || variant.quantity < 1) return;
 
+    const alreadyChosen = countChosenForVariant(chosenSizes, variant.id);
+    if (alreadyChosen >= variant.quantity) return;
+
     setChosenSizes((current) => {
-      if (current.some((size) => size.variantId === variant.id)) {
-        return current.filter((size) => size.variantId !== variant.id);
-      }
       if (current.length >= quantity) return current;
       return [
         ...current,
-        { variantId: variant.id, label: variantSelectionLabel(variant, options) },
+        {
+          variantId: variant.id,
+          label: variantSelectionLabel(variant, options),
+        },
       ];
     });
+    clearSelections();
   }
 
-  function isOptionValueSelected(option: SerializedProductOption, value: string, valueId: string) {
+  function countChosenForValue(valueId: string) {
+    return chosenSizes.filter((size) => {
+      const variant = variants.find((entry) => entry.id === size.variantId);
+      return variant?.optionValueIds.includes(valueId);
+    }).length;
+  }
+
+  function isOptionValueSelected(
+    option: SerializedProductOption,
+    value: string,
+    valueId: string,
+  ) {
     if (isSizePack) {
-      return chosenSizes.some((size) => {
-        const variant = variants.find((entry) => entry.id === size.variantId);
-        return variant?.optionValueIds.includes(valueId);
-      });
+      return countChosenForValue(valueId) > 0;
     }
     return selections[option.id] === value;
   }
@@ -242,7 +279,7 @@ export function ProductPurchaseSection({
       <ProductQuantityOptions
         packs={visiblePacks}
         value={quantity}
-        maxQuantity={hasVariants ? inStockVariantCount : stockQuantity}
+        maxQuantity={maxQuantity}
         shippingRates={shippingRates}
         onChange={handleQuantityChange}
       />
@@ -261,24 +298,31 @@ export function ProductPurchaseSection({
               ) : null}
               <div className="flex flex-wrap gap-2">
                 {option.values.map((value) => {
+                  const chosenCount = isSizePack ? countChosenForValue(value.id) : 0;
                   const isSelected = isOptionValueSelected(
                     option,
                     value.value,
                     value.id,
                   );
+                  const packFull = isSizePack && chosenSizes.length >= quantity;
                   return (
                     <button
                       key={value.id}
                       type="button"
+                      disabled={packFull}
                       onClick={() => handleSelect(option.id, value.value)}
                       className={cn(
-                        "rounded-md border px-3 py-1.5 font-mono text-sm transition-colors",
+                        "relative rounded-md border px-3 py-1.5 font-mono text-sm transition-colors",
                         isSelected
                           ? "border-foreground bg-foreground text-background"
                           : "border-input bg-background hover:border-foreground/40",
+                        packFull && "cursor-not-allowed opacity-40 hover:border-input",
                       )}
                     >
                       {value.value}
+                      {chosenCount > 1 ? (
+                        <span className="ml-1 text-[10px] opacity-80">×{chosenCount}</span>
+                      ) : null}
                     </button>
                   );
                 })}
@@ -290,10 +334,8 @@ export function ProductPurchaseSection({
             <ProductChosenSizes
               sizes={chosenSizes}
               needed={quantity}
-              onRemove={(variantId) =>
-                setChosenSizes((current) =>
-                  current.filter((size) => size.variantId !== variantId),
-                )
+              onRemove={(index) =>
+                setChosenSizes((current) => current.filter((_, i) => i !== index))
               }
             />
           ) : selectedVariant ? (
@@ -325,7 +367,7 @@ export function ProductPurchaseSection({
         inStock={canPurchase}
         soldOut={
           hasVariants
-            ? inStockVariantCount === 0
+            ? inStockVariants.length === 0
             : !stockStatus.inStock && !requiresSelection
         }
         requiresSelection={requiresSelection}

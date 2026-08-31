@@ -105,9 +105,6 @@ export function CartItemRow({
         </div>
 
         <div className="mt-3 flex items-center justify-between">
-          {item.product.variantLabel ? (
-            <span className="text-xs text-muted-foreground">× 1</span>
-          ) : (
           <div className="flex items-center rounded-md border bg-background">
             <Button
               type="button"
@@ -141,7 +138,6 @@ export function CartItemRow({
               <Plus className="h-3 w-3" />
             </Button>
           </div>
-          )}
 
           <Button
             type="button"

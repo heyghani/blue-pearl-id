@@ -166,7 +166,7 @@ export const es: Dictionary = {
     packLabel: "{count} pares",
     packLabelOne: "{count} par",
     eachPrice: "{price} cada uno",
-    selectSizes: "Elige {count} tallas diferentes",
+    selectSizes: "Elige una talla para cada par ({count} en total)",
     sizesChosen: "{chosen} de {count} tallas seleccionadas",
     addAnotherSize: "Selecciona otra talla",
     removeSize: "Quitar talla",

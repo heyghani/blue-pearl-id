@@ -12,7 +12,7 @@ export function ProductChosenSizes({
 }: {
   sizes: { variantId: string; label: string }[];
   needed: number;
-  onRemove: (variantId: string) => void;
+  onRemove: (index: number) => void;
 }) {
   const t = useTranslations();
 
@@ -27,7 +27,7 @@ export function ProductChosenSizes({
         <ul className="space-y-2">
           {sizes.map((size, index) => (
             <li
-              key={size.variantId}
+              key={`${size.variantId}-${index}`}
               className="flex items-center justify-between gap-3 rounded-xl border border-border/70 px-3 py-2"
             >
               <span className="text-sm font-medium">
@@ -38,7 +38,7 @@ export function ProductChosenSizes({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 rounded-md text-muted-foreground hover:text-destructive"
-                onClick={() => onRemove(size.variantId)}
+                onClick={() => onRemove(index)}
                 aria-label={t.product.removeSize}
               >
                 <X className="h-4 w-4" />

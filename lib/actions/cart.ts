@@ -52,7 +52,7 @@ export async function addToCartPackAction(
 ): Promise<CartActionState> {
   const parsed = addToCartPackSchema.safeParse({ productId, variantIds });
   if (!parsed.success) {
-    return { error: "Choose a different size for each pair." };
+    return { error: "Invalid product or sizes." };
   }
 
   const result = await addVariantPackToCart(

@@ -23,6 +23,7 @@ type GalleryImage = { url: string; alt?: string | null };
 type ProductVariantContextValue = {
   selections: Record<string, string>;
   setSelection: (optionId: string, value: string) => void;
+  clearSelections: () => void;
   selectedVariant: SerializedProductVariant | null;
   previewVariant: SerializedProductVariant | null;
   galleryImages: GalleryImage[];
@@ -95,6 +96,7 @@ export function ProductVariantProvider({
       setSelection: (optionId: string, value: string) => {
         setSelections((current) => ({ ...current, [optionId]: value }));
       },
+      clearSelections: () => setSelections({}),
       selectedVariant,
       previewVariant,
       galleryImages,
