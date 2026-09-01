@@ -1,6 +1,10 @@
 import { ShippingMethodType } from "@prisma/client";
 
 import {
+  applyQuantityDiscount,
+  type QuantityPriceTier,
+} from "@/lib/pricing/quantity-discounts";
+import {
   priceForShippingMethod,
   toQuantityTierPrices,
   type QuantityTierPrices,
@@ -10,6 +14,7 @@ export type StorefrontShippingTier = {
   quantity: number;
   standardPrice: string;
   expressPrice: string;
+  priceFactor: string;
 };
 
 export type StorefrontShippingRates = {
@@ -23,6 +28,16 @@ function toTierPrices(rates: StorefrontShippingRates): QuantityTierPrices[] {
     quantity: tier.quantity,
     standardPrice: Number(tier.standardPrice),
     expressPrice: Number(tier.expressPrice),
+    priceFactor: Number(tier.priceFactor),
+  }));
+}
+
+export function quantityPriceTiersFromStorefront(
+  rates: StorefrontShippingRates,
+): QuantityPriceTier[] {
+  return rates.tiers.map((tier) => ({
+    quantity: tier.quantity,
+    priceFactor: Number(tier.priceFactor),
   }));
 }
 
@@ -62,17 +77,31 @@ export function shippingForPackQuantity(
   };
 }
 
+export function merchandiseDiscountForQuantity(
+  undiscountedTotal: number,
+  quantity: number,
+  rates: StorefrontShippingRates,
+) {
+  return applyQuantityDiscount(
+    undiscountedTotal,
+    quantity,
+    quantityPriceTiersFromStorefront(rates),
+  );
+}
+
 export function serializeShippingTiers(
   tiers: {
     quantity: number;
     standardPrice: { toString(): string };
     expressPrice: { toString(): string };
+    priceFactor: { toString(): string };
   }[],
 ): StorefrontShippingTier[] {
   return tiers.map((tier) => ({
     quantity: tier.quantity,
     standardPrice: tier.standardPrice.toString(),
     expressPrice: tier.expressPrice.toString(),
+    priceFactor: tier.priceFactor.toString(),
   }));
 }
 

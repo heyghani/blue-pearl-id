@@ -3,6 +3,7 @@
 import { useTranslations } from "@/components/i18n/locale-provider";
 import { formatPrice } from "@/lib/currency";
 import {
+  merchandiseDiscountForQuantity,
   shippingForPackQuantity,
   type StorefrontShippingRates,
 } from "@/lib/shipping/storefront-rates";
@@ -33,6 +34,7 @@ export function ProductQuantityOptions({
           const isSelected = value === quantity;
           const exceedsStock = quantity > maxQuantity;
           const shipping = shippingForPackQuantity(quantity, shippingRates);
+          const discount = merchandiseDiscountForQuantity(100, quantity, shippingRates);
           return (
             <button
               key={quantity}
@@ -53,6 +55,19 @@ export function ProductQuantityOptions({
                   String(quantity),
                 )}
               </span>
+              {discount.discountPercent > 0 ? (
+                <span
+                  className={cn(
+                    "mt-0.5 text-[11px] font-medium",
+                    isSelected ? "text-emerald-200" : "text-emerald-700",
+                  )}
+                >
+                  {t.product.packQuantityDiscount.replace(
+                    "{percent}",
+                    discount.discountPercent.toFixed(2),
+                  )}
+                </span>
+              ) : null}
               <span
                 className={cn(
                   "mt-0.5 text-[11px] font-normal",

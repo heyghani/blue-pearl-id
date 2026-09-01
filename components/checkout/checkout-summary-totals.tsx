@@ -14,6 +14,8 @@ import {
 } from "@/lib/payments/platform-fee";
 
 type CheckoutSummaryTotalsProps = {
+  merchandiseTotal: string;
+  quantityDiscount: string;
   subtotal: string;
   shipping: string;
   discount: string;
@@ -22,6 +24,8 @@ type CheckoutSummaryTotalsProps = {
 };
 
 export function CheckoutSummaryTotals({
+  merchandiseTotal,
+  quantityDiscount,
   subtotal,
   shipping,
   discount,
@@ -36,6 +40,7 @@ export function CheckoutSummaryTotals({
   const subtotalAmount = Number(subtotal);
   const shippingAmount = Number(shipping);
   const discountAmount = Number(discount);
+  const quantityDiscountAmount = Number(quantityDiscount);
   const baseAmount = checkoutBaseAmount(
     subtotalAmount,
     shippingAmount,
@@ -57,8 +62,16 @@ export function CheckoutSummaryTotals({
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">{t.checkout.subtotal}</span>
-          <Price amount={subtotal} />
+          <Price amount={merchandiseTotal} />
         </div>
+        {quantityDiscountAmount > 0 ? (
+          <div className="flex justify-between text-emerald-700">
+            <span>{t.checkout.quantityDiscount}</span>
+            <span>
+              -<Price amount={quantityDiscount} />
+            </span>
+          </div>
+        ) : null}
         <div className="flex justify-between">
           <span className="text-muted-foreground">{t.checkout.shippingLabel}</span>
           <Price amount={shipping} />

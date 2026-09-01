@@ -71,6 +71,8 @@ describe("calculateCheckoutTotals", () => {
     );
 
     expect(result).toEqual({
+      merchandiseTotal: "200.00",
+      quantityDiscount: "0.00",
       subtotal: "200.00",
       shipping: "15.00",
       discount: "0.00",
@@ -97,11 +99,13 @@ describe("calculateCheckoutTotals", () => {
         quantity: 3,
         standardPrice: new Decimal(20),
         expressPrice: new Decimal(40),
+        priceFactor: new Decimal(1),
       },
       {
         quantity: 10,
         standardPrice: new Decimal(45),
         expressPrice: new Decimal(80),
+        priceFactor: new Decimal(0.95),
       },
     ]);
 
@@ -111,12 +115,14 @@ describe("calculateCheckoutTotals", () => {
     );
 
     expect(result).toEqual({
-      subtotal: "1000.00",
+      merchandiseTotal: "1000.00",
+      quantityDiscount: "50.00",
+      subtotal: "950.00",
       shipping: "45.00",
       discount: "0.00",
       tax: "0.00",
       platformFee: "0.00",
-      total: "1045.00",
+      total: "995.00",
       currency: "USD",
       shippingMethodName: "Standard Shipping",
     });
@@ -141,6 +147,8 @@ describe("calculateCheckoutTotals", () => {
     );
 
     expect(result).toEqual({
+      merchandiseTotal: "200.00",
+      quantityDiscount: "0.00",
       subtotal: "200.00",
       shipping: "15.00",
       discount: "0.00",

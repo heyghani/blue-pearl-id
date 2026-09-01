@@ -43,6 +43,7 @@ export async function getStorefrontShippingRates() {
       quantity: tier.quantity,
       standardPrice: tier.standardPrice.toString(),
       expressPrice: tier.expressPrice.toString(),
+      priceFactor: tier.priceFactor.toString(),
     })),
     standardFallback: standardRate?.price.toString() ?? "15.00",
     expressFallback: expressRate?.price.toString() ?? "35.00",
@@ -53,6 +54,7 @@ export async function createShippingQuantityTier(input: {
   quantity: number;
   standardPrice: number;
   expressPrice: number;
+  priceFactor: number;
   isActive: boolean;
 }) {
   const maxSort = await prisma.shippingQuantityTier.aggregate({
@@ -64,6 +66,7 @@ export async function createShippingQuantityTier(input: {
       quantity: input.quantity,
       standardPrice: input.standardPrice,
       expressPrice: input.expressPrice,
+      priceFactor: input.priceFactor,
       isActive: input.isActive,
       sortOrder: (maxSort._max.sortOrder ?? DEFAULT_QUANTITY_PACKS.length - 1) + 1,
     },
@@ -76,6 +79,7 @@ export async function updateShippingQuantityTier(
     quantity: number;
     standardPrice: number;
     expressPrice: number;
+    priceFactor: number;
     isActive: boolean;
   },
 ) {
@@ -85,6 +89,7 @@ export async function updateShippingQuantityTier(
       quantity: input.quantity,
       standardPrice: input.standardPrice,
       expressPrice: input.expressPrice,
+      priceFactor: input.priceFactor,
       isActive: input.isActive,
     },
   });

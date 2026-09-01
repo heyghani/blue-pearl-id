@@ -155,6 +155,9 @@ export interface Dictionary {
     shippingStandard: string;
     shippingExpress: string;
     estimatedTotal: string;
+    quantityDiscount: string;
+    quantityDiscountDetail: string;
+    packQuantityDiscount: string;
   };
   cart: {
     title: string;
@@ -169,6 +172,7 @@ export interface Dictionary {
     orderSummary: string;
     subtotal: string;
     subtotalWithCount: string;
+    quantityDiscount: string;
     shipping: string;
     shippingAtCheckout: string;
     estimatedTotal: string;
@@ -222,6 +226,7 @@ export interface Dictionary {
     shippingLabel: string;
     atNextStep: string;
     discount: string;
+    quantityDiscount: string;
     total: string;
     platformFee: string;
     platformFeeCalc: string;

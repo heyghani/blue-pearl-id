@@ -20,7 +20,12 @@ export function OrderSummary({
 }: {
   cart: Pick<
     CartView,
-    "subtotal" | "itemCount" | "estimatedShipping" | "estimatedTotal"
+    | "subtotal"
+    | "merchandiseSubtotal"
+    | "quantityDiscount"
+    | "itemCount"
+    | "estimatedShipping"
+    | "estimatedTotal"
   >;
   className?: string;
   showCheckout?: boolean;
@@ -33,6 +38,7 @@ export function OrderSummary({
     .replace("{count}", String(cart.itemCount))
     .replace("{label}", itemLabel);
   const isDrawer = variant === "drawer";
+  const quantityDiscountAmount = Number(cart.quantityDiscount);
 
   return (
     <div
@@ -48,8 +54,19 @@ export function OrderSummary({
       <div className={cn("space-y-2", isDrawer ? "text-sm" : "text-sm")}>
         <div className="flex items-center justify-between gap-3">
           <span className="text-muted-foreground">{subtotalLabel}</span>
-          <Price amount={cart.subtotal} className={isDrawer ? "text-sm font-semibold" : undefined} />
+          <Price
+            amount={cart.merchandiseSubtotal}
+            className={isDrawer ? "text-sm font-semibold" : undefined}
+          />
         </div>
+        {quantityDiscountAmount > 0 ? (
+          <div className="flex justify-between text-emerald-700">
+            <span>{t.cart.quantityDiscount}</span>
+            <span>
+              -<Price amount={cart.quantityDiscount} className={isDrawer ? "text-sm" : undefined} />
+            </span>
+          </div>
+        ) : null}
         <div className="flex justify-between">
           <span className="text-muted-foreground">{t.cart.shipping}</span>
           {cart.itemCount > 0 ? (

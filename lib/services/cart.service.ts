@@ -17,6 +17,7 @@ import {
 import { storefrontQuantityOptions } from "@/lib/shipping/quantity-tiers";
 import {
   estimateShippingForQuantity,
+  merchandiseDiscountForQuantity,
   type StorefrontShippingRates,
 } from "@/lib/shipping/storefront-rates";
 import { ShippingMethodType } from "@prisma/client";
@@ -90,6 +91,8 @@ export type CartView = {
   id: string | null;
   items: CartLineItem[];
   itemCount: number;
+  merchandiseSubtotal: string;
+  quantityDiscount: string;
   subtotal: string;
   quantityPacks: number[];
   shippingRates: StorefrontShippingRates;
@@ -108,6 +111,8 @@ function emptyCart(): CartView {
     id: null,
     items: [],
     itemCount: 0,
+    merchandiseSubtotal: "0.00",
+    quantityDiscount: "0.00",
     subtotal: "0.00",
     quantityPacks: [],
     shippingRates: emptyShippingRates,
@@ -225,6 +230,8 @@ function toCartView(cart: {
     id: cart.id,
     items,
     itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+    merchandiseSubtotal: subtotal.toFixed(2),
+    quantityDiscount: "0.00",
     subtotal: subtotal.toFixed(2),
     quantityPacks: [],
     shippingRates: emptyShippingRates,
@@ -252,11 +259,24 @@ async function withShippingContext(view: CartView): Promise<CartView> {
       quantity: tier.quantity,
       standardPrice: tier.standardPrice.toString(),
       expressPrice: tier.expressPrice.toString(),
+      priceFactor: tier.priceFactor.toString(),
     })),
     standardFallback: standardRate?.price.toString() ?? "15.00",
     expressFallback: expressRate?.price.toString() ?? "35.00",
   };
 
+  const merchandiseSubtotal = Number(view.subtotal);
+  const quantityPricing =
+    view.itemCount > 0
+      ? merchandiseDiscountForQuantity(
+          merchandiseSubtotal,
+          view.itemCount,
+          shippingRates,
+        )
+      : {
+          discountedTotal: 0,
+          discountAmount: 0,
+        };
   const estimatedShipping =
     view.itemCount > 0
       ? estimateShippingForQuantity(
@@ -266,11 +286,14 @@ async function withShippingContext(view: CartView): Promise<CartView> {
         )
       : "0.00";
   const estimatedTotal = (
-    Number(view.subtotal) + Number(estimatedShipping)
+    quantityPricing.discountedTotal + Number(estimatedShipping)
   ).toFixed(2);
 
   return {
     ...view,
+    merchandiseSubtotal: merchandiseSubtotal.toFixed(2),
+    quantityDiscount: quantityPricing.discountAmount.toFixed(2),
+    subtotal: quantityPricing.discountedTotal.toFixed(2),
     quantityPacks: storefrontQuantityOptions(tiers.map((tier) => tier.quantity)),
     shippingRates,
     estimatedShipping,

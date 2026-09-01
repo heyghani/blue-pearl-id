@@ -36,6 +36,7 @@ function parseTierForm(formData: FormData) {
     quantity: formData.get("quantity"),
     standardPrice: formData.get("standardPrice"),
     expressPrice: formData.get("expressPrice"),
+    priceFactor: formData.get("priceFactor"),
     isActive: formData.get("isActive") === "on",
   });
 }

@@ -421,15 +421,24 @@ async function main() {
   const standardPrice = standardRate?.price ?? 15;
   const expressPrice = expressRate?.price ?? 35;
 
-  for (const [index, quantity] of [3, 5, 10, 20, 50].entries()) {
+  for (const [index, pack] of [
+    { quantity: 3, priceFactor: 0.9889 },
+    { quantity: 5, priceFactor: 0.9778 },
+    { quantity: 10, priceFactor: 0.95 },
+    { quantity: 20, priceFactor: 0.9444 },
+    { quantity: 50, priceFactor: 0.9278 },
+    { quantity: 80, priceFactor: 0.9111 },
+    { quantity: 100, priceFactor: 0.9 },
+  ].entries()) {
     await prisma.shippingQuantityTier.upsert({
-      where: { quantity },
-      update: {},
+      where: { quantity: pack.quantity },
+      update: { priceFactor: pack.priceFactor },
       create: {
-        quantity,
+        quantity: pack.quantity,
         sortOrder: index,
         standardPrice,
         expressPrice,
+        priceFactor: pack.priceFactor,
       },
     });
   }
