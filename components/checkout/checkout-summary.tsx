@@ -35,6 +35,8 @@ export async function getCheckoutSummaryPayload(): Promise<CheckoutSummarySideba
     );
     if (!("error" in result)) {
       totals = {
+        merchandiseTotal: result.merchandiseTotal,
+        quantityDiscount: result.quantityDiscount,
         subtotal: result.subtotal,
         shipping: result.shipping,
         discount: result.discount,

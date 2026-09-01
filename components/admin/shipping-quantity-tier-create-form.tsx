@@ -30,8 +30,8 @@ export function ShippingQuantityTierCreateForm({
       <div>
         <h3 className="font-medium">Add a custom quantity</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Enter any pack size (for example 8 or 100 pairs) and the Standard /
-          Express shipping price for that quantity.
+          Enter any pack size, shipping prices, and price factor (for example
+          0.9889 means customers pay 98.89% of list).
         </p>
       </div>
 
@@ -57,7 +57,7 @@ export function ShippingQuantityTierCreateForm({
         </Alert>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
           <Label htmlFor="new-quantity">Pairs</Label>
           <Input
@@ -66,7 +66,7 @@ export function ShippingQuantityTierCreateForm({
             type="number"
             min={1}
             max={999}
-            placeholder="e.g. 8"
+            placeholder="e.g. 80"
             required
           />
         </div>
@@ -91,6 +91,19 @@ export function ShippingQuantityTierCreateForm({
             step="0.01"
             min="0"
             defaultValue={defaultExpressPrice}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="new-price-factor">Price factor</Label>
+          <Input
+            id="new-price-factor"
+            name="priceFactor"
+            type="number"
+            step="0.0001"
+            min="0.0001"
+            max="1"
+            defaultValue="1"
             required
           />
         </div>

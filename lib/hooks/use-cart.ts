@@ -9,6 +9,8 @@ const emptyCart: CartView = {
   id: null,
   items: [],
   itemCount: 0,
+  merchandiseSubtotal: "0.00",
+  quantityDiscount: "0.00",
   subtotal: "0.00",
   quantityPacks: [],
   shippingRates: {

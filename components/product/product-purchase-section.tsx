@@ -24,6 +24,7 @@ import {
 import { storefrontQuantityOptions } from "@/lib/shipping/quantity-tiers";
 import {
   estimateShippingForQuantity,
+  merchandiseDiscountForQuantity,
   type StorefrontShippingRates,
 } from "@/lib/shipping/storefront-rates";
 import { ShippingMethodType } from "@prisma/client";
@@ -167,6 +168,13 @@ export function ProductPurchaseSection({
     : unitCompareAt != null
       ? (Number(unitCompareAt) * quantity).toFixed(2)
       : null;
+  const undiscountedMerchandise = Number(displayPrice);
+  const quantityPricing = merchandiseDiscountForQuantity(
+    undiscountedMerchandise,
+    quantity,
+    shippingRates,
+  );
+  const discountedMerchandise = quantityPricing.discountedTotal.toFixed(2);
   const estimatedShipping = estimateShippingForQuantity(
     quantity,
     ShippingMethodType.STANDARD,
@@ -177,7 +185,9 @@ export function ProductPurchaseSection({
     ShippingMethodType.EXPRESS,
     shippingRates,
   );
-  const estimatedTotal = (Number(displayPrice) + Number(estimatedShipping)).toFixed(2);
+  const estimatedTotal = (
+    quantityPricing.discountedTotal + Number(estimatedShipping)
+  ).toFixed(2);
 
   function handleQuantityChange(next: number) {
     setSelectedQuantity(next);
@@ -245,10 +255,21 @@ export function ProductPurchaseSection({
         </span>
 
         <Price
-          amount={displayPrice}
-          compareAt={displayCompareAt}
+          amount={discountedMerchandise}
+          compareAt={
+            quantityPricing.discountAmount > 0
+              ? displayPrice
+              : displayCompareAt
+          }
           className="[&_span:first-child]:text-2xl [&_span:first-child]:font-bold sm:[&_span:first-child]:text-3xl"
         />
+        {quantityPricing.discountAmount > 0 ? (
+          <p className="text-sm font-medium text-emerald-700">
+            {t.product.quantityDiscountDetail
+              .replace("{amount}", formatPrice(quantityPricing.discountAmount.toFixed(2)))
+              .replace("{percent}", quantityPricing.discountPercent.toFixed(2))}
+          </p>
+        ) : null}
         {quantity > 1 ? (
           <p className="text-sm text-muted-foreground">
             {t.product.eachPrice.replace("{price}", formatPrice(unitPrice))}
@@ -362,7 +383,7 @@ export function ProductPurchaseSection({
               ? [selectedVariant.id]
               : undefined
         }
-        value={Number(displayPrice)}
+        value={Number(discountedMerchandise)}
         quantity={isSizePack ? chosenSizes.length : quantity}
         inStock={canPurchase}
         soldOut={

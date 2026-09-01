@@ -23,7 +23,7 @@ export default async function AdminShippingPage() {
     <div className="space-y-8">
       <AdminPageHeader
         title="Shipping rates"
-        description="Quantity packs on product pages map to Standard and Express prices below. Checkout uses the pack that matches the number of pairs in the cart."
+        description="Quantity packs on product pages map to shipping prices and bulk price factors below. Checkout uses the pack that matches the number of pairs in the cart."
         meta={`${tiers.length} pack${tiers.length === 1 ? "" : "s"}`}
       />
 
@@ -33,10 +33,9 @@ export default async function AdminShippingPage() {
             Quantity packs
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            These sizes appear on every product page. Set a shipping price per
-            pack for Standard and Express. Cart totals that fall between packs
-            use the next larger pack; quantities above the largest pack scale
-            from that pack’s price.
+            These sizes appear on every product page. Set shipping prices and a
+            price factor per pack (0.9889 = pay 98.89% of list). Cart totals
+            that fall between packs use the next larger pack.
           </p>
         </div>
 
@@ -56,6 +55,7 @@ export default async function AdminShippingPage() {
                 quantity={tier.quantity}
                 standardPrice={tier.standardPrice.toString()}
                 expressPrice={tier.expressPrice.toString()}
+                priceFactor={tier.priceFactor.toString()}
                 isActive={tier.isActive}
               />
             ))}

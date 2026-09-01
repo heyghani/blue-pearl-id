@@ -164,6 +164,10 @@ export const shippingQuantityTierSchema = z.object({
     .max(999, "Quantity cannot exceed 999 pairs."),
   standardPrice: z.coerce.number().min(0, "Standard shipping cannot be negative."),
   expressPrice: z.coerce.number().min(0, "Express shipping cannot be negative."),
+  priceFactor: z.coerce
+    .number()
+    .min(0.0001, "Price factor must be greater than zero.")
+    .max(1, "Price factor cannot exceed 1."),
   isActive: z.coerce.boolean(),
 });
 

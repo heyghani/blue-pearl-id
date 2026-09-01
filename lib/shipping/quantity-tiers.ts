@@ -8,6 +8,7 @@ export type QuantityTierPrices = {
   quantity: number;
   standardPrice: number;
   expressPrice: number;
+  priceFactor?: number;
 };
 
 function roundMoney(value: number) {
@@ -94,10 +95,13 @@ export function toQuantityTierPrices(tier: {
   quantity: number;
   standardPrice: { toString(): string } | number | string;
   expressPrice: { toString(): string } | number | string;
+  priceFactor?: { toString(): string } | number | string;
 }): QuantityTierPrices {
   return {
     quantity: tier.quantity,
     standardPrice: Number(tier.standardPrice),
     expressPrice: Number(tier.expressPrice),
+    priceFactor:
+      tier.priceFactor != null ? Number(tier.priceFactor) : undefined,
   };
 }

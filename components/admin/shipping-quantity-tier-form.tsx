@@ -13,6 +13,10 @@ import {
   updateShippingQuantityTierAction,
   type AdminActionState,
 } from "@/lib/actions/admin/shipping";
+import {
+  discountPercentFromFactor,
+  listPricePercentFromFactor,
+} from "@/lib/pricing/quantity-discounts";
 
 const initialState: AdminActionState = {};
 
@@ -21,18 +25,23 @@ export function ShippingQuantityTierForm({
   quantity,
   standardPrice,
   expressPrice,
+  priceFactor,
   isActive,
 }: {
   id: string;
   quantity: number;
   standardPrice: string;
   expressPrice: string;
+  priceFactor: string;
   isActive: boolean;
 }) {
   const [state, formAction, pending] = useActionState(
     updateShippingQuantityTierAction.bind(null, id),
     initialState,
   );
+  const factor = Number(priceFactor);
+  const discountPercent = discountPercentFromFactor(factor);
+  const listPercent = listPricePercentFromFactor(factor);
 
   return (
     <div className="space-y-4 rounded-lg border p-4">
@@ -68,7 +77,7 @@ export function ShippingQuantityTierForm({
         </Alert>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
           <Label htmlFor={`${id}-quantity`}>Pairs</Label>
           <Input
@@ -104,6 +113,22 @@ export function ShippingQuantityTierForm({
             defaultValue={expressPrice}
             required
           />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${id}-price-factor`}>Price factor</Label>
+          <Input
+            id={`${id}-price-factor`}
+            name="priceFactor"
+            type="number"
+            step="0.0001"
+            min="0.0001"
+            max="1"
+            defaultValue={priceFactor}
+            required
+          />
+          <p className="text-xs text-muted-foreground">
+            Pay {listPercent}% of list ({discountPercent}% off)
+          </p>
         </div>
       </div>
 

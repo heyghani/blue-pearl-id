@@ -9,10 +9,30 @@ import {
 
 const rates: StorefrontShippingRates = {
   tiers: [
-    { quantity: 3, standardPrice: "10.00", expressPrice: "35.00" },
-    { quantity: 5, standardPrice: "10.00", expressPrice: "35.00" },
-    { quantity: 10, standardPrice: "10.00", expressPrice: "35.00" },
-    { quantity: 20, standardPrice: "10.00", expressPrice: "35.00" },
+    {
+      quantity: 3,
+      standardPrice: "10.00",
+      expressPrice: "35.00",
+      priceFactor: "0.9889",
+    },
+    {
+      quantity: 5,
+      standardPrice: "10.00",
+      expressPrice: "35.00",
+      priceFactor: "0.9778",
+    },
+    {
+      quantity: 10,
+      standardPrice: "10.00",
+      expressPrice: "35.00",
+      priceFactor: "0.9500",
+    },
+    {
+      quantity: 20,
+      standardPrice: "10.00",
+      expressPrice: "35.00",
+      priceFactor: "0.9444",
+    },
   ],
   standardFallback: "15.00",
   expressFallback: "35.00",

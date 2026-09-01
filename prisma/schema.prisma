@@ -387,6 +387,8 @@ model ShippingQuantityTier {
   sortOrder      Int     @default(0)
   standardPrice  Decimal @db.Decimal(12, 2)
   expressPrice   Decimal @db.Decimal(12, 2)
+  /** Multiplier on merchandise total (e.g. 0.9889 = pay 98.89% of list). */
+  priceFactor    Decimal @default(1) @db.Decimal(8, 4)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

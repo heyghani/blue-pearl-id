@@ -13,6 +13,8 @@ export type CheckoutSummarySidebarProps = {
   heading: string;
   items: ReactNode;
   totals: {
+    merchandiseTotal: string;
+    quantityDiscount: string;
     subtotal: string;
     shipping: string;
     discount: string;
@@ -68,6 +70,8 @@ function CheckoutSummarySidebar({
       <Separator className="my-4" />
       {totals ? (
         <CheckoutSummaryTotals
+          merchandiseTotal={totals.merchandiseTotal}
+          quantityDiscount={totals.quantityDiscount}
           subtotal={totals.subtotal}
           shipping={totals.shipping}
           discount={totals.discount}

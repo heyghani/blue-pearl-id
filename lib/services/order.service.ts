@@ -16,6 +16,10 @@ import {
   resolveVariantImageUrl,
 } from "@/lib/products/variants";
 import {
+  applyQuantityDiscount,
+  toQuantityPriceTier,
+} from "@/lib/pricing/quantity-discounts";
+import {
   MAX_ORDER_QUANTITY,
   priceForShippingMethod,
   toQuantityTierPrices,
@@ -23,6 +27,8 @@ import {
 import type { AddressInput } from "@/lib/validations/checkout";
 
 export type CheckoutTotals = {
+  merchandiseTotal: string;
+  quantityDiscount: string;
   subtotal: string;
   shipping: string;
   discount: string;
@@ -136,7 +142,7 @@ export async function calculateCheckoutTotals(
     return { error: "Some items in your cart are no longer available." };
   }
 
-  let subtotal = 0;
+  let merchandiseTotal = 0;
   for (const item of cartItems) {
     const product = products.find((p) => p.id === item.productId);
     if (!product) return { error: "Product not found." };
@@ -154,7 +160,7 @@ export async function calculateCheckoutTotals(
         return { error: `Not enough stock for ${product.name}.` };
       }
 
-      subtotal += Number(variant.price ?? product.price) * item.quantity;
+      merchandiseTotal += Number(variant.price ?? product.price) * item.quantity;
       continue;
     }
 
@@ -166,7 +172,7 @@ export async function calculateCheckoutTotals(
       return { error: `Not enough stock for ${product.name}.` };
     }
 
-    subtotal += Number(product.price) * item.quantity;
+    merchandiseTotal += Number(product.price) * item.quantity;
   }
 
   const shippingRate = await getActiveShippingRate(shippingMethod);
@@ -175,11 +181,19 @@ export async function calculateCheckoutTotals(
   }
 
   const coupon = await resolveCoupon(couponCode);
-  const discount = calculateDiscount(subtotal, coupon);
   const cartQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const quantityTiers = await prisma.shippingQuantityTier.findMany({
     where: { isActive: true },
   });
+  const priceTiers = quantityTiers.map(toQuantityPriceTier);
+  const quantityPricing = applyQuantityDiscount(
+    merchandiseTotal,
+    cartQuantity,
+    priceTiers,
+  );
+  const subtotal = quantityPricing.discountedTotal;
+  const quantityDiscount = quantityPricing.discountAmount;
+  const discount = calculateDiscount(subtotal, coupon);
   const shipping = priceForShippingMethod(
     shippingMethod,
     cartQuantity,
@@ -195,6 +209,8 @@ export async function calculateCheckoutTotals(
   );
 
   return {
+    merchandiseTotal: merchandiseTotal.toFixed(2),
+    quantityDiscount: quantityDiscount.toFixed(2),
     subtotal: subtotal.toFixed(2),
     shipping: shipping.toFixed(2),
     discount: discount.toFixed(2),
@@ -360,7 +376,15 @@ export async function createOrderFromCart(
           orderDimensions: input.orderDimensions || null,
           items: {
             create: cart.items.map((item) => {
-              const unitPrice = item.variant?.price ?? item.product.price;
+              const listUnitPrice = item.variant?.price ?? item.product.price;
+              const lineListTotal =
+                Number(listUnitPrice) * item.quantity;
+              const merchandiseMultiplier =
+                Number(totals.merchandiseTotal) > 0
+                  ? Number(totals.subtotal) / Number(totals.merchandiseTotal)
+                  : 1;
+              const lineTotal = lineListTotal * merchandiseMultiplier;
+              const unitPrice = (lineTotal / item.quantity).toFixed(2);
               const variantLabel = getVariantLabel(item.variant);
               const options = getVariantOptions(item.variant);
               const productSku = item.variant?.sku ?? item.product.sku;
@@ -413,7 +437,7 @@ export async function createOrderFromCart(
                 imageUrl,
                 unitPrice,
                 quantity: item.quantity,
-                totalPrice: (Number(unitPrice) * item.quantity).toFixed(2),
+                totalPrice: lineTotal.toFixed(2),
               };
             }),
           },
