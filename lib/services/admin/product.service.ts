@@ -6,6 +6,7 @@ import {
   type ProductOptionInput,
   type ProductVariantInput,
 } from "@/lib/products/variants";
+import type { ProductMediaItem } from "@/lib/products/media";
 
 const variantInclude = {
   options: {
@@ -89,7 +90,7 @@ export async function listAdminProducts({
       include: {
         category: { select: { id: true, name: true } },
         brand: { select: { id: true, name: true } },
-        images: { where: { isPrimary: true }, take: 1 },
+        images: { where: { isPrimary: true, mediaType: "IMAGE" }, take: 1 },
         inventory: true,
         variants: { where: { isActive: true }, select: { quantity: true } },
       },
@@ -127,7 +128,7 @@ export type ProductInput = {
   tags?: string[];
   shortDescription?: string | null;
   description?: string | null;
-  imageUrls?: string[];
+  media?: ProductMediaItem[];
   quantity: number;
   isActive: boolean;
   isFeatured: boolean;
@@ -271,27 +272,42 @@ async function syncProductVariants(
   return { price: pricing.price, quantity: totalQuantity };
 }
 
+function normalizeMedia(items: ProductMediaItem[]) {
+  return items
+    .map((item) => ({ ...item, url: item.url.trim() }))
+    .filter((item) => item.url.length > 0);
+}
+
+function mediaRows(items: ProductMediaItem[], alt: string) {
+  const primaryIndex = items.findIndex((item) => item.type === "image");
+
+  return items.map((item, index) => ({
+    url: item.url,
+    alt,
+    isPrimary: index === primaryIndex,
+    sortOrder: index,
+    mediaType: item.type === "video" ? ("VIDEO" as const) : ("IMAGE" as const),
+  }));
+}
+
 async function syncProductImages(
   tx: Prisma.TransactionClient,
   productId: string,
-  imageUrls: string[],
+  media: ProductMediaItem[],
   alt: string,
 ) {
   await tx.productImage.deleteMany({ where: { productId } });
 
-  const urls = imageUrls.map((url) => url.trim()).filter(Boolean);
+  const items = normalizeMedia(media);
 
-  if (urls.length === 0) {
+  if (items.length === 0) {
     return;
   }
 
   await tx.productImage.createMany({
-    data: urls.map((url, index) => ({
+    data: mediaRows(items, alt).map((item) => ({
+      ...item,
       productId,
-      url,
-      alt,
-      isPrimary: index === 0,
-      sortOrder: index,
     })),
   });
 }
@@ -315,14 +331,9 @@ export async function createProduct(input: ProductInput) {
         isHalloween: input.isHalloween,
         hasVariants: input.hasVariants,
         images:
-          input.imageUrls && input.imageUrls.length > 0
+          input.media && normalizeMedia(input.media).length > 0
             ? {
-                create: input.imageUrls.map((url, index) => ({
-                  url,
-                  alt: input.name,
-                  isPrimary: index === 0,
-                  sortOrder: index,
-                })),
+                create: mediaRows(normalizeMedia(input.media), input.name),
               }
             : undefined,
         inventory: {
@@ -395,7 +406,7 @@ export async function updateProduct(id: string, input: ProductInput) {
       update: { quantity: inventoryQuantity },
     });
 
-    await syncProductImages(tx, id, input.imageUrls ?? [], input.name);
+    await syncProductImages(tx, id, input.media ?? [], input.name);
 
     return product;
   }, PRODUCT_TX_OPTIONS);

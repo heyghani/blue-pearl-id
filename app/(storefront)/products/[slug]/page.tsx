@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     product.description?.slice(0, 160) ??
     undefined;
 
-  const image = product.images[0]?.url;
+  const image = product.images.find((item) => item.mediaType === "IMAGE")?.url;
 
   return {
     title: product.name,
@@ -98,7 +98,11 @@ export default async function ProductDetailPage({ params }: Props) {
   const galleryImages = product.images.map((img) => ({
     url: img.url,
     alt: img.alt,
+    type: img.mediaType === "VIDEO" ? ("video" as const) : ("image" as const),
   }));
+  const photoUrls = galleryImages
+    .filter((item) => item.type === "image")
+    .map((item) => item.url);
 
   const purchaseProps = {
     productId: product.id,
@@ -127,7 +131,7 @@ export default async function ProductDetailPage({ params }: Props) {
         name={product.name}
         description={product.shortDescription ?? product.description}
         sku={product.sku}
-        image={product.images.map((img) => img.url)}
+        image={photoUrls}
         price={product.price.toString()}
         inStock={inStock}
         url={productUrl}

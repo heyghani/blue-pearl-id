@@ -15,7 +15,7 @@ import {
   setProductActive,
   updateProduct,
 } from "@/lib/services/admin/product.service";
-import { productFormSchema, parseProductImageUrls } from "@/lib/validations/admin";
+import { productFormSchema, parseProductMedia } from "@/lib/validations/admin";
 
 export type { AdminActionState } from "@/lib/actions/admin/types";
 
@@ -135,7 +135,7 @@ export async function createProductAction(
       tags: parseTags(data.tags),
       shortDescription: data.shortDescription ?? null,
       description: data.description ?? null,
-      imageUrls: parseProductImageUrls(data.imagesPayload),
+      media: parseProductMedia(data.imagesPayload),
       quantity: data.quantity,
       isActive: data.isActive,
       isFeatured: data.isFeatured,
@@ -183,7 +183,7 @@ export async function updateProductAction(
       tags: parseTags(data.tags),
       shortDescription: data.shortDescription ?? null,
       description: data.description ?? null,
-      imageUrls: parseProductImageUrls(data.imagesPayload),
+      media: parseProductMedia(data.imagesPayload),
       quantity: data.quantity,
       isActive: data.isActive,
       isFeatured: data.isFeatured,

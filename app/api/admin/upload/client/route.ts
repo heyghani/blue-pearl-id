@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/admin/require-admin";
 import {
-  ALLOWED_IMAGE_CONTENT_TYPES,
+  allowedContentTypesForFolder,
   MAX_IMAGE_UPLOAD_BYTES,
   uploadFolderSchema,
 } from "@/lib/validations/upload";
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
         }
 
         return {
-          allowedContentTypes: [...ALLOWED_IMAGE_CONTENT_TYPES],
+          allowedContentTypes: allowedContentTypesForFolder(folderResult.data),
           maximumSizeInBytes: MAX_IMAGE_UPLOAD_BYTES,
           addRandomSuffix: false,
         };

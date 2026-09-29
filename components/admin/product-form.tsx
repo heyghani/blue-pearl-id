@@ -30,6 +30,7 @@ import {
   type ProductOptionInput,
   type ProductVariantInput,
 } from "@/lib/products/variants";
+import type { ProductMediaItem } from "@/lib/products/media";
 import { FALLBACK_DEFAULT_BASE_PRICE } from "@/lib/store-defaults";
 
 type Category = { id: string; name: string };
@@ -46,7 +47,7 @@ type ProductDefaults = {
   tags?: string[];
   shortDescription?: string | null;
   description?: string | null;
-  imageUrls?: string[];
+  media?: ProductMediaItem[];
   quantity?: number;
   isActive?: boolean;
   isFeatured?: boolean;
@@ -308,13 +309,14 @@ export function ProductForm({
         <CardHeader>
           <CardTitle>Media</CardTitle>
           <CardDescription>
-            Upload as many product images as you need. The first image is the primary
-            photo in catalog and product gallery.
+            Upload product photos and videos. The first photo is the catalog thumbnail.
+            Videos play in the product gallery, where customers can open any file larger
+            and zoom photos.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ProductImagesField
-            value={defaults.imageUrls ?? []}
+            value={defaults.media ?? []}
             productName={defaults.name}
             onUploadingChange={setImagesUploading}
           />

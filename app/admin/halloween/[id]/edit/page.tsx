@@ -32,7 +32,10 @@ export default async function EditHalloweenProductPage({ params }: Props) {
   ]);
 
   const variantState = adminVariantsToFormState(product.options, product.variants);
-  const imageUrls = product.images.map((image) => image.url);
+  const media = product.images.map((image) => ({
+    url: image.url,
+    type: image.mediaType === "VIDEO" ? ("video" as const) : ("image" as const),
+  }));
 
   return (
     <div className="space-y-6">
@@ -71,7 +74,7 @@ export default async function EditHalloweenProductPage({ params }: Props) {
           tags: product.tags,
           shortDescription: product.shortDescription,
           description: product.description,
-          imageUrls,
+          media,
           quantity: product.inventory?.quantity ?? 0,
           isActive: product.isActive,
           isFeatured: product.isFeatured,

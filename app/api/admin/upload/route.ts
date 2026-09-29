@@ -9,7 +9,7 @@ import {
 } from "@/lib/storage/r2";
 import {
   getMaxUploadBytesForMode,
-  resolveImageContentType,
+  resolveAdminUpload,
   uploadFolderSchema,
 } from "@/lib/validations/upload";
 
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   const folderValue = formData.get("folder");
 
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "Choose an image file to upload." }, { status: 400 });
+    return NextResponse.json({ error: "Choose an image or video file to upload." }, { status: 400 });
   }
 
   const folderResult = uploadFolderSchema.safeParse(
@@ -72,25 +72,17 @@ export async function POST(request: Request) {
     );
   }
 
-  const contentType = resolveImageContentType(file);
-  if (!contentType) {
-    return NextResponse.json(
-      {
-        error:
-          file.name.toLowerCase().endsWith(".heic") ||
-          file.name.toLowerCase().endsWith(".heif")
-            ? "HEIC photos are not supported. Choose a JPG/PNG image or paste an image URL."
-            : "Unsupported image type. Use JPG, PNG, WebP, or GIF.",
-      },
-      { status: 400 },
-    );
+  const resolved = resolveAdminUpload(file, folderResult.data);
+  if (!resolved.ok) {
+    return NextResponse.json({ error: resolved.error }, { status: 400 });
   }
 
   const maxBytes = getMaxUploadBytesForMode(mode);
   if (file.size > maxBytes) {
+    const label = resolved.kind === "video" ? "Video" : "Image";
     return NextResponse.json(
       {
-        error: `Image must be ${Math.floor(maxBytes / (1024 * 1024))} MB or smaller.`,
+        error: `${label} must be ${Math.floor(maxBytes / (1024 * 1024))} MB or smaller.`,
       },
       { status: 400 },
     );
@@ -100,7 +92,7 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const url = await uploadProductImage({
       buffer,
-      contentType,
+      contentType: resolved.contentType,
       folder: folderResult.data,
     });
 

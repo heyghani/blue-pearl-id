@@ -4,9 +4,11 @@ import { prepareImageForUpload } from "@/lib/uploads/prepare-client-image";
 import {
   extensionForContentType,
   getUnsupportedImageTypeMessage,
+  resolveAdminUpload,
   resolveImageContentType,
   type UploadFolder,
 } from "@/lib/validations/upload";
+import type { ProductMediaItem } from "@/lib/products/media";
 
 const MULTIPART_UPLOAD_THRESHOLD_BYTES = 3 * 1024 * 1024;
 const BATCH_UPLOAD_YIELD_MS = 50;
@@ -196,6 +198,94 @@ export async function uploadImageFiles(
     options?.onProgress?.(index + 1, queue.length);
 
     if (index < queue.length - 1) {
+      await wait(BATCH_UPLOAD_YIELD_MS);
+    }
+  }
+
+  return { uploaded, errors, skipped };
+}
+
+export type MediaBatchUploadResult = {
+  uploaded: ProductMediaItem[];
+  errors: string[];
+  skipped: number;
+};
+
+export async function uploadProductMediaFile(
+  file: File,
+  folder: UploadFolder,
+  config: UploadConfig,
+  target: UploadTarget = "admin",
+): Promise<ProductMediaItem> {
+  const resolved = resolveAdminUpload(file, folder);
+  if (!resolved.ok) {
+    throw new Error(resolved.error);
+  }
+
+  if (resolved.kind === "image") {
+    return {
+      url: await uploadImageFile(file, folder, config, target),
+      type: "image",
+    };
+  }
+
+  if (!config.available) {
+    throw new Error(
+      config.message ?? "File upload is not configured. Paste a file URL instead.",
+    );
+  }
+
+  if (file.size > config.maxBytes) {
+    throw new Error(
+      `Video is too large. Please use a file under ${formatMaxSize(config.maxBytes)}.`,
+    );
+  }
+
+  const url = config.useClientUpload
+    ? await uploadViaBlob(file, folder, resolved.contentType, target)
+    : await uploadViaServer(file, folder, target);
+
+  return { url, type: "video" };
+}
+
+export async function uploadProductMediaFiles(
+  files: File[],
+  folder: UploadFolder,
+  config: UploadConfig,
+  options?: {
+    existingUrls?: string[];
+    onProgress?: (current: number, total: number) => void;
+    target?: UploadTarget;
+  },
+): Promise<MediaBatchUploadResult> {
+  const existing = new Set(options?.existingUrls ?? []);
+  const uploaded: ProductMediaItem[] = [];
+  const errors: string[] = [];
+  let skipped = 0;
+  const target = options?.target ?? "admin";
+
+  options?.onProgress?.(0, files.length);
+
+  for (let index = 0; index < files.length; index += 1) {
+    const file = files[index];
+
+    try {
+      const item = await uploadProductMediaFile(file, folder, config, target);
+
+      if (existing.has(item.url) || uploaded.some((entry) => entry.url === item.url)) {
+        skipped += 1;
+      } else {
+        uploaded.push(item);
+        existing.add(item.url);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed.";
+      errors.push(`${file.name}: ${message}`);
+    }
+
+    options?.onProgress?.(index + 1, files.length);
+
+    if (index < files.length - 1) {
       await wait(BATCH_UPLOAD_YIELD_MS);
     }
   }

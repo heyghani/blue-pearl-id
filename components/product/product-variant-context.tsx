@@ -18,7 +18,7 @@ import {
   type SerializedProductVariant,
 } from "@/lib/products/variants";
 
-type GalleryImage = { url: string; alt?: string | null };
+type GalleryImage = { url: string; alt?: string | null; type?: "image" | "video" };
 
 type ProductVariantContextValue = {
   selections: Record<string, string>;
@@ -41,7 +41,7 @@ function buildGalleryImages(
   const primaryAlt = baseImages[0]?.alt;
   const rest = baseImages.filter((image) => image.url !== variantImageUrl);
 
-  return [{ url: variantImageUrl, alt: primaryAlt }, ...rest];
+  return [{ url: variantImageUrl, alt: primaryAlt, type: "image" }, ...rest];
 }
 
 export function ProductVariantProvider({
