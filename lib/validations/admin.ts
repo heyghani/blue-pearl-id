@@ -2,6 +2,7 @@ import { OrderStatus } from "@prisma/client";
 import { z } from "zod";
 
 import { uploadedImageUrlSchema } from "@/lib/validations/upload";
+import { parseProductImageUrls, parseProductMedia } from "@/lib/products/media";
 
 const optionalImageUrlSchema = z
   .union([z.string(), z.null()])
@@ -30,21 +31,7 @@ const productVariantSchema = z.object({
   optionValues: z.record(z.string(), z.string()),
 });
 
-export function parseProductImageUrls(payload?: string | null) {
-  if (!payload) return [];
-
-  try {
-    const parsed = JSON.parse(payload);
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed
-      .filter((item): item is string => typeof item === "string")
-      .map((url) => url.trim())
-      .filter(Boolean);
-  } catch {
-    return [];
-  }
-}
+export { parseProductImageUrls, parseProductMedia };
 
 export const productFormSchema = z
   .object({
@@ -76,14 +63,15 @@ export const productFormSchema = z
     variantsPayload: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    const imageUrls = parseProductImageUrls(data.imagesPayload);
+    const media = parseProductMedia(data.imagesPayload);
 
-    for (const [index, url] of imageUrls.entries()) {
-      if (!uploadedImageUrlSchema.safeParse(url).success) {
+    for (const [index, item] of media.entries()) {
+      if (!uploadedImageUrlSchema.safeParse(item.url).success) {
+        const label = item.type === "video" ? "Video" : "Image";
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["imagesPayload"],
-          message: `Image ${index + 1} is not a valid uploaded image URL.`,
+          message: `${label} ${index + 1} is not a valid file URL.`,
         });
       }
     }

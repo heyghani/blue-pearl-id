@@ -4,6 +4,7 @@ import {
   extensionForContentType,
   isAllowedImageContentType,
   resolveImageContentType,
+  resolveVideoContentType,
   uploadedImageUrlSchema,
 } from "@/lib/validations/upload";
 
@@ -40,5 +41,17 @@ describe("upload validation", () => {
     expect(
       resolveImageContentType({ name: "IMG_0001.HEIC", type: "image/heic" }),
     ).toBeNull();
+  });
+
+  it("accepts mp4 and webm product videos", () => {
+    expect(resolveVideoContentType({ name: "clip.mp4", type: "" })).toBe("video/mp4");
+    expect(resolveVideoContentType({ name: "clip.webm", type: "video/webm" })).toBe(
+      "video/webm",
+    );
+    expect(extensionForContentType("video/mp4")).toBe("mp4");
+  });
+
+  it("rejects mov videos", () => {
+    expect(resolveVideoContentType({ name: "clip.mov", type: "video/quicktime" })).toBeNull();
   });
 });

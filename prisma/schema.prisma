@@ -32,6 +32,11 @@ enum PaymentProvider {
   NOWPAYMENTS
 }
 
+enum ProductMediaType {
+  IMAGE
+  VIDEO
+}
+
 enum PaymentStatus {
   PENDING
   AUTHORIZED
@@ -283,8 +288,9 @@ model ProductImage {
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   url       String
   alt       String?
-  sortOrder Int     @default(0)
-  isPrimary Boolean @default(false)
+  mediaType ProductMediaType @default(IMAGE)
+  sortOrder Int              @default(0)
+  isPrimary Boolean          @default(false)
 
   createdAt DateTime @default(now())
 

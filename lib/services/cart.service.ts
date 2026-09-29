@@ -35,7 +35,7 @@ const cartInclude = {
     include: {
       product: {
         include: {
-          images: { where: { isPrimary: true }, take: 1 },
+          images: { where: { isPrimary: true, mediaType: "IMAGE" }, take: 1 },
           inventory: true,
           variants: {
             where: { isActive: true, imageUrl: { not: null } },

@@ -82,6 +82,7 @@ export const orderItemImageInclude = {
   product: {
     select: {
       images: {
+        where: { mediaType: "IMAGE" },
         orderBy: [{ isPrimary: "desc" as const }, { sortOrder: "asc" as const }],
         take: 1,
         select: { url: true },

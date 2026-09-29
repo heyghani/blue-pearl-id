@@ -7,8 +7,8 @@ import { put } from "@vercel/blob";
 import {
   extensionForContentType,
   getMaxUploadBytesForMode,
-  isAllowedImageContentType,
-  type AllowedImageContentType,
+  isAllowedUploadContentType,
+  isAllowedVideoContentType,
   uploadFolderSchema,
 } from "@/lib/validations/upload";
 
@@ -86,7 +86,7 @@ async function uploadToR2({
   filename,
 }: {
   buffer: Buffer;
-  contentType: AllowedImageContentType;
+  contentType: string;
   folder: UploadFolder;
   filename: string;
 }) {
@@ -118,7 +118,7 @@ async function uploadToVercelBlob({
   filename,
 }: {
   buffer: Buffer;
-  contentType: AllowedImageContentType;
+  contentType: string;
   folder: UploadFolder;
   filename: string;
 }) {
@@ -157,14 +157,15 @@ export async function uploadProductImage({
 }) {
   const parsedFolder = uploadFolderSchema.parse(folder);
 
-  if (!isAllowedImageContentType(contentType)) {
-    throw new Error("Unsupported image type. Use JPG, PNG, WebP, or GIF.");
+  if (!isAllowedUploadContentType(contentType)) {
+    throw new Error("Unsupported file type. Use JPG, PNG, WebP, GIF, MP4, or WebM.");
   }
 
   const maxBytes = getMaxUploadBytesForMode(getUploadStorageMode());
   if (buffer.byteLength > maxBytes) {
+    const label = isAllowedVideoContentType(contentType) ? "Video" : "Image";
     throw new Error(
-      `Image must be ${Math.floor(maxBytes / (1024 * 1024))} MB or smaller.`,
+      `${label} must be ${Math.floor(maxBytes / (1024 * 1024))} MB or smaller.`,
     );
   }
 

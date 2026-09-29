@@ -249,7 +249,7 @@ export async function createOrderFromCart(
           product: {
             include: {
               inventory: true,
-              images: { where: { isPrimary: true }, take: 1 },
+              images: { where: { isPrimary: true, mediaType: "IMAGE" }, take: 1 },
               variants: {
                 where: { isActive: true, imageUrl: { not: null } },
                 select: {

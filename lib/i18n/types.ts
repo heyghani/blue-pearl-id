@@ -130,6 +130,13 @@ export interface Dictionary {
     noImage: string;
     noImageAvailable: string;
     viewImage: string;
+    viewVideo: string;
+    closeViewer: string;
+    zoomIn: string;
+    zoomOut: string;
+    previousMedia: string;
+    nextMedia: string;
+    mediaPosition: string;
     back: string;
     shop: string;
     buyNow: string;

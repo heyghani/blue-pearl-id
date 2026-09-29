@@ -26,7 +26,11 @@ const CATALOG_REVALIDATE_SECONDS = 60;
 const PRODUCT_REVALIDATE_SECONDS = 30;
 
 const productInclude = {
-  images: { orderBy: { sortOrder: "asc" as const }, take: 1 },
+  images: {
+    where: { mediaType: "IMAGE" },
+    orderBy: [{ isPrimary: "desc" as const }, { sortOrder: "asc" as const }],
+    take: 1,
+  },
   inventory: true,
   category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } },
   brand: { select: { name: true, slug: true, logoUrl: true } },
@@ -228,7 +232,7 @@ const fetchRelatedProducts = unstable_cache(
         slug: { not: excludeSlug },
       },
       include: {
-        images: { where: { isPrimary: true }, take: 1 },
+        images: { where: { isPrimary: true, mediaType: "IMAGE" }, take: 1 },
         inventory: true,
         variants: {
           where: { isActive: true },
@@ -269,7 +273,7 @@ export async function getFeaturedProducts(limit = 8) {
   return prisma.product.findMany({
     where: { isActive: true, isFeatured: true, isHalloween: false, deletedAt: null },
     include: {
-      images: { where: { isPrimary: true }, take: 1 },
+      images: { where: { isPrimary: true, mediaType: "IMAGE" }, take: 1 },
       inventory: true,
       variants: {
         where: { isActive: true },
@@ -291,7 +295,7 @@ export async function getHalloweenProducts(limit = 8) {
   return prisma.product.findMany({
     where: { isActive: true, isHalloween: true, deletedAt: null },
     include: {
-      images: { where: { isPrimary: true }, take: 1 },
+      images: { where: { isPrimary: true, mediaType: "IMAGE" }, take: 1 },
       inventory: true,
       brand: { select: { name: true, slug: true } },
       variants: {
@@ -324,7 +328,12 @@ export async function getFeaturedRecommendationsByCategory() {
           deletedAt: null,
         },
         select: {
-          images: { orderBy: { sortOrder: "asc" }, take: 1, select: { url: true } },
+          images: {
+            where: { mediaType: "IMAGE" },
+            orderBy: [{ isPrimary: "desc" as const }, { sortOrder: "asc" as const }],
+            take: 1,
+            select: { url: true },
+          },
           category: {
             select: {
               id: true,
@@ -376,7 +385,7 @@ export async function getBestSellerProducts(limit = 8) {
   return prisma.product.findMany({
     where: { isActive: true, isHalloween: false, deletedAt: null },
     include: {
-      images: { where: { isPrimary: true }, take: 1 },
+      images: { where: { isPrimary: true, mediaType: "IMAGE" }, take: 1 },
       inventory: true,
       variants: {
         where: { isActive: true },
